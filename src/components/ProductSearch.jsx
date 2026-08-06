@@ -1,0 +1,67 @@
+import { useMemo, useState } from 'react';
+import { PRODUCTS, getDepartment, locationLabel, searchProducts } from '../data/storeData';
+import ProductDetail from './ProductDetail';
+
+export default function ProductSearch({ onAdd, listedIds }) {
+  const [query, setQuery] = useState('');
+  const [selected, setSelected] = useState(null);
+
+  const results = useMemo(() => {
+    if (!query.trim()) return PRODUCTS.slice(0, 8);
+    return searchProducts(query);
+  }, [query]);
+
+  return (
+    <div className="product-search">
+      <input
+        className="search-input"
+        type="text"
+        placeholder="🔍 חפש מוצר… (למשל: חלב, קטשופ)"
+        value={query}
+        onChange={(e) => setQuery(e.target.value)}
+      />
+      <ul className="product-list">
+        {results.map((p) => {
+          const dept = getDepartment(p.department);
+          const inList = listedIds.has(p.id);
+          return (
+            <li className="product-row" key={p.id}>
+              <button className="product-row-main" onClick={() => setSelected(p)}>
+                <span className="product-row-icon">{dept.icon}</span>
+                <span className="product-row-info">
+                  <span className="product-row-name">{p.name}</span>
+                  <span className="product-row-loc">
+                    {dept.name} · {locationLabel(p)}
+                  </span>
+                </span>
+                <span className="product-row-price">₪{p.price.toFixed(2)}</span>
+              </button>
+              <button
+                className={'btn btn--icon' + (inList ? ' btn--added' : '')}
+                onClick={() => onAdd(p)}
+                aria-label="הוסף לרשימה"
+                title={inList ? 'ברשימה' : 'הוסף לרשימה'}
+              >
+                {inList ? '✓' : '➕'}
+              </button>
+            </li>
+          );
+        })}
+        {query.trim() && results.length === 0 && (
+          <li className="product-empty">לא נמצאו מוצרים תואמים</li>
+        )}
+      </ul>
+
+      {selected && (
+        <ProductDetail
+          product={selected}
+          onClose={() => setSelected(null)}
+          onAdd={(p) => {
+            onAdd(p);
+            setSelected(null);
+          }}
+        />
+      )}
+    </div>
+  );
+}

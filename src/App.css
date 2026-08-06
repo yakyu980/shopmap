@@ -1,0 +1,592 @@
+.app {
+  max-width: 480px;
+  margin: 0 auto;
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg);
+}
+
+.app-header {
+  padding: 18px 20px 8px;
+  text-align: center;
+}
+
+.app-header h1 {
+  margin: 0;
+  font-size: 26px;
+  color: var(--primary-dark);
+  letter-spacing: -0.5px;
+}
+
+.app-tagline {
+  margin: 2px 0 0;
+  color: var(--text-dim);
+  font-size: 13px;
+}
+
+.tabs {
+  display: flex;
+  gap: 6px;
+  padding: 8px 12px;
+  position: sticky;
+  top: 0;
+  background: var(--bg);
+  z-index: 5;
+}
+
+.tab {
+  flex: 1;
+  position: relative;
+  padding: 10px 6px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  border-radius: 12px;
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--text);
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.tab--active {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #fff;
+  font-weight: 600;
+}
+
+.tab-badge {
+  position: absolute;
+  top: -6px;
+  left: -6px;
+  background: var(--danger);
+  color: #fff;
+  font-size: 10px;
+  min-width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 4px;
+}
+
+.app-main {
+  flex: 1;
+  padding: 8px 14px 32px;
+}
+
+/* --- כפתורים כלליים --- */
+.btn {
+  border: none;
+  border-radius: 10px;
+  padding: 10px 16px;
+  font-size: 14px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.btn--primary {
+  background: var(--primary);
+  color: #fff;
+}
+.btn--primary:hover {
+  background: var(--primary-dark);
+}
+
+.btn--ghost {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text);
+}
+
+.btn--text {
+  background: transparent;
+  color: var(--primary-dark);
+  padding: 6px 8px;
+}
+
+.btn--small {
+  font-size: 12px;
+  padding: 4px 8px;
+  font-weight: 500;
+}
+
+.btn--icon {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  width: 34px;
+  height: 34px;
+  border-radius: 9px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.btn--added {
+  background: var(--primary);
+  color: #fff;
+  border-color: var(--primary);
+}
+
+.btn--danger {
+  color: var(--danger);
+}
+
+.empty-hint {
+  color: var(--text-dim);
+  text-align: center;
+  padding: 24px 12px;
+  font-size: 14px;
+}
+
+/* --- מפת חנות --- */
+.store-map {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px;
+}
+
+.store-map-grid {
+  display: grid;
+  gap: 8px;
+  aspect-ratio: 4 / 3.4;
+}
+
+.store-map-cell {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: #f7f9fa;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  font-size: 11px;
+  text-align: center;
+  padding: 4px;
+  transition: background 0.2s, border-color 0.2s, transform 0.2s;
+}
+
+.store-map-icon {
+  font-size: 20px;
+}
+
+.store-map-cell--fixed {
+  background: #eef2ff;
+  border-style: dashed;
+}
+
+.store-map-cell--active {
+  background: #dcfce7;
+  border-color: var(--primary);
+  border-width: 2px;
+  transform: scale(1.03);
+  font-weight: 700;
+}
+
+@media (prefers-color-scheme: dark) {
+  .store-map-cell {
+    background: #202833;
+  }
+  .store-map-cell--fixed {
+    background: #232741;
+  }
+  .store-map-cell--active {
+    background: #113322;
+  }
+}
+
+/* --- חיפוש מוצר --- */
+.search-input {
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  font-size: 15px;
+  margin-bottom: 8px;
+}
+
+.product-list,
+.cart-list,
+.nav-item-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.product-row,
+.cart-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 6px 8px;
+}
+
+.product-row-main {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: none;
+  border: none;
+  text-align: right;
+  cursor: pointer;
+  padding: 4px;
+  color: var(--text);
+}
+
+.product-row-icon,
+.cart-row-icon {
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+.product-row-info,
+.cart-row-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.product-row-name,
+.cart-row-name {
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.product-row-loc,
+.cart-row-loc {
+  font-size: 12px;
+  color: var(--text-dim);
+}
+
+.product-row-price,
+.cart-row-price {
+  font-size: 13px;
+  color: var(--text-dim);
+  white-space: nowrap;
+}
+
+.product-empty {
+  text-align: center;
+  color: var(--text-dim);
+  padding: 16px;
+  font-size: 13px;
+}
+
+/* --- רשימת קניות --- */
+.shopping-list-section {
+  margin-top: 18px;
+}
+
+.shopping-list-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.shopping-list-header h3 {
+  margin: 0;
+  font-size: 15px;
+}
+
+.shopping-list-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 14px;
+  gap: 10px;
+}
+
+.cart-total {
+  font-weight: 700;
+}
+
+/* --- ניווט --- */
+.nav-page {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.nav-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 13px;
+  color: var(--text-dim);
+}
+
+.route-steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+}
+
+.route-step {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  font-size: 12px;
+  color: var(--text-dim);
+}
+
+.route-step--active {
+  border-color: var(--primary);
+  color: var(--text);
+  font-weight: 700;
+  background: #ecfdf3;
+}
+
+.route-step--done {
+  opacity: 0.55;
+}
+
+.route-step-badge {
+  width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  background: var(--border);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+}
+
+.route-step--active .route-step-badge {
+  background: var(--primary);
+  color: #fff;
+}
+
+.nav-stop-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px;
+}
+
+.nav-stop-card h2 {
+  margin: 0 0 10px;
+  font-size: 18px;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 8px 10px;
+}
+
+.nav-item--picked {
+  opacity: 0.55;
+  text-decoration: line-through;
+}
+
+.nav-item-check {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  flex: 1;
+}
+
+.nav-item-check input {
+  width: 18px;
+  height: 18px;
+}
+
+.nav-item-name {
+  display: block;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.nav-item-loc {
+  display: block;
+  font-size: 12px;
+  color: var(--text-dim);
+}
+
+.nav-next {
+  width: 100%;
+  margin-top: 14px;
+}
+
+.nav-finished {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 24px;
+  text-align: center;
+}
+
+/* --- מודל פרטי מוצר --- */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  z-index: 50;
+}
+
+.modal {
+  background: var(--surface);
+  width: 100%;
+  max-width: 480px;
+  border-radius: 20px 20px 0 0;
+  padding: 20px;
+  position: relative;
+  max-height: 88vh;
+  overflow-y: auto;
+}
+
+.modal-close {
+  position: absolute;
+  left: 14px;
+  top: 14px;
+  background: var(--bg);
+  border: none;
+  border-radius: 999px;
+  width: 30px;
+  height: 30px;
+  cursor: pointer;
+}
+
+.modal h2 {
+  margin: 0 0 4px;
+  font-size: 20px;
+}
+
+.modal-location {
+  color: var(--text-dim);
+  font-size: 13px;
+  margin: 0 0 10px;
+}
+
+.modal-flag {
+  background: #fef3c7;
+  color: #92400e;
+  border-radius: 10px;
+  padding: 8px 10px;
+  font-size: 13px;
+  margin: 0 0 10px;
+}
+
+.modal-price-row {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.modal-price {
+  font-size: 24px;
+  font-weight: 700;
+}
+
+.trend {
+  font-size: 13px;
+  font-weight: 600;
+}
+.trend--up {
+  color: var(--danger);
+}
+.trend--down {
+  color: var(--primary-dark);
+}
+
+.price-history {
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+  height: 90px;
+  margin: 12px 0 18px;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 4px;
+}
+
+.price-bar-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  height: 100%;
+  gap: 4px;
+}
+
+.price-bar {
+  width: 60%;
+  background: var(--primary);
+  border-radius: 4px 4px 0 0;
+  min-height: 3px;
+}
+
+.price-bar-label {
+  font-size: 9px;
+  color: var(--text-dim);
+}
+
+.verify-row {
+  border-top: 1px solid var(--border);
+  padding-top: 12px;
+  margin-bottom: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.verify-label {
+  font-size: 13px;
+  color: var(--text-dim);
+}
+
+.verify-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+.verify-count {
+  font-size: 12px;
+  color: var(--text-dim);
+}
+
+.modal-add {
+  width: 100%;
+}
+
+@media (prefers-color-scheme: dark) {
+  .route-step--active {
+    background: #113322;
+  }
+  .modal-flag {
+    background: #3a2c10;
+    color: #fcd34d;
+  }
+}
