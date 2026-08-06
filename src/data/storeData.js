@@ -7,9 +7,17 @@ export const SHELF_COLS = 5;
 export const SHELF_ROWS = 3;
 
 let _nextId = 1;
+let _nextBarcode = 1;
+
+// ברקוד-דמה בפורמט EAN-13-ישראלי (קידומת 729), רץ ברצף — לצורך סריקה.
+function nextBarcode() {
+  return '729' + String(_nextBarcode++).padStart(10, '0');
+}
+
 function product(deptId, name, shelf, zone, price, category) {
   return {
     id: 'p' + _nextId++,
+    barcode: nextBarcode(),
     department: deptId,
     name,
     shelf,
@@ -76,6 +84,10 @@ export const PRODUCTS = [
 
 export function getProduct(id) {
   return PRODUCTS.find((p) => p.id === id);
+}
+
+export function getProductByBarcode(code) {
+  return PRODUCTS.find((p) => p.barcode === code.trim());
 }
 
 export function searchProducts(query) {

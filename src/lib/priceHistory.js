@@ -1,16 +1,7 @@
 // היסטוריית מחירים — mock דטרמיניסטי (זהה בכל טעינה) לפי מזהה המוצר,
 // עתיד להיות מוחלף בנתונים אמיתיים מהשרת.
 
-function seededRandom(seedStr) {
-  let h = 0;
-  for (let i = 0; i < seedStr.length; i++) {
-    h = (h * 31 + seedStr.charCodeAt(i)) >>> 0;
-  }
-  return () => {
-    h = (h * 1103515245 + 12345) >>> 0;
-    return (h % 1000) / 1000;
-  };
-}
+import { seededRandom } from './seededRandom';
 
 const MONTHS = ['פבר', 'מרץ', 'אפר', 'מאי', 'יונ', 'יול'];
 

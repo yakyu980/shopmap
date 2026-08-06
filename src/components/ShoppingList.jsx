@@ -1,17 +1,43 @@
+import { useState } from 'react';
 import { locationLabel } from '../data/storeData';
 import { getDepartment } from '../lib/storeConfig';
 import ProductSearch from './ProductSearch';
 import VoiceAddPanel from './VoiceAddPanel';
+import BarcodeScanner from './BarcodeScanner';
+import ImageProductSearch from './ImageProductSearch';
 
 export default function ShoppingList({ list, onGoNavigate }) {
   const { items, addItem, removeItem, clear } = list;
   const listedIds = new Set(items.map((i) => i.id));
   const total = items.reduce((sum, i) => sum + i.price, 0);
+  const [scannerOpen, setScannerOpen] = useState(false);
+  const [imageSearchOpen, setImageSearchOpen] = useState(false);
 
   return (
     <div className="shopping-list-page">
       <VoiceAddPanel onAdd={addItem} />
+
+      <div className="scan-buttons-row">
+        <button className="btn btn--ghost" onClick={() => setScannerOpen(true)}>
+          📷 סרוק ברקוד
+        </button>
+        <button className="btn btn--ghost" onClick={() => setImageSearchOpen(true)}>
+          📸 חפש לפי תמונה
+        </button>
+      </div>
+
       <ProductSearch onAdd={addItem} listedIds={listedIds} />
+
+      {scannerOpen && (
+        <BarcodeScanner onAdd={addItem} onClose={() => setScannerOpen(false)} />
+      )}
+      {imageSearchOpen && (
+        <ImageProductSearch
+          onAdd={addItem}
+          onClose={() => setImageSearchOpen(false)}
+          onFallbackToSearch={() => setImageSearchOpen(false)}
+        />
+      )}
 
       <div className="shopping-list-section">
         <div className="shopping-list-header">

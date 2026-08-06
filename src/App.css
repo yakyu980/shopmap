@@ -1059,6 +1059,157 @@
   color: var(--danger);
 }
 
+/* --- סריקת ברקוד + חיפוש לפי תמונה --- */
+.scan-buttons-row {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.scan-buttons-row .btn {
+  flex: 1;
+}
+
+.barcode-modal,
+.image-search-modal {
+  max-width: 420px;
+}
+
+.barcode-video-wrap {
+  position: relative;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #000;
+  margin-bottom: 10px;
+}
+
+.barcode-video {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  display: block;
+}
+
+.barcode-hint {
+  font-size: 13px;
+  color: var(--text-dim);
+  text-align: center;
+  margin: 8px 0;
+}
+
+.barcode-video-wrap .barcode-hint {
+  position: absolute;
+  bottom: 6px;
+  left: 0;
+  right: 0;
+  color: #fff;
+  background: rgba(0, 0, 0, 0.45);
+  margin: 0;
+  padding: 4px;
+}
+
+.barcode-manual-row {
+  display: flex;
+  gap: 6px;
+  margin: 10px 0;
+}
+
+.barcode-result {
+  border-top: 1px solid var(--border);
+  padding-top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.barcode-found {
+  margin: 0;
+  font-size: 13px;
+  color: var(--primary-dark);
+  font-weight: 600;
+}
+
+.barcode-not-found {
+  margin: 0;
+  font-size: 13px;
+  color: var(--danger);
+}
+
+.barcode-result-actions {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.mock-disclaimer {
+  font-size: 12px;
+  color: var(--text-dim);
+  background: var(--bg);
+  border-radius: 8px;
+  padding: 8px 10px;
+  margin: 0 0 10px;
+}
+
+.candidate-list {
+  list-style: none;
+  margin: 0 0 10px;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.candidate-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 8px 10px;
+  cursor: pointer;
+  text-align: right;
+  color: var(--text);
+}
+
+.candidate-btn:hover {
+  border-color: var(--primary);
+}
+
+.candidate-icon {
+  font-size: 20px;
+}
+
+.candidate-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.candidate-name {
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.candidate-loc {
+  font-size: 12px;
+  color: var(--text-dim);
+}
+
+.candidate-price {
+  font-size: 13px;
+  color: var(--text-dim);
+}
+
+.image-search-actions {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
 @media (prefers-color-scheme: dark) {
   .step-hint {
     background: #3a2c10;

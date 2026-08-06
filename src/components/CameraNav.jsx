@@ -1,15 +1,9 @@
-import { useEffect, useRef, useState } from 'react';
+import { useState } from 'react';
 import { locationLabel } from '../data/storeData';
 import { getDepartment } from '../lib/storeConfig';
 import { computeDirection } from '../lib/direction';
+import { useCameraStream, CAMERA_STATUS as STATUS } from '../lib/useCameraStream';
 import LocationCheckin from './LocationCheckin';
-
-const STATUS = {
-  LOADING: 'loading',
-  READY: 'ready',
-  DENIED: 'denied',
-  UNSUPPORTED: 'unsupported',
-};
 
 export default function CameraNav({
   fromDept,
@@ -23,43 +17,8 @@ export default function CameraNav({
   onCheckin,
   stepCounter,
 }) {
-  const videoRef = useRef(null);
-  const streamRef = useRef(null);
-  const [status, setStatus] = useState(STATUS.LOADING);
+  const { videoRef, status } = useCameraStream();
   const [showPicker, setShowPicker] = useState(false);
-
-  useEffect(() => {
-    let cancelled = false;
-
-    if (!window.isSecureContext) {
-      setStatus(STATUS.UNSUPPORTED);
-      return;
-    }
-    if (!navigator.mediaDevices?.getUserMedia) {
-      setStatus(STATUS.UNSUPPORTED);
-      return;
-    }
-
-    navigator.mediaDevices
-      .getUserMedia({ video: { facingMode: 'environment' }, audio: false })
-      .then((stream) => {
-        if (cancelled) {
-          stream.getTracks().forEach((t) => t.stop());
-          return;
-        }
-        streamRef.current = stream;
-        if (videoRef.current) videoRef.current.srcObject = stream;
-        setStatus(STATUS.READY);
-      })
-      .catch(() => {
-        if (!cancelled) setStatus(STATUS.DENIED);
-      });
-
-    return () => {
-      cancelled = true;
-      streamRef.current?.getTracks().forEach((t) => t.stop());
-    };
-  }, []);
 
   const dir = computeDirection(fromDept, stop.department);
   const allPicked = stop.items.every((i) => items.find((x) => x.id === i.id)?.picked);
