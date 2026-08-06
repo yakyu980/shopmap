@@ -1,15 +1,17 @@
 import { useState } from 'react';
-import { locationLabel } from '../data/storeData';
+import { getAlternatives, locationLabel } from '../data/storeData';
 import { getDepartment } from '../lib/storeConfig';
 import { getPriceHistory, priceTrend } from '../lib/priceHistory';
 import { getVerification, markFound, markNotFound } from '../lib/verification';
+import PriceTag from './PriceTag';
 
-export default function ProductDetail({ product, onClose, onAdd }) {
+export default function ProductDetail({ product, onClose, onAdd, onSwap }) {
   const [verification, setVerification] = useState(() => getVerification(product.id));
   const dept = getDepartment(product.department);
   const history = getPriceHistory(product);
   const trend = priceTrend(history);
   const maxPrice = Math.max(...history.map((h) => h.price));
+  const alternatives = getAlternatives(product);
 
   return (
     <div className="modal-backdrop" onClick={onClose}>
@@ -27,7 +29,9 @@ export default function ProductDetail({ product, onClose, onAdd }) {
         )}
 
         <div className="modal-price-row">
-          <span className="modal-price">₪{product.price.toFixed(2)}</span>
+          <span className="modal-price">
+            <PriceTag product={product} />
+          </span>
           {trend.rising && <span className="trend trend--up">↑ עלה {trend.diffPct}%</span>}
           {trend.falling && <span className="trend trend--down">↓ ירד {Math.abs(trend.diffPct)}%</span>}
         </div>
@@ -69,6 +73,43 @@ export default function ProductDetail({ product, onClose, onAdd }) {
         <button className="btn btn--primary modal-add" onClick={() => onAdd(product)}>
           ➕ הוסף לרשימת הקניות
         </button>
+
+        {alternatives.length > 0 && (
+          <div className="alternatives-section">
+            <h3>🔁 מוצרים דומים</h3>
+            <ul className="candidate-list">
+              {alternatives.map((alt) => {
+                const altDept = getDepartment(alt.department);
+                return (
+                  <li key={alt.id} className="candidate-row">
+                    <span className="candidate-btn candidate-btn--static">
+                      <span className="candidate-icon">{altDept.icon}</span>
+                      <span className="candidate-info">
+                        <span className="candidate-name">{alt.name}</span>
+                        <span className="candidate-loc">
+                          {altDept.name} · {locationLabel(alt)}
+                        </span>
+                      </span>
+                      <span className="candidate-price">
+                        <PriceTag product={alt} size="small" />
+                      </span>
+                    </span>
+                    <div className="alternative-actions">
+                      <button className="btn btn--ghost btn--small" onClick={() => onAdd(alt)}>
+                        ➕ הוסף
+                      </button>
+                      {onSwap && (
+                        <button className="btn btn--ghost btn--small" onClick={() => onSwap(alt)}>
+                          ↔ החלף
+                        </button>
+                      )}
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+        )}
       </div>
     </div>
   );

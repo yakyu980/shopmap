@@ -3,6 +3,7 @@ import { getDepartment } from '../lib/storeConfig';
 import { getProductByBarcode, locationLabel } from '../data/storeData';
 import { useCameraStream, CAMERA_STATUS } from '../lib/useCameraStream';
 import ProductDetail from './ProductDetail';
+import PriceTag from './PriceTag';
 
 const SCAN_FORMATS = ['ean_13', 'ean_8', 'upc_a', 'upc_e', 'code_128'];
 const SCAN_INTERVAL_MS = 400;
@@ -92,8 +93,8 @@ export default function BarcodeScanner({ onAdd, onClose }) {
             {result.found ? (
               <>
                 <p className="barcode-found">
-                  ✅ {getDepartment(result.product.department).icon} {result.product.name} · ₪
-                  {result.product.price.toFixed(2)} ·{' '}
+                  ✅ {getDepartment(result.product.department).icon} {result.product.name} ·{' '}
+                  <PriceTag product={result.product} size="small" /> ·{' '}
                   {getDepartment(result.product.department).name},{' '}
                   {locationLabel(result.product)}
                 </p>

@@ -3,6 +3,7 @@ import { getDepartment } from '../lib/storeConfig';
 import { locationLabel } from '../data/storeData';
 import { useCameraStream, CAMERA_STATUS } from '../lib/useCameraStream';
 import { pickCandidates } from '../lib/imageRecognitionMock';
+import PriceTag from './PriceTag';
 
 const SAMPLE_SIZE = 24;
 
@@ -86,7 +87,9 @@ export default function ImageProductSearch({ onAdd, onClose, onFallbackToSearch 
                           {dept.name} · {locationLabel(p)}
                         </span>
                       </span>
-                      <span className="candidate-price">₪{p.price.toFixed(2)}</span>
+                      <span className="candidate-price">
+                        <PriceTag product={p} size="small" />
+                      </span>
                     </button>
                   </li>
                 );

@@ -7,6 +7,7 @@ import { useStepCounter } from '../lib/useStepCounter';
 import StoreMap from './StoreMap';
 import CameraNav from './CameraNav';
 import LocationCheckin from './LocationCheckin';
+import ProductDetail from './ProductDetail';
 
 const CHECKIN_INTERVAL_MS = 90_000;
 
@@ -18,7 +19,7 @@ function timeAgoLabel(ts) {
 }
 
 export default function Navigation({ list, onBack }) {
-  const { items, togglePicked } = list;
+  const { items, togglePicked, addItem, removeItem } = list;
   const [routeInit] = useState(() => computeRoute(items));
   const { entrance } = routeInit;
   const [stops, setStops] = useState(routeInit.stops);
@@ -30,6 +31,7 @@ export default function Navigation({ list, onBack }) {
   const [showCheckinPrompt, setShowCheckinPrompt] = useState(false);
   const [showInlinePicker, setShowInlinePicker] = useState(false);
   const [rerouteHint, setRerouteHint] = useState('');
+  const [detailProduct, setDetailProduct] = useState(null);
   const stepCounter = useStepCounter();
 
   const finished = stopIndex >= stops.length;
@@ -53,6 +55,7 @@ export default function Navigation({ list, onBack }) {
 
   const stop = !finished ? stops[stopIndex] : null;
   const allPickedAtStop = stop ? stop.items.every((i) => items.find((x) => x.id === i.id)?.picked) : false;
+  const saleItemsAtStop = stop ? stop.items.filter((i) => i.salePercent) : [];
   const fromDept =
     (currentLocationId && getDepartment(currentLocationId)) ||
     (stopIndex === 0 ? entrance : stops[stopIndex - 1].department);
@@ -64,8 +67,9 @@ export default function Navigation({ list, onBack }) {
   function reportFound(productId) {
     markFound(productId);
   }
-  function reportNotFound(productId) {
-    markNotFound(productId);
+  function reportNotFound(item) {
+    markNotFound(item.id);
+    setDetailProduct(item);
   }
   function goNext() {
     setStopIndex((i) => i + 1);
@@ -184,6 +188,19 @@ export default function Navigation({ list, onBack }) {
         ))}
       </ol>
 
+      {saleItemsAtStop.length > 0 && (
+        <div className="sale-banner">
+          <p className="sale-banner-title">🏷️ מבצע בתחנה זו!</p>
+          <ul className="sale-banner-list">
+            {saleItemsAtStop.map((i) => (
+              <li key={i.id}>
+                {i.name} — {i.salePercent}% הנחה
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
       {finished ? (
         <div className="nav-finished">
           <h2>🎉 הגעת לקופות!</h2>
@@ -223,7 +240,7 @@ export default function Navigation({ list, onBack }) {
                   </label>
                   <button
                     className="btn btn--text btn--small"
-                    onClick={() => reportNotFound(item.id)}
+                    onClick={() => reportNotFound(item)}
                     title="דווח שהמוצר לא נמצא במיקום"
                   >
                     ❌ לא נמצא
@@ -245,6 +262,22 @@ export default function Navigation({ list, onBack }) {
           variant="prompt"
           onSelect={handleCheckin}
           onSkip={() => setShowCheckinPrompt(false)}
+        />
+      )}
+
+      {detailProduct && (
+        <ProductDetail
+          product={detailProduct}
+          onClose={() => setDetailProduct(null)}
+          onAdd={(p) => {
+            addItem(p);
+            setDetailProduct(null);
+          }}
+          onSwap={(alt) => {
+            removeItem(detailProduct.id);
+            addItem(alt);
+            setDetailProduct(null);
+          }}
         />
       )}
     </div>

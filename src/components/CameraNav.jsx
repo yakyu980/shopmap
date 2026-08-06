@@ -22,6 +22,7 @@ export default function CameraNav({
 
   const dir = computeDirection(fromDept, stop.department);
   const allPicked = stop.items.every((i) => items.find((x) => x.id === i.id)?.picked);
+  const saleItemsAtStop = stop.items.filter((i) => i.salePercent);
 
   return (
     <div className="ar-overlay">
@@ -78,6 +79,9 @@ export default function CameraNav({
         <div className="ar-arrow-label">{dir.label}</div>
         {stepCounter?.active && (
           <div className="ar-step-info">🚶 כ-{stepCounter.distanceMeters} מ׳ מאז העדכון</div>
+        )}
+        {saleItemsAtStop.length > 0 && (
+          <div className="ar-sale-info">🏷️ מבצע: {saleItemsAtStop.map((i) => i.name).join(', ')}</div>
         )}
       </div>
 

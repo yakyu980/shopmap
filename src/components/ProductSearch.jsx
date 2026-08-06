@@ -3,6 +3,7 @@ import { PRODUCTS, locationLabel, searchProducts } from '../data/storeData';
 import { getDepartment } from '../lib/storeConfig';
 import { useSpeechRecognition } from '../lib/useSpeechRecognition';
 import ProductDetail from './ProductDetail';
+import PriceTag from './PriceTag';
 
 export default function ProductSearch({ onAdd, listedIds }) {
   const [query, setQuery] = useState('');
@@ -53,7 +54,9 @@ export default function ProductSearch({ onAdd, listedIds }) {
                     {dept.name} · {locationLabel(p)}
                   </span>
                 </span>
-                <span className="product-row-price">₪{p.price.toFixed(2)}</span>
+                <span className="product-row-price">
+                  <PriceTag product={p} size="small" />
+                </span>
               </button>
               <button
                 className={'btn btn--icon' + (inList ? ' btn--added' : '')}

@@ -5,6 +5,8 @@ import ProductSearch from './ProductSearch';
 import VoiceAddPanel from './VoiceAddPanel';
 import BarcodeScanner from './BarcodeScanner';
 import ImageProductSearch from './ImageProductSearch';
+import ProductDetail from './ProductDetail';
+import PriceTag from './PriceTag';
 
 export default function ShoppingList({ list, onGoNavigate }) {
   const { items, addItem, removeItem, clear } = list;
@@ -12,6 +14,7 @@ export default function ShoppingList({ list, onGoNavigate }) {
   const total = items.reduce((sum, i) => sum + i.price, 0);
   const [scannerOpen, setScannerOpen] = useState(false);
   const [imageSearchOpen, setImageSearchOpen] = useState(false);
+  const [detailProduct, setDetailProduct] = useState(null);
 
   return (
     <div className="shopping-list-page">
@@ -58,13 +61,15 @@ export default function ShoppingList({ list, onGoNavigate }) {
               return (
                 <li className="cart-row" key={item.id}>
                   <span className="cart-row-icon">{dept.icon}</span>
-                  <span className="cart-row-info">
+                  <button className="cart-row-info cart-row-info--btn" onClick={() => setDetailProduct(item)}>
                     <span className="cart-row-name">{item.name}</span>
                     <span className="cart-row-loc">
                       {dept.name} · {locationLabel(item)}
                     </span>
+                  </button>
+                  <span className="cart-row-price">
+                    <PriceTag product={item} size="small" />
                   </span>
-                  <span className="cart-row-price">₪{item.price.toFixed(2)}</span>
                   <button
                     className="btn btn--icon btn--danger"
                     onClick={() => removeItem(item.id)}
@@ -87,6 +92,22 @@ export default function ShoppingList({ list, onGoNavigate }) {
           </div>
         )}
       </div>
+
+      {detailProduct && (
+        <ProductDetail
+          product={detailProduct}
+          onClose={() => setDetailProduct(null)}
+          onAdd={(p) => {
+            addItem(p);
+            setDetailProduct(null);
+          }}
+          onSwap={(alt) => {
+            removeItem(detailProduct.id);
+            addItem(alt);
+            setDetailProduct(null);
+          }}
+        />
+      )}
     </div>
   );
 }

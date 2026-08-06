@@ -386,6 +386,15 @@
   min-width: 0;
 }
 
+.cart-row-info--btn {
+  background: none;
+  border: none;
+  text-align: right;
+  cursor: pointer;
+  padding: 0;
+  color: var(--text);
+}
+
 .product-row-name,
 .cart-row-name {
   font-weight: 600;
@@ -1210,6 +1219,102 @@
   gap: 6px;
 }
 
+/* --- תג-מחיר / מבצע --- */
+.price-tag {
+  font-size: 13px;
+  color: var(--text-dim);
+  white-space: nowrap;
+}
+
+.price-tag--small {
+  font-size: 12px;
+}
+
+.price-tag--sale {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.price-tag-original {
+  text-decoration: line-through;
+  color: var(--text-dim);
+  font-size: 0.85em;
+}
+
+.price-tag-discounted {
+  color: var(--danger);
+  font-weight: 700;
+}
+
+.price-tag-percent {
+  background: #fee2e2;
+  color: #b91c1c;
+  border-radius: 999px;
+  padding: 1px 6px;
+  font-size: 0.75em;
+  font-weight: 700;
+}
+
+/* --- מוצרים חלופיים --- */
+.alternatives-section {
+  margin-top: 16px;
+  border-top: 1px solid var(--border);
+  padding-top: 12px;
+}
+
+.alternatives-section h3 {
+  margin: 0 0 8px;
+  font-size: 14px;
+}
+
+.candidate-btn--static {
+  cursor: default;
+}
+
+.candidate-btn--static:hover {
+  border-color: var(--border);
+}
+
+.alternative-actions {
+  display: flex;
+  gap: 6px;
+  justify-content: flex-end;
+  margin-top: 4px;
+}
+
+/* --- באנר-מבצע בניווט --- */
+.sale-banner {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 12px;
+  padding: 10px 12px;
+}
+
+.sale-banner-title {
+  margin: 0 0 4px;
+  font-weight: 700;
+  font-size: 13px;
+  color: #b91c1c;
+}
+
+.sale-banner-list {
+  margin: 0;
+  padding-inline-start: 18px;
+  font-size: 12px;
+  color: #7f1d1d;
+}
+
+.ar-sale-info {
+  position: relative;
+  z-index: 2;
+  background: rgba(185, 28, 28, 0.85);
+  color: #fff;
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+}
+
 @media (prefers-color-scheme: dark) {
   .step-hint {
     background: #3a2c10;
@@ -1225,5 +1330,19 @@
   .map-edit-hint {
     background: #3a2c10;
     color: #fcd34d;
+  }
+  .price-tag-percent {
+    background: #4c1414;
+    color: #fca5a5;
+  }
+  .sale-banner {
+    background: #2a1414;
+    border-color: #5c1f1f;
+  }
+  .sale-banner-title {
+    color: #fca5a5;
+  }
+  .sale-banner-list {
+    color: #fecaca;
   }
 }
