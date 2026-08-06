@@ -5,7 +5,9 @@ import StoreMap from './components/StoreMap';
 import ShoppingList from './components/ShoppingList';
 import PriceComparison from './components/PriceComparison';
 import Navigation from './components/Navigation';
+import Settings from './components/Settings';
 import { useShoppingList } from './lib/useShoppingList';
+import { useHouseholdSync } from './lib/useHouseholdSync';
 
 const TABS = [
   { id: 'home', label: '🏠 דף בית' },
@@ -17,14 +19,25 @@ const TABS = [
 
 export default function App() {
   const [tab, setTab] = useState('home');
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const list = useShoppingList();
+  useHouseholdSync();
 
   return (
     <div className="app">
       <header className="app-header">
+        <button
+          className="settings-gear-btn"
+          onClick={() => setSettingsOpen(true)}
+          aria-label="הגדרות"
+        >
+          ⚙️
+        </button>
         <h1>SuperNav AI</h1>
         <p className="app-tagline">ה-Waze של הסופר — MVP הדגמה</p>
       </header>
+
+      {settingsOpen && <Settings onClose={() => setSettingsOpen(false)} />}
 
       <nav className="tabs">
         {TABS.map((t) => (

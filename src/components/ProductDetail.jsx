@@ -1,17 +1,72 @@
-import { useState } from 'react';
-import { getAlternatives, locationLabel } from '../data/storeData';
+import { useEffect, useState } from 'react';
+import { getAlternatives, locationLabel, SHELF_COLS, SHELF_ROWS } from '../data/storeData';
 import { getDepartment } from '../lib/storeConfig';
 import { getPriceHistory, priceTrend } from '../lib/priceHistory';
 import { getVerification, markFound, markNotFound } from '../lib/verification';
+import { useAuth } from '../lib/useAuth';
+import { api } from '../lib/apiClient';
 import PriceTag from './PriceTag';
 
 export default function ProductDetail({ product, onClose, onAdd, onSwap }) {
+  const { user } = useAuth();
   const [verification, setVerification] = useState(() => getVerification(product.id));
   const dept = getDepartment(product.department);
   const history = getPriceHistory(product);
   const trend = priceTrend(history);
   const maxPrice = Math.max(...history.map((h) => h.price));
   const alternatives = getAlternatives(product);
+
+  const [locationHistory, setLocationHistory] = useState([]);
+  const [showLocationPicker, setShowLocationPicker] = useState(false);
+  const [pickShelf, setPickShelf] = useState(product.shelf);
+  const [locationSaved, setLocationSaved] = useState(false);
+  const [verifiedViaServer, setVerifiedViaServer] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    api
+      .get(`/products/${product.id}/location-history`)
+      .then((data) => {
+        if (!cancelled) setLocationHistory(data.history || []);
+      })
+      .catch(() => {
+        /* השרת לא זמין — פשוט לא מציגים היסטוריית-מיקום */
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [product.id]);
+
+  async function handleVerify(found) {
+    if (user) {
+      try {
+        const data = await api.post(`/products/${product.id}/verify`, { found });
+        setVerification(data.verification);
+        setVerifiedViaServer(true);
+        return;
+      } catch {
+        /* נופל לגרסה המקומית אם השרת לא זמין */
+      }
+    }
+    setVerification(found ? markFound(product.id) : markNotFound(product.id));
+    setVerifiedViaServer(false);
+  }
+
+  async function submitLocation(zone) {
+    try {
+      await api.post(`/products/${product.id}/location`, {
+        departmentId: product.department,
+        shelf: pickShelf,
+        zone,
+      });
+      setLocationSaved(true);
+      setShowLocationPicker(false);
+      const data = await api.get(`/products/${product.id}/location-history`);
+      setLocationHistory(data.history || []);
+    } catch {
+      /* השרת לא זמין — לא ניתן לעדכן כרגע */
+    }
+  }
 
   return (
     <div className="modal-backdrop" onClick={onClose}>
@@ -52,23 +107,71 @@ export default function ProductDetail({ product, onClose, onAdd, onSwap }) {
         <div className="verify-row">
           <span className="verify-label">האם המוצר נמצא במיקום המצוין?</span>
           <div className="verify-buttons">
-            <button
-              className="btn btn--ghost"
-              onClick={() => setVerification(markFound(product.id))}
-            >
+            <button className="btn btn--ghost" onClick={() => handleVerify(true)}>
               ✅ נמצא
             </button>
-            <button
-              className="btn btn--ghost"
-              onClick={() => setVerification(markNotFound(product.id))}
-            >
+            <button className="btn btn--ghost" onClick={() => handleVerify(false)}>
               ❌ לא נמצא
             </button>
           </div>
           <span className="verify-count">
             {verification.confirmed} אישרו · {verification.notFound} לא מצאו
+            {verifiedViaServer && ' · משותף לכל המשפחה'}
           </span>
         </div>
+
+        {user ? (
+          <div className="location-update-section">
+            <button className="btn btn--ghost btn--small" onClick={() => setShowLocationPicker((v) => !v)}>
+              📍 עדכן מיקום על המדף
+            </button>
+            {locationSaved && <span className="settings-confirm-msg">✓ עודכן</span>}
+
+            {showLocationPicker && (
+              <div className="location-picker">
+                <label className="location-shelf-label">
+                  מדף:
+                  <input
+                    type="number"
+                    min="1"
+                    className="map-edit-input location-shelf-input"
+                    value={pickShelf}
+                    onChange={(e) => setPickShelf(Number(e.target.value) || 1)}
+                  />
+                </label>
+                <p className="location-picker-hint">בחרו את הבלוק (5×3) בתוך המדף:</p>
+                <div
+                  className="location-block-grid"
+                  style={{ gridTemplateColumns: `repeat(${SHELF_COLS}, 1fr)` }}
+                >
+                  {Array.from({ length: SHELF_COLS * SHELF_ROWS }, (_, i) => i + 1).map((zone) => (
+                    <button
+                      key={zone}
+                      className="location-block-btn"
+                      onClick={() => submitLocation(zone)}
+                    >
+                      {zone}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {locationHistory.length > 0 && (
+              <ul className="location-history-list">
+                {locationHistory.map((h) => (
+                  <li key={h.id}>
+                    {h.changedBy} עדכן/ה מ"{getDepartment(h.department)?.name}, מדף {h.shelf} תא {h.zone}"
+                    {' · '}
+                    {new Date(h.createdAt).toLocaleDateString('he-IL')}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        ) : (
+          <p className="settings-hint">💡 התחברו (⚙️ הגדרות) כדי לעדכן מיקום-מוצר לכולם</p>
+        )}
 
         <button className="btn btn--primary modal-add" onClick={() => onAdd(product)}>
           ➕ הוסף לרשימת הקניות

@@ -3,17 +3,20 @@ import { getDepartment } from '../lib/storeConfig';
 import { locationLabel } from '../data/storeData';
 import { useCameraStream, CAMERA_STATUS } from '../lib/useCameraStream';
 import { pickCandidates } from '../lib/imageRecognitionMock';
+import { useAuth } from '../lib/useAuth';
+import { api } from '../lib/apiClient';
 import PriceTag from './PriceTag';
 
 const SAMPLE_SIZE = 24;
 
 export default function ImageProductSearch({ onAdd, onClose, onFallbackToSearch }) {
+  const { user } = useAuth();
   const { videoRef, status } = useCameraStream();
   const canvasRef = useRef(null);
   const [candidates, setCandidates] = useState(null);
   const [added, setAdded] = useState(null);
 
-  function handleCapture() {
+  async function handleCapture() {
     const video = videoRef.current;
     const canvas = canvasRef.current;
     if (!video || !canvas) return;
@@ -27,6 +30,17 @@ export default function ImageProductSearch({ onAdd, onClose, onFallbackToSearch 
       for (let i = 0; i < data.length; i += 37) seed += data[i];
     } catch {
       seed = String(Date.now());
+    }
+
+    if (user) {
+      try {
+        const data = await api.post('/image-search', { seed });
+        setCandidates(data.candidates);
+        setAdded(null);
+        return;
+      } catch {
+        /* השרת לא זמין — נופלים לזיהוי-הדמה המקומי */
+      }
     }
     setCandidates(pickCandidates(seed, 3));
     setAdded(null);

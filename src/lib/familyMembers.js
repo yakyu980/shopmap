@@ -64,3 +64,15 @@ export function removeMember(id) {
 export function setActiveMember(id) {
   update({ ...state, activeMemberId: id });
 }
+
+// מסנכרן את רשימת-החברים מהשרת (כשהמשתמש מחובר) — כל שאר האפליקציה
+// (בורר-אחראי בעגלה, תג-שיוך בניווט/AR) ממשיכה לקרוא מה-store הזה
+// בדיוק כמו היום, בלי לדעת אם המקור הוא שרת או localStorage.
+export function setMembersFromServer(serverMembers) {
+  const mapped = serverMembers.map((m) => ({ id: m.id, name: m.username, emoji: m.emoji }));
+  update({
+    ...state,
+    members: mapped,
+    activeMemberId: mapped.some((m) => m.id === state.activeMemberId) ? state.activeMemberId : null,
+  });
+}
