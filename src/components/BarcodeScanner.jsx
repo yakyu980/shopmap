@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from 'react';
 import { getDepartment } from '../lib/storeConfig';
 import { getProductByBarcode, locationLabel } from '../data/storeData';
 import { useCameraStream, CAMERA_STATUS } from '../lib/useCameraStream';
-import { addPoints } from '../lib/points';
 import ProductDetail from './ProductDetail';
 import PriceTag from './PriceTag';
 
@@ -19,7 +18,6 @@ export default function BarcodeScanner({ onAdd, onClose }) {
 
   function lookup(code) {
     const product = getProductByBarcode(code);
-    if (product) addPoints(2, 'סריקת ברקוד');
     setResult({ found: !!product, product, code });
   }
 

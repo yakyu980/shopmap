@@ -65,7 +65,6 @@ export default function CameraNav({
       {showPicker && (
         <div className="ar-location-picker">
           <LocationCheckin
-            variant="inline"
             onSelect={(id) => {
               onCheckin(id);
               setShowPicker(false);

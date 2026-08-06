@@ -7,14 +7,12 @@ import { useStepCounter } from '../lib/useStepCounter';
 import { useGeolocationWatch } from '../lib/useGeolocationWatch';
 import { matchDepartmentByGps } from '../lib/geoMatch';
 import { useFamilyMembers } from '../lib/useFamilyMembers';
-import { addPoints } from '../lib/points';
 import { recordPurchase } from '../lib/purchaseHistory';
 import StoreMap from './StoreMap';
 import CameraNav from './CameraNav';
 import LocationCheckin from './LocationCheckin';
 import ProductDetail from './ProductDetail';
 
-const CHECKIN_INTERVAL_MS = 90_000;
 const GPS_ACCURACY_THRESHOLD_M = 30; // מעל זה — לא סומכים על ה-fix
 const GPS_MATCH_MAX_M = 60; // מרחק מקסימלי ממחלקה-מכוילת כדי לזהות אותה
 
@@ -35,7 +33,6 @@ export default function Navigation({ list, onBack }) {
 
   const [currentLocationId, setCurrentLocationId] = useState(null);
   const [lastCheckinAt, setLastCheckinAt] = useState(null);
-  const [showCheckinPrompt, setShowCheckinPrompt] = useState(false);
   const [showInlinePicker, setShowInlinePicker] = useState(false);
   const [rerouteHint, setRerouteHint] = useState('');
   const [detailProduct, setDetailProduct] = useState(null);
@@ -49,19 +46,12 @@ export default function Navigation({ list, onBack }) {
     gps.active && gps.position != null && gps.position.accuracy <= GPS_ACCURACY_THRESHOLD_M;
   const gpsMatch = gpsConfident ? matchDepartmentByGps(gps.position, getDepartments(), GPS_MATCH_MAX_M) : null;
   // "יש קליטת-GPS" = יש fix מדויק *וגם* הוא תואם למחלקה-מכוילת — בלי זה
-  // אין דרך לתרגם את הנקודה-על-כדור-הארץ למפה-הלוגית שלנו, אז מבחינת
-  // האפליקציה זה כמו "אין קליטה" והטיימר הידני חוזר להיות הגיבוי.
+  // אין דרך לתרגם את הנקודה-על-כדור-הארץ למפה-הלוגית שלנו.
   const gpsUsable = gpsConfident && gpsMatch != null;
 
-  // הטיימר-היזום רץ רק כשאין GPS-שמישה — ברגע ש-GPS מתחיל לעבוד, הוא
-  // מעדכן מיקום אוטומטית והפרומפט הידני מיותר.
-  useEffect(() => {
-    if (finished || gpsUsable) return;
-    const id = setInterval(() => setShowCheckinPrompt(true), CHECKIN_INTERVAL_MS);
-    return () => clearInterval(id);
-  }, [finished, gpsUsable]);
-
   // עדכון-מיקום אוטומטי מ-GPS כשיש קליטה שמישה, בלי לפתוח שום פרומפט.
+  // אין יותר טיימר-יזום — עדכון-מיקום ידני זמין תמיד דרך הכרטיס הקבוע
+  // (locationCard) למטה, בלי לקפוץ למסך המשתמש.
   useEffect(() => {
     if (!gpsUsable || finished) return;
     if (gpsMatch.id === currentLocationId) return;
@@ -93,11 +83,9 @@ export default function Navigation({ list, onBack }) {
 
   function reportFound(productId) {
     markFound(productId);
-    addPoints(1, 'אימות מוצר');
   }
   function reportNotFound(item) {
     markNotFound(item.id);
-    addPoints(1, 'אימות מוצר');
     setDetailProduct(item);
   }
   function goNext() {
@@ -107,7 +95,6 @@ export default function Navigation({ list, onBack }) {
 
   function handleFinish() {
     recordPurchase(items.map((i) => i.id));
-    addPoints(10, 'השלמת קנייה');
     clear();
     onBack();
   }
@@ -116,9 +103,7 @@ export default function Navigation({ list, onBack }) {
     setCurrentLocationId(deptId);
     setLastCheckinAt(Date.now());
     stepCounter.reset();
-    setShowCheckinPrompt(false);
     setShowInlinePicker(false);
-    if (!opts.silent) addPoints(1, 'עדכון מיקום');
 
     if (!finished && deptId !== stop.department.id) {
       const fromPoint = getDepartment(deptId);
@@ -149,7 +134,7 @@ export default function Navigation({ list, onBack }) {
         </button>
       </div>
 
-      {showInlinePicker && <LocationCheckin variant="inline" onSelect={handleCheckin} />}
+      {showInlinePicker && <LocationCheckin onSelect={handleCheckin} />}
 
       <div className="location-card-row location-card-steps">
         {!gps.active ? (
@@ -159,7 +144,7 @@ export default function Navigation({ list, onBack }) {
         ) : gpsUsable ? (
           <span className="step-info">📡 GPS פעיל — מעדכן מיקום אוטומטית</span>
         ) : gpsConfident ? (
-          <span className="step-info">📡 יש קליטת-GPS, אך המחלקה כאן לא כוילה — הפרומפט הידני ממשיך</span>
+          <span className="step-info">📡 יש קליטת-GPS, אך המחלקה כאן לא כוילה — עדכנו מיקום ידנית</span>
         ) : (
           <span className="step-info">📡 מחפש קליטת-GPS… (בד"כ עובד רק ליד כניסה/חוץ)</span>
         )}
@@ -315,14 +300,6 @@ export default function Navigation({ list, onBack }) {
             {stopIndex + 1 < stops.length ? 'לתחנה הבאה ⬅' : 'עבור לקופות 🛒'}
           </button>
         </div>
-      )}
-
-      {showCheckinPrompt && (
-        <LocationCheckin
-          variant="prompt"
-          onSelect={handleCheckin}
-          onSkip={() => setShowCheckinPrompt(false)}
-        />
       )}
 
       {detailProduct && (

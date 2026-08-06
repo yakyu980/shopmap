@@ -3,7 +3,6 @@ import './App.css';
 import StoreMap from './components/StoreMap';
 import ShoppingList from './components/ShoppingList';
 import Navigation from './components/Navigation';
-import PointsBadge from './components/PointsBadge';
 import { useShoppingList } from './lib/useShoppingList';
 
 const TABS = [
@@ -19,10 +18,7 @@ export default function App() {
   return (
     <div className="app">
       <header className="app-header">
-        <div className="app-header-row">
-          <h1>SuperNav AI</h1>
-          <PointsBadge />
-        </div>
+        <h1>SuperNav AI</h1>
         <p className="app-tagline">ה-Waze של הסופר — MVP הדגמה</p>
       </header>
 
