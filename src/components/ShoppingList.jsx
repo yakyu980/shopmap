@@ -1,4 +1,5 @@
-import { getDepartment, locationLabel } from '../data/storeData';
+import { locationLabel } from '../data/storeData';
+import { getDepartment } from '../lib/storeConfig';
 import ProductSearch from './ProductSearch';
 import VoiceAddPanel from './VoiceAddPanel';
 

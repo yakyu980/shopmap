@@ -1,11 +1,11 @@
-import { DEPARTMENTS } from '../data/storeData';
-
-const CHECKIN_DEPTS = DEPARTMENTS.filter((d) => !d.fixed);
+import { useStoreConfig } from '../lib/useStoreConfig';
 
 function Chips({ onSelect }) {
+  const config = useStoreConfig();
+  const checkinDepts = config.departments.filter((d) => !d.fixed);
   return (
     <div className="location-chips">
-      {CHECKIN_DEPTS.map((d) => (
+      {checkinDepts.map((d) => (
         <button key={d.id} className="location-chip" onClick={() => onSelect(d.id)}>
           {d.icon} {d.name}
         </button>

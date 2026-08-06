@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { getDepartment, locationLabel } from '../data/storeData';
+import { locationLabel } from '../data/storeData';
+import { getDepartment } from '../lib/storeConfig';
 import { getPriceHistory, priceTrend } from '../lib/priceHistory';
 import { getVerification, markFound, markNotFound } from '../lib/verification';
 

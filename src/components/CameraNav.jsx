@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
-import { getDepartment, locationLabel } from '../data/storeData';
+import { locationLabel } from '../data/storeData';
+import { getDepartment } from '../lib/storeConfig';
 import { computeDirection } from '../lib/direction';
 import LocationCheckin from './LocationCheckin';
 

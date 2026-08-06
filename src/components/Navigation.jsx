@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { computeRoute, dist, reorderRemainingStops, GRID_UNIT_METERS } from '../lib/route';
-import { getDepartment, locationLabel } from '../data/storeData';
+import { locationLabel } from '../data/storeData';
+import { getDepartment } from '../lib/storeConfig';
 import { markFound, markNotFound } from '../lib/verification';
 import { useStepCounter } from '../lib/useStepCounter';
 import StoreMap from './StoreMap';

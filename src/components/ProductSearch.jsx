@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
-import { PRODUCTS, getDepartment, locationLabel, searchProducts } from '../data/storeData';
+import { PRODUCTS, locationLabel, searchProducts } from '../data/storeData';
+import { getDepartment } from '../lib/storeConfig';
 import { useSpeechRecognition } from '../lib/useSpeechRecognition';
 import ProductDetail from './ProductDetail';
 

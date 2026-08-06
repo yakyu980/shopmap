@@ -1,4 +1,4 @@
-import { DEPARTMENTS, getDepartment } from '../data/storeData';
+import { getDepartments, getDepartment } from './storeConfig';
 
 // המרה גסה בין יחידת-מרחק לוגית (על רשת המחלקות) למטרים — לצורך השוואה
 // מול הערכת-המרחק שמגיעה ממד-הצעדים הניסיוני.
@@ -28,8 +28,9 @@ export function orderByNearestNeighbor(start, depts) {
  * החל מהכניסה וכלה בקופות.
  */
 export function computeRoute(items) {
-  const entrance = DEPARTMENTS.find((d) => d.fixed === 'start');
-  const checkout = DEPARTMENTS.find((d) => d.fixed === 'end');
+  const departments = getDepartments();
+  const entrance = departments.find((d) => d.fixed === 'start');
+  const checkout = departments.find((d) => d.fixed === 'end');
 
   const neededDeptIds = [...new Set(items.map((i) => i.department))];
   const neededDepts = neededDeptIds

@@ -1,22 +1,6 @@
-// נתוני-דוגמה סטטיים לסניף אחד לצורך ה-MVP.
-// מיקום כל מחלקה הוא (x,y) על רשת לוגית של הסופר — משמש גם לחישוב
-// המסלול האופטימלי וגם לציור מפת החנות.
-
-export const DEPARTMENTS = [
-  { id: 'entrance', name: 'כניסה', icon: '🚪', x: 0, y: 2, fixed: 'start' },
-  { id: 'produce', name: 'ירקות ופירות', icon: '🥦', x: 0, y: 1 },
-  { id: 'bakery', name: 'מאפייה', icon: '🥖', x: 1, y: 0 },
-  { id: 'dairy', name: 'חלב וגבינות', icon: '🥛', x: 2, y: 0 },
-  { id: 'meat', name: 'בשר ודגים', icon: '🍗', x: 3, y: 0 },
-  { id: 'drinks', name: 'שתייה', icon: '🥤', x: 3, y: 1 },
-  { id: 'cleaning', name: 'ניקיון וטואלטיקה', icon: '🧴', x: 2, y: 1 },
-  { id: 'frozen', name: 'קפואים', icon: '🧊', x: 1, y: 1 },
-  { id: 'snacks', name: 'חטיפים וממתקים', icon: '🍫', x: 0, y: 0 },
-  { id: 'checkout', name: 'קופות', icon: '🛒', x: 1, y: 2, fixed: 'end' },
-];
-
-export const GRID_COLS = 4;
-export const GRID_ROWS = 3;
+// קטלוג-מוצרים סטטי לסניף-דוגמה. מחלקות-הסופר (מיקום/שם/אייקון/גודל-
+// רשת) עברו ל-src/lib/storeConfig.js — שם ניתן לעריכה ע"י המשתמש;
+// כאן נשאר רק הקטלוג הקבוע.
 
 // כל מדף מחולק ל-15 אזורים: 5 עמודות × 3 שורות (לפי הספסיפיקציה).
 export const SHELF_COLS = 5;
@@ -89,10 +73,6 @@ export const PRODUCTS = [
   product('snacks', 'קטשופ', 3, 6, 11.9, 'רטבים'),
   product('snacks', 'אורז', 3, 12, 13.9, 'יבשים'),
 ];
-
-export function getDepartment(id) {
-  return DEPARTMENTS.find((d) => d.id === id);
-}
 
 export function getProduct(id) {
   return PRODUCTS.find((p) => p.id === id);
