@@ -387,8 +387,16 @@
 }
 
 .nav-stop-card h2 {
-  margin: 0 0 10px;
+  margin: 0;
   font-size: 18px;
+}
+
+.nav-stop-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 10px;
 }
 
 .nav-item {
@@ -589,4 +597,127 @@
     background: #3a2c10;
     color: #fcd34d;
   }
+}
+
+/* --- ניווט AR (מצלמה + חצים, דמה) --- */
+.ar-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: #0a0e14;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.ar-video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.ar-fallback {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 32px;
+  text-align: center;
+  color: #cbd5e1;
+  font-size: 14px;
+  background: radial-gradient(circle at 50% 40%, #1b2431, #0a0e14 70%);
+}
+
+.ar-topbar {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px;
+  gap: 8px;
+}
+
+.ar-exit {
+  background: rgba(10, 14, 20, 0.6);
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.25);
+}
+
+.ar-dept-chip {
+  background: rgba(10, 14, 20, 0.6);
+  color: #fff;
+  border-radius: 999px;
+  padding: 8px 14px;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.ar-arrow-wrap {
+  position: relative;
+  z-index: 2;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.ar-arrow {
+  font-size: 96px;
+  filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.6));
+  transition: transform 0.3s;
+}
+
+.ar-arrow-label {
+  background: rgba(10, 14, 20, 0.65);
+  color: #fff;
+  padding: 8px 16px;
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.ar-bottom-card {
+  position: relative;
+  z-index: 2;
+  background: rgba(10, 14, 20, 0.82);
+  backdrop-filter: blur(6px);
+  border-radius: 20px 20px 0 0;
+  padding: 14px;
+}
+
+.ar-item-list {
+  list-style: none;
+  margin: 0 0 10px;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 30vh;
+  overflow-y: auto;
+}
+
+.ar-item {
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 10px;
+  padding: 8px 10px;
+}
+
+.ar-item .nav-item-name,
+.ar-item .nav-item-loc {
+  color: #fff;
+}
+
+.ar-item .nav-item-loc {
+  color: #9aa5b3;
+}
+
+.ar-item--picked {
+  opacity: 0.5;
+  text-decoration: line-through;
 }

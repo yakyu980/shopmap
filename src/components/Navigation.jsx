@@ -3,11 +3,13 @@ import { computeRoute } from '../lib/route';
 import { locationLabel } from '../data/storeData';
 import { markFound, markNotFound } from '../lib/verification';
 import StoreMap from './StoreMap';
+import CameraNav from './CameraNav';
 
 export default function Navigation({ list, onBack }) {
   const { items, togglePicked } = list;
   const route = useMemo(() => computeRoute(items), [items]);
   const [stopIndex, setStopIndex] = useState(0);
+  const [arMode, setArMode] = useState(false);
 
   if (items.length === 0) {
     return (
@@ -23,12 +25,34 @@ export default function Navigation({ list, onBack }) {
   const finished = stopIndex >= route.stops.length;
   const stop = !finished ? route.stops[stopIndex] : null;
   const allPickedAtStop = stop ? stop.items.every((i) => items.find((x) => x.id === i.id)?.picked) : false;
+  const fromDept = stopIndex === 0 ? route.entrance : route.stops[stopIndex - 1].department;
 
   function reportFound(productId) {
     markFound(productId);
   }
   function reportNotFound(productId) {
     markNotFound(productId);
+  }
+  function goNext() {
+    setStopIndex((i) => i + 1);
+    if (stopIndex + 1 >= route.stops.length) setArMode(false);
+  }
+
+  if (arMode && stop) {
+    return (
+      <CameraNav
+        fromDept={fromDept}
+        stop={stop}
+        items={items}
+        togglePicked={(id) => {
+          togglePicked(id);
+          reportFound(id);
+        }}
+        onNext={goNext}
+        isLast={stopIndex + 1 >= route.stops.length}
+        onExit={() => setArMode(false)}
+      />
+    );
   }
 
   return (
@@ -72,9 +96,14 @@ export default function Navigation({ list, onBack }) {
         </div>
       ) : (
         <div className="nav-stop-card">
-          <h2>
-            {stop.department.icon} {stop.department.name}
-          </h2>
+          <div className="nav-stop-head">
+            <h2>
+              {stop.department.icon} {stop.department.name}
+            </h2>
+            <button className="btn btn--ghost btn--small" onClick={() => setArMode(true)}>
+              📷 ניווט AR
+            </button>
+          </div>
           <ul className="nav-item-list">
             {stop.items.map((item) => {
               const live = items.find((x) => x.id === item.id);
@@ -106,10 +135,7 @@ export default function Navigation({ list, onBack }) {
             })}
           </ul>
 
-          <button
-            className="btn btn--primary nav-next"
-            onClick={() => setStopIndex((i) => i + 1)}
-          >
+          <button className="btn btn--primary nav-next" onClick={goNext}>
             {allPickedAtStop ? '✓ ' : ''}
             {stopIndex + 1 < route.stops.length ? 'לתחנה הבאה ⬅' : 'עבור לקופות 🛒'}
           </button>
