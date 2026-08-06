@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
-import { locationLabel } from '../data/storeData';
+import { getDepartment, locationLabel } from '../data/storeData';
 import { computeDirection } from '../lib/direction';
+import LocationCheckin from './LocationCheckin';
 
 const STATUS = {
   LOADING: 'loading',
@@ -9,10 +10,22 @@ const STATUS = {
   UNSUPPORTED: 'unsupported',
 };
 
-export default function CameraNav({ fromDept, stop, items, togglePicked, onNext, isLast, onExit }) {
+export default function CameraNav({
+  fromDept,
+  stop,
+  items,
+  togglePicked,
+  onNext,
+  isLast,
+  onExit,
+  currentLocationId,
+  onCheckin,
+  stepCounter,
+}) {
   const videoRef = useRef(null);
   const streamRef = useRef(null);
   const [status, setStatus] = useState(STATUS.LOADING);
+  const [showPicker, setShowPicker] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -81,13 +94,31 @@ export default function CameraNav({ fromDept, stop, items, togglePicked, onNext,
         <span className="ar-dept-chip">
           {stop.department.icon} {stop.department.name}
         </span>
+        <button className="btn btn--ghost btn--small ar-location-btn" onClick={() => setShowPicker((v) => !v)}>
+          📍{currentLocationId ? ` ${getDepartment(currentLocationId).icon}` : ''}
+        </button>
       </div>
+
+      {showPicker && (
+        <div className="ar-location-picker">
+          <LocationCheckin
+            variant="inline"
+            onSelect={(id) => {
+              onCheckin(id);
+              setShowPicker(false);
+            }}
+          />
+        </div>
+      )}
 
       <div className="ar-arrow-wrap">
         <div className="ar-arrow" style={{ transform: `rotate(${dir.rotation}deg)` }}>
           {dir.arrow}
         </div>
         <div className="ar-arrow-label">{dir.label}</div>
+        {stepCounter?.active && (
+          <div className="ar-step-info">🚶 כ-{stepCounter.distanceMeters} מ׳ מאז העדכון</div>
+        )}
       </div>
 
       <div className="ar-bottom-card">

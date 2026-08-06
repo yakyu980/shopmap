@@ -1,7 +1,25 @@
 import { DEPARTMENTS, getDepartment } from '../data/storeData';
 
-function dist(a, b) {
+// המרה גסה בין יחידת-מרחק לוגית (על רשת המחלקות) למטרים — לצורך השוואה
+// מול הערכת-המרחק שמגיעה ממד-הצעדים הניסיוני.
+export const GRID_UNIT_METERS = 9;
+
+export function dist(a, b) {
   return Math.hypot(a.x - b.x, a.y - b.y);
+}
+
+/** מסדר מחלקות בסדר שממזער הליכה (Nearest-Neighbor TSP heuristic) מנקודת-פתיחה נתונה. */
+export function orderByNearestNeighbor(start, depts) {
+  const pool = [...depts];
+  const order = [];
+  let current = start;
+  while (pool.length) {
+    pool.sort((a, b) => dist(current, a) - dist(current, b));
+    const next = pool.shift();
+    order.push(next);
+    current = next;
+  }
+  return order;
 }
 
 /**
@@ -14,18 +32,11 @@ export function computeRoute(items) {
   const checkout = DEPARTMENTS.find((d) => d.fixed === 'end');
 
   const neededDeptIds = [...new Set(items.map((i) => i.department))];
-  let remaining = neededDeptIds
+  const neededDepts = neededDeptIds
     .map(getDepartment)
     .filter((d) => d && d.id !== entrance.id && d.id !== checkout.id);
 
-  const order = [];
-  let current = entrance;
-  while (remaining.length) {
-    remaining.sort((a, b) => dist(current, a) - dist(current, b));
-    const next = remaining.shift();
-    order.push(next);
-    current = next;
-  }
+  const order = orderByNearestNeighbor(entrance, neededDepts);
 
   let totalDistance = dist(entrance, order[0] || checkout);
   for (let i = 0; i < order.length - 1; i++) {
@@ -46,4 +57,23 @@ export function computeRoute(items) {
   const estimatedMinutes = Math.max(1, Math.round(walkMinutes + pickMinutes));
 
   return { stops, entrance, checkout, totalDistance, estimatedMinutes };
+}
+
+/**
+ * מסדר-מחדש את יתרת-המסלול (מ-fromIndex ואילך) לפי מיקום בפועל שדווח
+ * ע"י המשתמש — תחנות שכבר הושלמו (לפני fromIndex) לא נוגעים בהן.
+ */
+export function reorderRemainingStops(stops, fromIndex, fromPoint) {
+  const before = stops.slice(0, fromIndex);
+  const remaining = stops.slice(fromIndex);
+  if (remaining.length <= 1) return stops;
+
+  const orderedDepts = orderByNearestNeighbor(
+    fromPoint,
+    remaining.map((s) => s.department)
+  );
+  const orderedStops = orderedDepts.map((d) =>
+    remaining.find((s) => s.department.id === d.id)
+  );
+  return [...before, ...orderedStops];
 }

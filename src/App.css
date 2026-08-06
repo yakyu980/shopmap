@@ -721,3 +721,167 @@
   opacity: 0.5;
   text-decoration: line-through;
 }
+
+/* --- כרטיס מיקום + מד-צעדים --- */
+.location-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.location-card-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.location-card-info {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.location-card-time {
+  font-weight: 400;
+  color: var(--text-dim);
+}
+
+.location-card-steps {
+  font-size: 12px;
+  color: var(--text-dim);
+}
+
+.step-info {
+  font-size: 12px;
+  color: var(--text-dim);
+}
+
+.step-unsupported {
+  font-size: 11px;
+  color: var(--text-dim);
+}
+
+.step-hint {
+  margin: 0;
+  font-size: 12px;
+  background: #fef3c7;
+  color: #92400e;
+  border-radius: 8px;
+  padding: 6px 10px;
+}
+
+.reroute-hint {
+  margin: 0;
+  font-size: 12px;
+  background: #dcfce7;
+  color: var(--primary-dark);
+  border-radius: 8px;
+  padding: 6px 10px;
+}
+
+.location-chips,
+.location-chips-inline .location-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.location-chip {
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text);
+  border-radius: 999px;
+  padding: 6px 12px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.location-chip:hover {
+  border-color: var(--primary);
+}
+
+.location-chips-inline {
+  margin-top: 4px;
+}
+
+/* --- פרומפט מיקום יזום --- */
+.checkin-prompt-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 60;
+  padding: 20px;
+}
+
+.checkin-prompt {
+  background: var(--surface);
+  border-radius: 16px;
+  padding: 18px;
+  max-width: 380px;
+  width: 100%;
+}
+
+.checkin-prompt h3 {
+  margin: 0 0 4px;
+  font-size: 16px;
+}
+
+.checkin-prompt p {
+  margin: 0 0 12px;
+  font-size: 13px;
+  color: var(--text-dim);
+}
+
+.checkin-prompt .location-chips {
+  margin-bottom: 10px;
+}
+
+/* --- מיקום בתוך מסך ה-AR --- */
+.ar-location-btn {
+  background: rgba(10, 14, 20, 0.6);
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.25);
+}
+
+.ar-location-picker {
+  position: relative;
+  z-index: 3;
+  margin: 0 14px;
+  background: rgba(10, 14, 20, 0.85);
+  border-radius: 12px;
+  padding: 10px;
+}
+
+.ar-location-picker .location-chip {
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.ar-step-info {
+  position: relative;
+  z-index: 2;
+  background: rgba(10, 14, 20, 0.6);
+  color: #fff;
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+}
+
+@media (prefers-color-scheme: dark) {
+  .step-hint {
+    background: #3a2c10;
+    color: #fcd34d;
+  }
+  .reroute-hint {
+    background: #113322;
+    color: #86efac;
+  }
+}
