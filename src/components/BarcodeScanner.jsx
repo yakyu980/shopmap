@@ -4,6 +4,9 @@ import { getProductByBarcode, locationLabel } from '../data/storeData';
 import { useCameraStream, CAMERA_STATUS } from '../lib/useCameraStream';
 import ProductDetail from './ProductDetail';
 import PriceTag from './PriceTag';
+import Icon from './Icon';
+import DeptIcon from './DeptIcon';
+import CloseButton from './CloseButton';
 
 const SCAN_FORMATS = ['ean_13', 'ean_8', 'upc_a', 'upc_e', 'code_128'];
 const SCAN_INTERVAL_MS = 400;
@@ -47,10 +50,10 @@ export default function BarcodeScanner({ onAdd, onClose }) {
   return (
     <div className="modal-backdrop" onClick={onClose}>
       <div className="modal barcode-modal" onClick={(e) => e.stopPropagation()}>
-        <button className="modal-close" onClick={onClose} aria-label="סגור">
-          ✕
-        </button>
-        <h2>📷 סריקת ברקוד</h2>
+        <CloseButton onClick={onClose} />
+        <h2>
+          <Icon name="camera" /> סריקת ברקוד
+        </h2>
 
         {status === CAMERA_STATUS.READY && detectorSupported && !result && (
           <div className="barcode-video-wrap">
@@ -58,9 +61,15 @@ export default function BarcodeScanner({ onAdd, onClose }) {
             <p className="barcode-hint">כוונו את המצלמה לברקוד</p>
           </div>
         )}
-        {status === CAMERA_STATUS.LOADING && <p className="barcode-hint">📷 מבקש הרשאת מצלמה…</p>}
+        {status === CAMERA_STATUS.LOADING && (
+          <p className="barcode-hint">
+            <Icon name="camera" /> מבקש הרשאת מצלמה…
+          </p>
+        )}
         {status === CAMERA_STATUS.DENIED && (
-          <p className="barcode-hint">🚫 לא ניתנה הרשאת מצלמה — אפשר להקליד ברקוד ידנית למטה.</p>
+          <p className="barcode-hint">
+            <Icon name="warning" /> לא ניתנה הרשאת מצלמה — אפשר להקליד ברקוד ידנית למטה.
+          </p>
         )}
         {status === CAMERA_STATUS.UNSUPPORTED && (
           <p className="barcode-hint">ℹ️ מצלמה לא זמינה כאן — אפשר להקליד ברקוד ידנית למטה.</p>
@@ -84,7 +93,7 @@ export default function BarcodeScanner({ onAdd, onClose }) {
             disabled={!manualCode.trim()}
             onClick={() => lookup(manualCode.trim())}
           >
-            🔍 חפש
+            <Icon name="search" /> חפש
           </button>
         </div>
 
@@ -93,7 +102,8 @@ export default function BarcodeScanner({ onAdd, onClose }) {
             {result.found ? (
               <>
                 <p className="barcode-found">
-                  ✅ {getDepartment(result.product.department).icon} {result.product.name} ·{' '}
+                  <Icon name="check" /> <DeptIcon dept={getDepartment(result.product.department)} />{' '}
+                  {result.product.name} ·{' '}
                   <PriceTag product={result.product} size="small" /> ·{' '}
                   {getDepartment(result.product.department).name},{' '}
                   {locationLabel(result.product)}
@@ -106,10 +116,10 @@ export default function BarcodeScanner({ onAdd, onClose }) {
                       onClose();
                     }}
                   >
-                    ➕ הוסף לרשימה
+                    <Icon name="plus" /> הוסף לרשימה
                   </button>
                   <button className="btn btn--ghost btn--small" onClick={() => setShowDetail(true)}>
-                    🔎 פרטים נוספים
+                    <Icon name="search" /> פרטים נוספים
                   </button>
                   <button
                     className="btn btn--text btn--small"
@@ -118,13 +128,15 @@ export default function BarcodeScanner({ onAdd, onClose }) {
                       setManualCode('');
                     }}
                   >
-                    🔁 סרוק שוב
+                    <Icon name="reset" /> סרוק שוב
                   </button>
                 </div>
               </>
             ) : (
               <>
-                <p className="barcode-not-found">❌ לא נמצא מוצר עם ברקוד "{result.code}"</p>
+                <p className="barcode-not-found">
+                  <Icon name="close" /> לא נמצא מוצר עם ברקוד "{result.code}"
+                </p>
                 <button
                   className="btn btn--text btn--small"
                   onClick={() => {

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { login, register } from '../lib/auth';
+import Icon from './Icon';
 
 export default function Login({ onDone }) {
   const [mode, setMode] = useState('login'); // 'login' | 'register'
@@ -116,7 +117,11 @@ export default function Login({ onDone }) {
           </>
         )}
 
-        {error && <p className="login-error">⚠️ {error}</p>}
+        {error && (
+          <p className="login-error">
+            <Icon name="warning" /> {error}
+          </p>
+        )}
 
         <button className="btn btn--primary" type="submit" disabled={busy}>
           {busy ? 'רק רגע…' : mode === 'login' ? 'התחבר' : 'הרשמה'}

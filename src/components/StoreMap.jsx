@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { PRODUCTS } from '../data/storeData';
 import { useStoreConfig } from '../lib/useStoreConfig';
+import Icon from './Icon';
+import DeptIcon from './DeptIcon';
 import {
   addDepartment,
   clearDepartmentGps,
@@ -136,34 +138,34 @@ export default function StoreMap({ activeDeptId }) {
             setMoveSourceId(null);
           }}
         >
-          ✏️ ערוך מפה
+          <Icon name="edit" /> ערוך מפה
         </button>
         {editMode && (
           <div className="store-map-grid-controls">
             <span>עמודות</span>
             <button className="btn btn--icon btn--small" onClick={() => handleResize('cols', -1)}>
-              ➖
+              <Icon name="minus" />
             </button>
             <button
               className="btn btn--icon btn--small"
               onClick={() => handleResize('cols', 1)}
               disabled={config.gridCols >= MAX_GRID_SIZE}
             >
-              ➕
+              <Icon name="plus" />
             </button>
             <span>שורות</span>
             <button className="btn btn--icon btn--small" onClick={() => handleResize('rows', -1)}>
-              ➖
+              <Icon name="minus" />
             </button>
             <button
               className="btn btn--icon btn--small"
               onClick={() => handleResize('rows', 1)}
               disabled={config.gridRows >= MAX_GRID_SIZE}
             >
-              ➕
+              <Icon name="plus" />
             </button>
             <button className="btn btn--text btn--small" onClick={handleReset}>
-              ↺ אפס למצב ברירת-מחדל
+              <Icon name="reset" /> אפס למצב ברירת-מחדל
             </button>
           </div>
         )}
@@ -171,7 +173,8 @@ export default function StoreMap({ activeDeptId }) {
 
       {moveSourceId && (
         <p className="map-move-hint">
-          📍 בחר תא ריק להעברת "{config.departments.find((d) => d.id === moveSourceId)?.name}"
+          <Icon name="pin" /> בחר תא ריק להעברת "
+          {config.departments.find((d) => d.id === moveSourceId)?.name}"
           אליו
           <button className="btn btn--text btn--small" onClick={() => setMoveSourceId(null)}>
             ביטול
@@ -206,11 +209,17 @@ export default function StoreMap({ activeDeptId }) {
             >
               {dept ? (
                 <>
-                  <span className="store-map-icon">{dept.icon}</span>
+                  <span className="store-map-icon">
+                    <DeptIcon dept={dept} />
+                  </span>
                   <span className="store-map-name">{dept.name}</span>
                 </>
               ) : (
-                editMode && <span className="store-map-add">➕</span>
+                editMode && (
+                  <span className="store-map-add">
+                    <Icon name="plus" />
+                  </span>
+                )
               )}
             </div>
           );
@@ -241,7 +250,7 @@ export default function StoreMap({ activeDeptId }) {
           />
           <div className="map-edit-actions">
             <button className="btn btn--primary btn--small" onClick={handleSave}>
-              ✔ שמור
+              <Icon name="check" /> שמור
             </button>
             {editingCell.dept && !editingCell.dept.fixed && (
               <>
@@ -252,15 +261,15 @@ export default function StoreMap({ activeDeptId }) {
                     setEditingCell(null);
                   }}
                 >
-                  ➡️ הזז
+                  <Icon name="swap" /> הזז
                 </button>
                 <button className="btn btn--ghost btn--small btn--danger" onClick={handleDelete}>
-                  🗑️ מחק
+                  <Icon name="trash" /> מחק
                 </button>
               </>
             )}
             <button className="btn btn--text btn--small" onClick={() => setEditingCell(null)}>
-              ✖ ביטול
+              <Icon name="close" /> ביטול
             </button>
           </div>
 
@@ -276,20 +285,20 @@ export default function StoreMap({ activeDeptId }) {
                   onClick={() => handleSetGps(liveDept.id)}
                   disabled={gpsBusy}
                 >
-                  📍 {gpsBusy ? 'מאתר…' : 'קבע GPS למיקום הנוכחי'}
+                  <Icon name="pin" /> {gpsBusy ? 'מאתר…' : 'קבע GPS למיקום הנוכחי'}
                 </button>
                 {typeof liveDept.lat === 'number' && (
                   <button
                     className="btn btn--text btn--small"
                     onClick={() => handleClearGps(liveDept.id)}
                   >
-                    🗑️ נקה GPS
+                    <Icon name="trash" /> נקה GPS
                   </button>
                 )}
               </div>
               {typeof liveDept.lat === 'number' && (
                 <p className="map-edit-gps-status">
-                  ✅ GPS מכויל: {liveDept.lat.toFixed(5)}, {liveDept.lng.toFixed(5)}
+                  <Icon name="check" /> GPS מכויל: {liveDept.lat.toFixed(5)}, {liveDept.lng.toFixed(5)}
                 </p>
               )}
             </div>

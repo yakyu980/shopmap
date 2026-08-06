@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useFamilyMembers } from '../lib/useFamilyMembers';
 import { addMember, removeMember, setActiveMember } from '../lib/familyMembers';
 import { useAuth } from '../lib/useAuth';
+import Icon from './Icon';
 
 export default function FamilyManager() {
   const family = useFamilyMembers();
@@ -20,7 +21,7 @@ export default function FamilyManager() {
   return (
     <div className="family-manager">
       <button className="btn btn--ghost btn--small family-toggle" onClick={() => setOpen((v) => !v)}>
-        👨‍👩‍👧 משפחה {family.members.length > 0 ? `(${family.members.length})` : ''}
+        <Icon name="family" /> משפחה {family.members.length > 0 ? `(${family.members.length})` : ''}
       </button>
 
       {open && (
@@ -50,8 +51,7 @@ export default function FamilyManager() {
                     onClick={() => setActiveMember(family.activeMemberId === m.id ? null : m.id)}
                     title="קבע כ'מי אני'"
                   >
-                    {family.activeMemberId === m.id ? '✓ ' : ''}
-                    {m.emoji} {m.name}
+                    {family.activeMemberId === m.id && <Icon name="check" />} {m.emoji} {m.name}
                   </button>
                   {!user && (
                     <button
@@ -59,7 +59,7 @@ export default function FamilyManager() {
                       onClick={() => removeMember(m.id)}
                       aria-label="הסר"
                     >
-                      🗑️
+                      <Icon name="trash" />
                     </button>
                   )}
                 </li>
@@ -86,7 +86,7 @@ export default function FamilyManager() {
                 maxLength={4}
               />
               <button className="btn btn--primary btn--small" onClick={handleAdd}>
-                ➕ הוסף
+                <Icon name="plus" /> הוסף
               </button>
             </div>
           )}

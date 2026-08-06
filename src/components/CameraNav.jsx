@@ -5,6 +5,8 @@ import { computeDirection } from '../lib/direction';
 import { useCameraStream, CAMERA_STATUS as STATUS } from '../lib/useCameraStream';
 import { useFamilyMembers } from '../lib/useFamilyMembers';
 import LocationCheckin from './LocationCheckin';
+import Icon from './Icon';
+import DeptIcon from './DeptIcon';
 
 export default function CameraNav({
   fromDept,
@@ -34,16 +36,20 @@ export default function CameraNav({
 
       {status !== STATUS.READY && (
         <div className="ar-fallback">
-          {status === STATUS.LOADING && <p>📷 מבקש הרשאת מצלמה…</p>}
+          {status === STATUS.LOADING && (
+            <p>
+              <Icon name="camera" /> מבקש הרשאת מצלמה…
+            </p>
+          )}
           {status === STATUS.DENIED && (
             <p>
-              🚫 לא ניתנה הרשאת מצלמה. אפשר לאשר גישה למצלמה בהגדרות הדפדפן ולנסות שוב — או
-              להמשיך עם הניווט הרגיל.
+              <Icon name="warning" /> לא ניתנה הרשאת מצלמה. אפשר לאשר גישה למצלמה בהגדרות הדפדפן
+              ולנסות שוב — או להמשיך עם הניווט הרגיל.
             </p>
           )}
           {status === STATUS.UNSUPPORTED && (
             <p>
-              ℹ️ מצב AR דורש דפדפן עם תמיכה במצלמה בחיבור מאובטח (HTTPS/localhost). ממשיכים בלי
+              מצב AR דורש דפדפן עם תמיכה במצלמה בחיבור מאובטח (HTTPS/localhost). ממשיכים בלי
               וידאו-רקע — החצים עדיין עובדים.
             </p>
           )}
@@ -52,13 +58,14 @@ export default function CameraNav({
 
       <div className="ar-topbar">
         <button className="btn btn--ghost ar-exit" onClick={onExit}>
-          ✕ יציאה מ-AR
+          <Icon name="close" /> יציאה מ-AR
         </button>
         <span className="ar-dept-chip">
-          {stop.department.icon} {stop.department.name}
+          <DeptIcon dept={stop.department} /> {stop.department.name}
         </span>
         <button className="btn btn--ghost btn--small ar-location-btn" onClick={() => setShowPicker((v) => !v)}>
-          📍{currentLocationId ? ` ${getDepartment(currentLocationId).icon}` : ''}
+          <Icon name="pin" />
+          {currentLocationId ? <DeptIcon dept={getDepartment(currentLocationId)} /> : ''}
         </button>
       </div>
 
@@ -74,15 +81,23 @@ export default function CameraNav({
       )}
 
       <div className="ar-arrow-wrap">
-        <div className="ar-arrow" style={{ transform: `rotate(${dir.rotation}deg)` }}>
-          {dir.arrow}
+        <div className="ar-arrow">
+          {dir.arrived ? (
+            <Icon name="pin" />
+          ) : (
+            <Icon name="arrow-left" style={{ transform: `rotate(${dir.rotation}deg)` }} />
+          )}
         </div>
         <div className="ar-arrow-label">{dir.label}</div>
         {stepCounter?.active && (
-          <div className="ar-step-info">🚶 כ-{stepCounter.distanceMeters} מ׳ מאז העדכון</div>
+          <div className="ar-step-info">
+            <Icon name="footsteps" solid /> כ-{stepCounter.distanceMeters} מ׳ מאז העדכון
+          </div>
         )}
         {saleItemsAtStop.length > 0 && (
-          <div className="ar-sale-info">🏷️ מבצע: {saleItemsAtStop.map((i) => i.name).join(', ')}</div>
+          <div className="ar-sale-info">
+            <Icon name="tag" /> מבצע: {saleItemsAtStop.map((i) => i.name).join(', ')}
+          </div>
         )}
       </div>
 
@@ -115,8 +130,16 @@ export default function CameraNav({
           })}
         </ul>
         <button className="btn btn--primary nav-next" onClick={onNext}>
-          {allPicked ? '✓ ' : ''}
-          {isLast ? 'עבור לקופות 🛒' : 'לתחנה הבאה ⬅'}
+          {allPicked && <Icon name="check" />}
+          {isLast ? (
+            <>
+              עבור לקופות <Icon name="cart" />
+            </>
+          ) : (
+            <>
+              לתחנה הבאה <Icon name="arrow-left" />
+            </>
+          )}
         </button>
       </div>
     </div>

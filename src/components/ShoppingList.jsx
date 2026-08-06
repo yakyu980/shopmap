@@ -8,6 +8,8 @@ import BarcodeScanner from './BarcodeScanner';
 import ImageProductSearch from './ImageProductSearch';
 import ProductDetail from './ProductDetail';
 import PriceTag from './PriceTag';
+import Icon from './Icon';
+import DeptIcon from './DeptIcon';
 
 export default function ShoppingList({ list, onGoNavigate }) {
   const { items, addItem, removeItem, assignItem, clear } = list;
@@ -24,10 +26,10 @@ export default function ShoppingList({ list, onGoNavigate }) {
 
       <div className="scan-buttons-row">
         <button className="btn btn--ghost" onClick={() => setScannerOpen(true)}>
-          📷 סרוק ברקוד
+          <Icon name="barcode" solid /> סרוק ברקוד
         </button>
         <button className="btn btn--ghost" onClick={() => setImageSearchOpen(true)}>
-          📸 חפש לפי תמונה
+          <Icon name="camera" /> חפש לפי תמונה
         </button>
       </div>
 
@@ -62,7 +64,9 @@ export default function ShoppingList({ list, onGoNavigate }) {
               const dept = getDepartment(item.department);
               return (
                 <li className="cart-row" key={item.id}>
-                  <span className="cart-row-icon">{dept.icon}</span>
+                  <span className="cart-row-icon">
+                    <DeptIcon dept={dept} />
+                  </span>
                   <button className="cart-row-info cart-row-info--btn" onClick={() => setDetailProduct(item)}>
                     <span className="cart-row-name">{item.name}</span>
                     <span className="cart-row-loc">
@@ -92,7 +96,7 @@ export default function ShoppingList({ list, onGoNavigate }) {
                     onClick={() => removeItem(item.id)}
                     aria-label="הסר"
                   >
-                    🗑️
+                    <Icon name="trash" />
                   </button>
                 </li>
               );
@@ -104,7 +108,7 @@ export default function ShoppingList({ list, onGoNavigate }) {
           <div className="shopping-list-footer">
             <span className="cart-total">סה"כ: ₪{total.toFixed(2)}</span>
             <button className="btn btn--primary" onClick={onGoNavigate}>
-              🧭 חשב מסלול וניווט
+              <Icon name="compass" /> חשב מסלול וניווט
             </button>
           </div>
         )}

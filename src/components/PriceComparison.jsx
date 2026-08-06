@@ -4,6 +4,8 @@ import { getDepartment } from '../lib/storeConfig';
 import { getPriceHistory, priceTrend } from '../lib/priceHistory';
 import PriceTag from './PriceTag';
 import ProductDetail from './ProductDetail';
+import Icon from './Icon';
+import DeptIcon from './DeptIcon';
 
 // הרחבה-עתידית (לא מומשת כאן): להרחיב את purchaseHistory.js לרישום
 // מחיר-ששולם-בפועל בכל recordPurchase, כדי ש"כמה פעם זה עלה" יהיה
@@ -14,7 +16,9 @@ function ProductRow({ product, onOpen }) {
   const trend = priceTrend(getPriceHistory(product));
   return (
     <li className="compare-row" onClick={() => onOpen(product)}>
-      <span className="compare-icon">{dept.icon}</span>
+      <span className="compare-icon">
+        <DeptIcon dept={dept} />
+      </span>
       <span className="compare-info">
         <span className="compare-name">{product.name}</span>
         <span className="compare-loc">
@@ -41,7 +45,9 @@ export default function PriceComparison({ list }) {
 
       {saleProducts.length > 0 && (
         <>
-          <p className="section-title">🏷️ מבצעים היום</p>
+          <p className="section-title">
+            <Icon name="tag" /> מבצעים היום
+          </p>
           <ul className="compare-list">
             {saleProducts.map((p) => (
               <ProductRow key={p.id} product={p} onOpen={setDetailProduct} />

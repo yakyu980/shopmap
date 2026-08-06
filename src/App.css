@@ -38,14 +38,23 @@
 .tab {
   flex: 1;
   position: relative;
-  padding: 10px 6px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 8px 4px 9px;
   border: 1px solid var(--border);
   background: var(--surface);
   border-radius: 12px;
   cursor: pointer;
-  font-size: 13px;
+  font-size: 11px;
   color: var(--text);
   transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.tab .icon {
+  width: 18px;
+  height: 18px;
 }
 
 .tab--active {
@@ -300,7 +309,7 @@
 }
 
 .store-map-cell--active {
-  background: #dcfce7;
+  background: var(--primary-tint);
   border-color: var(--primary);
   border-width: 2px;
   transform: scale(1.03);
@@ -315,7 +324,7 @@
     background: #232741;
   }
   .store-map-cell--active {
-    background: #113322;
+    background: var(--primary-tint);
   }
 }
 
@@ -513,7 +522,7 @@
   border-color: var(--primary);
   color: var(--text);
   font-weight: 700;
-  background: #ecfdf3;
+  background: var(--primary-tint);
 }
 
 .route-step--done {
@@ -827,6 +836,11 @@
 .ar-arrow {
   font-size: 96px;
   filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.6));
+}
+
+.ar-arrow .icon {
+  color: #fff;
+  stroke-width: 1.4;
   transition: transform 0.3s;
 }
 
@@ -934,7 +948,7 @@
 .reroute-hint {
   margin: 0;
   font-size: 12px;
-  background: #dcfce7;
+  background: var(--primary-tint);
   color: var(--primary-dark);
   border-radius: 8px;
   padding: 6px 10px;
@@ -1308,8 +1322,8 @@
     color: #fcd34d;
   }
   .reroute-hint {
-    background: #113322;
-    color: #86efac;
+    background: var(--primary-tint);
+    color: var(--primary-dark);
   }
   .map-move-hint {
     background: #232741;
@@ -1488,6 +1502,14 @@
 .home-stat-label {
   font-size: 11px;
   color: var(--text-dim);
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.home-stat-label .icon {
+  width: 12px;
+  height: 12px;
 }
 
 .home-shortcuts {
@@ -1506,6 +1528,16 @@
   color: var(--text);
   cursor: pointer;
   text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.home-shortcut .icon {
+  width: 20px;
+  height: 20px;
+  color: var(--primary);
 }
 
 .home-shortcut:hover {
@@ -1594,8 +1626,12 @@
   border-radius: 999px;
   width: 34px;
   height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   cursor: pointer;
-  font-size: 16px;
+  color: var(--text-dim);
+  font-size: 17px;
 }
 
 .app-header {

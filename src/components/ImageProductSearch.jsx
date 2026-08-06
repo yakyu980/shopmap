@@ -6,6 +6,9 @@ import { pickCandidates } from '../lib/imageRecognitionMock';
 import { useAuth } from '../lib/useAuth';
 import { api } from '../lib/apiClient';
 import PriceTag from './PriceTag';
+import Icon from './Icon';
+import DeptIcon from './DeptIcon';
+import CloseButton from './CloseButton';
 
 const SAMPLE_SIZE = 24;
 
@@ -54,10 +57,10 @@ export default function ImageProductSearch({ onAdd, onClose, onFallbackToSearch 
   return (
     <div className="modal-backdrop" onClick={onClose}>
       <div className="modal image-search-modal" onClick={(e) => e.stopPropagation()}>
-        <button className="modal-close" onClick={onClose} aria-label="סגור">
-          ✕
-        </button>
-        <h2>📸 חפש לפי תמונה</h2>
+        <CloseButton onClick={onClose} />
+        <h2>
+          <Icon name="camera" /> חפש לפי תמונה
+        </h2>
 
         {!candidates && (
           <>
@@ -67,17 +70,23 @@ export default function ImageProductSearch({ onAdd, onClose, onFallbackToSearch 
                 <p className="barcode-hint">צלמו את המוצר שאתם מחפשים</p>
               </div>
             )}
-            {status === CAMERA_STATUS.LOADING && <p className="barcode-hint">📷 מבקש הרשאת מצלמה…</p>}
+            {status === CAMERA_STATUS.LOADING && (
+              <p className="barcode-hint">
+                <Icon name="camera" /> מבקש הרשאת מצלמה…
+              </p>
+            )}
             {status === CAMERA_STATUS.DENIED && (
-              <p className="barcode-hint">🚫 לא ניתנה הרשאת מצלמה — נסו את החיפוש הרגיל.</p>
+              <p className="barcode-hint">
+                <Icon name="warning" /> לא ניתנה הרשאת מצלמה — נסו את החיפוש הרגיל.
+              </p>
             )}
             {status === CAMERA_STATUS.UNSUPPORTED && (
-              <p className="barcode-hint">ℹ️ מצלמה לא זמינה כאן — נסו את החיפוש הרגיל.</p>
+              <p className="barcode-hint">מצלמה לא זמינה כאן — נסו את החיפוש הרגיל.</p>
             )}
             <canvas ref={canvasRef} style={{ display: 'none' }} />
             {status === CAMERA_STATUS.READY && (
               <button className="btn btn--primary" onClick={handleCapture}>
-                📸 צלם
+                <Icon name="camera" /> צלם
               </button>
             )}
           </>
@@ -94,7 +103,9 @@ export default function ImageProductSearch({ onAdd, onClose, onFallbackToSearch 
                 return (
                   <li key={p.id} className="candidate-row">
                     <button className="candidate-btn" onClick={() => handlePick(p)}>
-                      <span className="candidate-icon">{dept.icon}</span>
+                      <span className="candidate-icon">
+                        <DeptIcon dept={dept} />
+                      </span>
                       <span className="candidate-info">
                         <span className="candidate-name">{p.name}</span>
                         <span className="candidate-loc">
@@ -109,7 +120,11 @@ export default function ImageProductSearch({ onAdd, onClose, onFallbackToSearch 
                 );
               })}
             </ul>
-            {added && <p className="voice-matched">✅ נוסף: {added}</p>}
+            {added && (
+              <p className="voice-matched">
+                <Icon name="check" /> נוסף: {added}
+              </p>
+            )}
             <div className="image-search-actions">
               <button
                 className="btn btn--text btn--small"
@@ -118,7 +133,7 @@ export default function ImageProductSearch({ onAdd, onClose, onFallbackToSearch 
                   setAdded(null);
                 }}
               >
-                🔁 צלם שוב
+                <Icon name="reset" /> צלם שוב
               </button>
               <button
                 className="btn btn--text btn--small"

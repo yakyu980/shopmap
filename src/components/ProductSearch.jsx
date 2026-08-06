@@ -4,6 +4,8 @@ import { getDepartment } from '../lib/storeConfig';
 import { useSpeechRecognition } from '../lib/useSpeechRecognition';
 import ProductDetail from './ProductDetail';
 import PriceTag from './PriceTag';
+import Icon from './Icon';
+import DeptIcon from './DeptIcon';
 
 export default function ProductSearch({ onAdd, listedIds }) {
   const [query, setQuery] = useState('');
@@ -25,7 +27,7 @@ export default function ProductSearch({ onAdd, listedIds }) {
         <input
           className="search-input"
           type="text"
-          placeholder="🔍 חפש מוצר… (למשל: חלב, קטשופ)"
+          placeholder="חפש מוצר… (למשל: חלב, קטשופ)"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
         />
@@ -36,7 +38,7 @@ export default function ProductSearch({ onAdd, listedIds }) {
             aria-label="חיפוש קולי"
             title="חיפוש קולי"
           >
-            🎤
+            <Icon name="mic" />
           </button>
         )}
       </div>
@@ -47,7 +49,9 @@ export default function ProductSearch({ onAdd, listedIds }) {
           return (
             <li className="product-row" key={p.id}>
               <button className="product-row-main" onClick={() => setSelected(p)}>
-                <span className="product-row-icon">{dept.icon}</span>
+                <span className="product-row-icon">
+                  <DeptIcon dept={dept} />
+                </span>
                 <span className="product-row-info">
                   <span className="product-row-name">{p.name}</span>
                   <span className="product-row-loc">
@@ -64,7 +68,7 @@ export default function ProductSearch({ onAdd, listedIds }) {
                 aria-label="הוסף לרשימה"
                 title={inList ? 'ברשימה' : 'הוסף לרשימה'}
               >
-                {inList ? '✓' : '➕'}
+                <Icon name={inList ? 'check' : 'plus'} />
               </button>
             </li>
           );

@@ -1,12 +1,13 @@
 import { PRODUCTS, getSaleProducts } from '../data/storeData';
 import FamilyManager from './FamilyManager';
 import PurchasePredictions from './PurchasePredictions';
+import Icon from './Icon';
 
 const SHORTCUTS = [
-  { tab: 'map', label: '🗺️ מפת חנות' },
-  { tab: 'list', label: '📝 רשימת קניות' },
-  { tab: 'compare', label: '💰 השוואת מחירים' },
-  { tab: 'nav', label: '🧭 ניווט' },
+  { tab: 'map', icon: 'map', label: 'מפת חנות' },
+  { tab: 'list', icon: 'list', label: 'רשימת קניות' },
+  { tab: 'compare', icon: 'tag', label: 'השוואת מחירים' },
+  { tab: 'nav', icon: 'compass', label: 'ניווט' },
 ];
 
 export default function Home({ list, onNavigate }) {
@@ -28,7 +29,9 @@ export default function Home({ list, onNavigate }) {
         </div>
         <div className="home-stat">
           <span className="home-stat-value">{saleCount}</span>
-          <span className="home-stat-label">🏷️ מבצעים היום</span>
+          <span className="home-stat-label">
+            <Icon name="tag" /> מבצעים היום
+          </span>
         </div>
       </div>
 
@@ -38,6 +41,7 @@ export default function Home({ list, onNavigate }) {
       <div className="home-shortcuts">
         {SHORTCUTS.map((s) => (
           <button key={s.tab} className="home-shortcut" onClick={() => onNavigate(s.tab)}>
+            <Icon name={s.icon} />
             {s.label}
           </button>
         ))}

@@ -12,6 +12,8 @@ import StoreMap from './StoreMap';
 import CameraNav from './CameraNav';
 import LocationCheckin from './LocationCheckin';
 import ProductDetail from './ProductDetail';
+import Icon from './Icon';
+import DeptIcon from './DeptIcon';
 
 const GPS_ACCURACY_THRESHOLD_M = 30; // מעל זה — לא סומכים על ה-fix
 const GPS_MATCH_MAX_M = 60; // מרחק מקסימלי ממחלקה-מכוילת כדי לזהות אותה
@@ -64,7 +66,7 @@ export default function Navigation({ list, onBack }) {
       <div className="nav-page">
         <p className="empty-hint">אין מוצרים ברשימת הקניות. חזרו והוסיפו מוצרים כדי לחשב מסלול.</p>
         <button className="btn btn--primary" onClick={onBack}>
-          ⬅ חזרה לרשימה
+          <Icon name="arrow-left" /> חזרה לרשימה
         </button>
       </div>
     );
@@ -119,7 +121,8 @@ export default function Navigation({ list, onBack }) {
         <span className="location-card-info">
           {currentLocationId ? (
             <>
-              📍 {getDepartment(currentLocationId).icon} {getDepartment(currentLocationId).name}
+              <Icon name="pin" /> <DeptIcon dept={getDepartment(currentLocationId)} />{' '}
+              {getDepartment(currentLocationId).name}
               <span className="location-card-time"> · {timeAgoLabel(lastCheckinAt)}</span>
             </>
           ) : (
@@ -130,7 +133,7 @@ export default function Navigation({ list, onBack }) {
           className="btn btn--ghost btn--small"
           onClick={() => setShowInlinePicker((v) => !v)}
         >
-          📍 עדכן מיקום
+          <Icon name="pin" /> עדכן מיקום
         </button>
       </div>
 
@@ -139,14 +142,20 @@ export default function Navigation({ list, onBack }) {
       <div className="location-card-row location-card-steps">
         {!gps.active ? (
           <button className="btn btn--text btn--small" onClick={gps.start} disabled={!gps.supported}>
-            📡 הפעל GPS (אמיתי, תלוי-קליטה)
+            <Icon name="wifi" /> הפעל GPS (אמיתי, תלוי-קליטה)
           </button>
         ) : gpsUsable ? (
-          <span className="step-info">📡 GPS פעיל — מעדכן מיקום אוטומטית</span>
+          <span className="step-info">
+            <Icon name="wifi" /> GPS פעיל — מעדכן מיקום אוטומטית
+          </span>
         ) : gpsConfident ? (
-          <span className="step-info">📡 יש קליטת-GPS, אך המחלקה כאן לא כוילה — עדכנו מיקום ידנית</span>
+          <span className="step-info">
+            <Icon name="wifi" /> יש קליטת-GPS, אך המחלקה כאן לא כוילה — עדכנו מיקום ידנית
+          </span>
         ) : (
-          <span className="step-info">📡 מחפש קליטת-GPS… (בד"כ עובד רק ליד כניסה/חוץ)</span>
+          <span className="step-info">
+            <Icon name="wifi" /> מחפש קליטת-GPS… (בד"כ עובד רק ליד כניסה/חוץ)
+          </span>
         )}
         {!gps.supported && <span className="step-unsupported">לא נתמך במכשיר זה</span>}
       </div>
@@ -159,15 +168,19 @@ export default function Navigation({ list, onBack }) {
             onClick={stepCounter.start}
             disabled={!stepCounter.supported}
           >
-            🚶 הפעל מד-צעדים (ניסיוני)
+            <Icon name="footsteps" solid /> הפעל מד-צעדים (ניסיוני)
           </button>
         ) : (
-          <span className="step-info">🚶 הלכת כ-{stepCounter.distanceMeters} מ׳ מאז העדכון האחרון</span>
+          <span className="step-info">
+            <Icon name="footsteps" solid /> הלכת כ-{stepCounter.distanceMeters} מ׳ מאז העדכון האחרון
+          </span>
         )}
         {!stepCounter.supported && <span className="step-unsupported">לא נתמך במכשיר זה</span>}
       </div>
       {showStepHint && (
-        <p className="step-hint">יכול להיות שהגעת — כדאי לעדכן מיקום? 📍</p>
+        <p className="step-hint">
+          יכול להיות שהגעת — כדאי לעדכן מיקום? <Icon name="pin" />
+        </p>
       )}
       {rerouteHint && <p className="reroute-hint">{rerouteHint}</p>}
     </div>
@@ -197,10 +210,11 @@ export default function Navigation({ list, onBack }) {
     <div className="nav-page">
       <div className="nav-summary">
         <div>
-          <strong>{stops.length}</strong> תחנות · ⏱ כ-{routeInit.estimatedMinutes} דק׳ משוער
+          <strong>{stops.length}</strong> תחנות ·{' '}
+          <Icon name="clock" /> כ-{routeInit.estimatedMinutes} דק׳ משוער
         </div>
         <button className="btn btn--text" onClick={onBack}>
-          ⬅ חזרה לרשימה
+          <Icon name="arrow-left" /> חזרה לרשימה
         </button>
       </div>
 
@@ -218,9 +232,9 @@ export default function Navigation({ list, onBack }) {
               (idx < stopIndex ? ' route-step--done' : '')
             }
           >
-            <span className="route-step-badge">{idx < stopIndex ? '✓' : idx + 1}</span>
+            <span className="route-step-badge">{idx < stopIndex ? <Icon name="check" /> : idx + 1}</span>
             <span>
-              {s.department.icon} {s.department.name}
+              <DeptIcon dept={s.department} /> {s.department.name}
             </span>
           </li>
         ))}
@@ -228,7 +242,9 @@ export default function Navigation({ list, onBack }) {
 
       {saleItemsAtStop.length > 0 && (
         <div className="sale-banner">
-          <p className="sale-banner-title">🏷️ מבצע בתחנה זו!</p>
+          <p className="sale-banner-title">
+            <Icon name="tag" /> מבצע בתחנה זו!
+          </p>
           <ul className="sale-banner-list">
             {saleItemsAtStop.map((i) => (
               <li key={i.id}>
@@ -241,7 +257,9 @@ export default function Navigation({ list, onBack }) {
 
       {finished ? (
         <div className="nav-finished">
-          <h2>🎉 הגעת לקופות!</h2>
+          <h2>
+            <Icon name="cart" /> הגעת לקופות!
+          </h2>
           <p>כל המחלקות הוקפו במסלול היעיל ביותר.</p>
           <button className="btn btn--primary" onClick={handleFinish}>
             סיום קנייה
@@ -251,10 +269,10 @@ export default function Navigation({ list, onBack }) {
         <div className="nav-stop-card">
           <div className="nav-stop-head">
             <h2>
-              {stop.department.icon} {stop.department.name}
+              <DeptIcon dept={stop.department} /> {stop.department.name}
             </h2>
             <button className="btn btn--ghost btn--small" onClick={() => setArMode(true)}>
-              📷 ניווט AR
+              <Icon name="camera" /> ניווט AR
             </button>
           </div>
           <ul className="nav-item-list">
@@ -288,7 +306,7 @@ export default function Navigation({ list, onBack }) {
                     onClick={() => reportNotFound(item)}
                     title="דווח שהמוצר לא נמצא במיקום"
                   >
-                    ❌ לא נמצא
+                    <Icon name="close" /> לא נמצא
                   </button>
                 </li>
               );
@@ -296,8 +314,16 @@ export default function Navigation({ list, onBack }) {
           </ul>
 
           <button className="btn btn--primary nav-next" onClick={goNext}>
-            {allPickedAtStop ? '✓ ' : ''}
-            {stopIndex + 1 < stops.length ? 'לתחנה הבאה ⬅' : 'עבור לקופות 🛒'}
+            {allPickedAtStop && <Icon name="check" />}
+            {stopIndex + 1 < stops.length ? (
+              <>
+                לתחנה הבאה <Icon name="arrow-left" />
+              </>
+            ) : (
+              <>
+                עבור לקופות <Icon name="cart" />
+              </>
+            )}
           </button>
         </div>
       )}

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { searchProducts } from '../data/storeData';
 import { parseVoiceListText } from '../lib/voiceParse';
 import { useSpeechRecognition } from '../lib/useSpeechRecognition';
+import Icon from './Icon';
 
 export default function VoiceAddPanel({ onAdd }) {
   const speech = useSpeechRecognition();
@@ -26,7 +27,11 @@ export default function VoiceAddPanel({ onAdd }) {
   }, [speech.transcript]);
 
   if (!speech.supported) {
-    return <p className="voice-unsupported">🎤 זיהוי-דיבור לא נתמך בדפדפן הזה.</p>;
+    return (
+      <p className="voice-unsupported">
+        <Icon name="mic" /> זיהוי-דיבור לא נתמך בדפדפן הזה.
+      </p>
+    );
   }
 
   return (
@@ -39,11 +44,13 @@ export default function VoiceAddPanel({ onAdd }) {
           else speech.start();
         }}
       >
-        {speech.listening ? '⏹️ עצור הקלטה' : '🎤 הוסף בקול'}
+        <Icon name={speech.listening ? 'close' : 'mic'} /> {speech.listening ? 'עצור הקלטה' : 'הוסף בקול'}
       </button>
 
       {speech.listening && (
-        <p className="voice-hint">🎙️ מקשיב… למשל: "אני צריך חלב, קפה וביצים"</p>
+        <p className="voice-hint">
+          <Icon name="mic" /> מקשיב… למשל: "אני צריך חלב, קפה וביצים"
+        </p>
       )}
 
       {speech.error && <p className="voice-error">שגיאת מיקרופון: {speech.error}</p>}
@@ -52,10 +59,14 @@ export default function VoiceAddPanel({ onAdd }) {
         <div className="voice-result">
           <p className="voice-transcript">זוהה: "{result.transcript}"</p>
           {result.matched.length > 0 && (
-            <p className="voice-matched">✅ נוספו: {result.matched.join(', ')}</p>
+            <p className="voice-matched">
+              <Icon name="check" /> נוספו: {result.matched.join(', ')}
+            </p>
           )}
           {result.unmatched.length > 0 && (
-            <p className="voice-unmatched">❌ לא נמצאו במלאי: {result.unmatched.join(', ')}</p>
+            <p className="voice-unmatched">
+              <Icon name="close" /> לא נמצאו במלאי: {result.unmatched.join(', ')}
+            </p>
           )}
         </div>
       )}

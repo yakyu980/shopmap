@@ -1,4 +1,5 @@
 import { getSalePrice } from '../data/storeData';
+import Icon from './Icon';
 
 /** מציג מחיר רגיל, או מחיר-מבצע (מקורי חצוי + מחיר-מוזל + תג-אחוזים). */
 export default function PriceTag({ product, size = 'normal' }) {
@@ -13,7 +14,9 @@ export default function PriceTag({ product, size = 'normal' }) {
     <span className={'price-tag price-tag--sale' + sizeClass}>
       <span className="price-tag-original">₪{sale.original.toFixed(2)}</span>
       <span className="price-tag-discounted">₪{sale.discounted.toFixed(2)}</span>
-      <span className="price-tag-percent">🏷️ {sale.percent}%-</span>
+      <span className="price-tag-percent">
+        <Icon name="tag" /> {sale.percent}%-
+      </span>
     </span>
   );
 }

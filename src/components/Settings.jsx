@@ -3,6 +3,8 @@ import { useAuth } from '../lib/useAuth';
 import { logout } from '../lib/auth';
 import { resetStoreConfig } from '../lib/storeConfig';
 import Login from './Login';
+import Icon from './Icon';
+import CloseButton from './CloseButton';
 
 const LOCAL_KEYS_TO_CLEAR = [
   'supernav_shopping_list_v1',
@@ -47,10 +49,10 @@ export default function Settings({ onClose }) {
   return (
     <div className="settings-overlay" onClick={onClose}>
       <div className="settings-panel" onClick={(e) => e.stopPropagation()}>
-        <button className="modal-close" onClick={onClose} aria-label="סגור">
-          ✕
-        </button>
-        <h2>⚙️ הגדרות</h2>
+        <CloseButton onClick={onClose} />
+        <h2>
+          <Icon name="gear" /> הגדרות
+        </h2>
 
         <section className="settings-section">
           <h3>חשבון</h3>
@@ -67,7 +69,7 @@ export default function Settings({ onClose }) {
                 שתפו את הקוד עם בני-המשפחה כדי שיצטרפו ויראו את אותם עדכוני-מיקום/מחיר/משפחה.
               </p>
               <button className="btn btn--ghost" onClick={logout}>
-                🚪 התנתק
+                <Icon name="door" /> התנתק
               </button>
             </>
           ) : (
@@ -96,13 +98,17 @@ export default function Settings({ onClose }) {
         <section className="settings-section">
           <h3>נתונים מקומיים</h3>
           <button className="btn btn--ghost" onClick={handleResetMap}>
-            ↺ אפס מפת-חנות לברירת-מחדל
+            <Icon name="reset" /> אפס מפת-חנות לברירת-מחדל
           </button>
-          {mapReset && <span className="settings-confirm-msg">✓ אופס</span>}
+          {mapReset && (
+            <span className="settings-confirm-msg">
+              <Icon name="check" /> אופס
+            </span>
+          )}
           <br />
           {!confirmClear ? (
             <button className="btn btn--ghost btn--danger" onClick={() => setConfirmClear(true)}>
-              🗑️ נקה נתונים מקומיים (רשימה, היסטוריית-קניות, משפחה-מקומית)
+              <Icon name="trash" /> נקה נתונים מקומיים (רשימה, היסטוריית-קניות, משפחה-מקומית)
             </button>
           ) : (
             <div className="settings-confirm-row">
@@ -115,7 +121,11 @@ export default function Settings({ onClose }) {
               </button>
             </div>
           )}
-          {cleared && <p className="settings-confirm-msg">✓ נוקה — טוב לרענן את הדף</p>}
+          {cleared && (
+            <p className="settings-confirm-msg">
+              <Icon name="check" /> נוקה — טוב לרענן את הדף
+            </p>
+          )}
         </section>
 
         <section className="settings-section">

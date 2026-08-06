@@ -6,6 +6,9 @@ import { getVerification, markFound, markNotFound } from '../lib/verification';
 import { useAuth } from '../lib/useAuth';
 import { api } from '../lib/apiClient';
 import PriceTag from './PriceTag';
+import Icon from './Icon';
+import DeptIcon from './DeptIcon';
+import CloseButton from './CloseButton';
 
 export default function ProductDetail({ product, onClose, onAdd, onSwap }) {
   const { user } = useAuth();
@@ -71,16 +74,16 @@ export default function ProductDetail({ product, onClose, onAdd, onSwap }) {
   return (
     <div className="modal-backdrop" onClick={onClose}>
       <div className="modal" onClick={(e) => e.stopPropagation()}>
-        <button className="modal-close" onClick={onClose} aria-label="סגור">
-          ✕
-        </button>
+        <CloseButton onClick={onClose} />
         <h2>{product.name}</h2>
         <p className="modal-location">
-          {dept.icon} {dept.name} · {locationLabel(product)}
+          <DeptIcon dept={dept} /> {dept.name} · {locationLabel(product)}
         </p>
 
         {verification.flagged && (
-          <p className="modal-flag">⚠️ משתמשים דיווחו שהמוצר ייתכן שעבר מקום</p>
+          <p className="modal-flag">
+            <Icon name="warning" /> משתמשים דיווחו שהמוצר ייתכן שעבר מקום
+          </p>
         )}
 
         <div className="modal-price-row">
@@ -108,10 +111,10 @@ export default function ProductDetail({ product, onClose, onAdd, onSwap }) {
           <span className="verify-label">האם המוצר נמצא במיקום המצוין?</span>
           <div className="verify-buttons">
             <button className="btn btn--ghost" onClick={() => handleVerify(true)}>
-              ✅ נמצא
+              <Icon name="check" /> נמצא
             </button>
             <button className="btn btn--ghost" onClick={() => handleVerify(false)}>
-              ❌ לא נמצא
+              <Icon name="close" /> לא נמצא
             </button>
           </div>
           <span className="verify-count">
@@ -123,9 +126,13 @@ export default function ProductDetail({ product, onClose, onAdd, onSwap }) {
         {user ? (
           <div className="location-update-section">
             <button className="btn btn--ghost btn--small" onClick={() => setShowLocationPicker((v) => !v)}>
-              📍 עדכן מיקום על המדף
+              <Icon name="pin" /> עדכן מיקום על המדף
             </button>
-            {locationSaved && <span className="settings-confirm-msg">✓ עודכן</span>}
+            {locationSaved && (
+              <span className="settings-confirm-msg">
+                <Icon name="check" /> עודכן
+              </span>
+            )}
 
             {showLocationPicker && (
               <div className="location-picker">
@@ -174,19 +181,23 @@ export default function ProductDetail({ product, onClose, onAdd, onSwap }) {
         )}
 
         <button className="btn btn--primary modal-add" onClick={() => onAdd(product)}>
-          ➕ הוסף לרשימת הקניות
+          <Icon name="plus" /> הוסף לרשימת הקניות
         </button>
 
         {alternatives.length > 0 && (
           <div className="alternatives-section">
-            <h3>🔁 מוצרים דומים</h3>
+            <h3>
+              <Icon name="swap" /> מוצרים דומים
+            </h3>
             <ul className="candidate-list">
               {alternatives.map((alt) => {
                 const altDept = getDepartment(alt.department);
                 return (
                   <li key={alt.id} className="candidate-row">
                     <span className="candidate-btn candidate-btn--static">
-                      <span className="candidate-icon">{altDept.icon}</span>
+                      <span className="candidate-icon">
+                        <DeptIcon dept={altDept} />
+                      </span>
                       <span className="candidate-info">
                         <span className="candidate-name">{alt.name}</span>
                         <span className="candidate-loc">
@@ -199,11 +210,11 @@ export default function ProductDetail({ product, onClose, onAdd, onSwap }) {
                     </span>
                     <div className="alternative-actions">
                       <button className="btn btn--ghost btn--small" onClick={() => onAdd(alt)}>
-                        ➕ הוסף
+                        <Icon name="plus" /> הוסף
                       </button>
                       {onSwap && (
                         <button className="btn btn--ghost btn--small" onClick={() => onSwap(alt)}>
-                          ↔ החלף
+                          <Icon name="swap" /> החלף
                         </button>
                       )}
                     </div>

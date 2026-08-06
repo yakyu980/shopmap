@@ -2,6 +2,8 @@ import { useMemo } from 'react';
 import { getProduct } from '../data/storeData';
 import { getPredictions } from '../lib/purchaseHistory';
 import { getDepartment } from '../lib/storeConfig';
+import Icon from './Icon';
+import DeptIcon from './DeptIcon';
 
 export default function PurchasePredictions({ onAdd, listedIds }) {
   const predictions = useMemo(() => getPredictions(getProduct), []);
@@ -22,7 +24,10 @@ export default function PurchasePredictions({ onAdd, listedIds }) {
               onClick={() => onAdd(product)}
               title={`נרכש לאחרונה לפני ${daysSince} ימים`}
             >
-              {dept.icon} {product.name} <span className="prediction-add">➕</span>
+              <DeptIcon dept={dept} /> {product.name}{' '}
+              <span className="prediction-add">
+                <Icon name="plus" />
+              </span>
             </button>
           );
         })}
