@@ -2,14 +2,13 @@ import { useState } from 'react';
 import { PRODUCTS, getSaleProducts, locationLabel } from '../data/storeData';
 import { getDepartment } from '../lib/storeConfig';
 import { getPriceHistory, priceTrend } from '../lib/priceHistory';
+import { useReceiptHistory } from '../lib/useReceiptHistory';
+import { deleteReceipt } from '../lib/receiptHistory';
 import PriceTag from './PriceTag';
 import ProductDetail from './ProductDetail';
+import ReceiptScanner from './ReceiptScanner';
 import Icon from './Icon';
 import DeptIcon from './DeptIcon';
-
-// הרחבה-עתידית (לא מומשת כאן): להרחיב את purchaseHistory.js לרישום
-// מחיר-ששולם-בפועל בכל recordPurchase, כדי ש"כמה פעם זה עלה" יהיה
-// מבוסס-נתונים-אמיתיים במקום המוק הדטרמיניסטי של getPriceHistory.
 
 function ProductRow({ product, onOpen }) {
   const dept = getDepartment(product.department);
@@ -34,14 +33,49 @@ function ProductRow({ product, onOpen }) {
 
 export default function PriceComparison({ list }) {
   const [detailProduct, setDetailProduct] = useState(null);
+  const [scannerOpen, setScannerOpen] = useState(false);
   const saleProducts = getSaleProducts();
+  const receipts = useReceiptHistory();
 
   return (
     <div className="compare-page">
       <p className="compare-intro">
-        השוואת מחירים והיסטוריית-מחיר לכל מוצר בקטלוג. נתוני ההיסטוריה כרגע הם הדמיה
-        (mock) — הוחלפו בעתיד בנתונים אמיתיים כשיהיה שרת.
+        השוואת מחירים והיסטוריית-מחיר לכל מוצר בקטלוג. נתוני ההיסטוריה הכללית כאן הם
+        הדמיה (mock) — אבל אפשר לבנות היסטוריה אמיתית משלכם, לפי מה ששילמתם בפועל.
       </p>
+
+      <button className="btn btn--primary compare-scan-btn" onClick={() => setScannerOpen(true)}>
+        <Icon name="receipt" /> סרוק קבלה להשוואה אישית
+      </button>
+      {scannerOpen && <ReceiptScanner onClose={() => setScannerOpen(false)} />}
+
+      {receipts.length > 0 && (
+        <>
+          <p className="section-title">
+            <Icon name="receipt" /> הקבלות שסרקתי ({receipts.length})
+          </p>
+          <ul className="receipt-history-list">
+            {receipts.map((r) => {
+              const total = r.items.reduce((s, i) => s + i.price, 0);
+              return (
+                <li key={r.id} className="receipt-history-row">
+                  <span>
+                    {new Date(r.date).toLocaleDateString('he-IL')} · {r.items.length} פריטים · ₪
+                    {total.toFixed(2)}
+                  </span>
+                  <button
+                    className="btn btn--icon btn--danger"
+                    onClick={() => deleteReceipt(r.id)}
+                    aria-label="מחק קבלה"
+                  >
+                    <Icon name="trash" />
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+        </>
+      )}
 
       {saleProducts.length > 0 && (
         <>

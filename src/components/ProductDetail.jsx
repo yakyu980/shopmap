@@ -3,6 +3,7 @@ import { getAlternatives, locationLabel, SHELF_COLS, SHELF_ROWS } from '../data/
 import { getDepartment } from '../lib/storeConfig';
 import { getPriceHistory, priceTrend } from '../lib/priceHistory';
 import { getVerification, markFound, markNotFound } from '../lib/verification';
+import { getRealPriceHistoryForProduct } from '../lib/receiptHistory';
 import { useAuth } from '../lib/useAuth';
 import { api } from '../lib/apiClient';
 import PriceTag from './PriceTag';
@@ -18,6 +19,7 @@ export default function ProductDetail({ product, onClose, onAdd, onSwap }) {
   const trend = priceTrend(history);
   const maxPrice = Math.max(...history.map((h) => h.price));
   const alternatives = getAlternatives(product);
+  const realHistory = getRealPriceHistoryForProduct(product.id);
 
   const [locationHistory, setLocationHistory] = useState([]);
   const [showLocationPicker, setShowLocationPicker] = useState(false);
@@ -94,6 +96,7 @@ export default function ProductDetail({ product, onClose, onAdd, onSwap }) {
           {trend.falling && <span className="trend trend--down">↓ ירד {Math.abs(trend.diffPct)}%</span>}
         </div>
 
+        <p className="settings-hint">היסטוריית-מחיר כללית (הדגמה, לא נתונים אמיתיים):</p>
         <div className="price-history">
           {history.map((h) => (
             <div className="price-bar-col" key={h.month}>
@@ -106,6 +109,22 @@ export default function ProductDetail({ product, onClose, onAdd, onSwap }) {
             </div>
           ))}
         </div>
+
+        {realHistory.length > 0 && (
+          <div className="real-price-history">
+            <p className="settings-hint">
+              <Icon name="receipt" /> המחיר ששילמתם בפועל (מהקבלות שסרקתם):
+            </p>
+            <ul className="real-price-history-list">
+              {realHistory.map((p, i) => (
+                <li key={i}>
+                  {new Date(p.date).toLocaleDateString('he-IL')} · ₪{p.price.toFixed(2)}
+                  {p.discountPercent ? ` (הנחה ${p.discountPercent}%)` : ''}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
 
         <div className="verify-row">
           <span className="verify-label">האם המוצר נמצא במיקום המצוין?</span>

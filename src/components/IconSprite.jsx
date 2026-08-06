@@ -5,6 +5,10 @@ export default function IconSprite() {
   return (
     <svg width="0" height="0" style={{ position: 'absolute' }} aria-hidden="true">
       <defs>
+        <symbol id="ic-receipt" viewBox="0 0 24 24">
+          <path d="M6 2.5h12v18.3l-1.5-1-1.5 1-1.5-1-1.5 1-1.5-1-1.5 1-1.5-1-1.5 1z" />
+          <path d="M9 7.5h6M9 11h6M9 14.5h4" />
+        </symbol>
         <symbol id="ic-clock" viewBox="0 0 24 24">
           <circle cx="12" cy="12" r="9" />
           <path d="M12 7v5l3.5 2" />
