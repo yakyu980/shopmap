@@ -8,8 +8,6 @@ import BarcodeScanner from './BarcodeScanner';
 import ImageProductSearch from './ImageProductSearch';
 import ProductDetail from './ProductDetail';
 import PriceTag from './PriceTag';
-import FamilyManager from './FamilyManager';
-import PurchasePredictions from './PurchasePredictions';
 
 export default function ShoppingList({ list, onGoNavigate }) {
   const { items, addItem, removeItem, assignItem, clear } = list;
@@ -22,8 +20,6 @@ export default function ShoppingList({ list, onGoNavigate }) {
 
   return (
     <div className="shopping-list-page">
-      <FamilyManager />
-      <PurchasePredictions onAdd={addItem} listedIds={listedIds} />
       <VoiceAddPanel onAdd={addItem} />
 
       <div className="scan-buttons-row">

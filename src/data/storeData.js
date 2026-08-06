@@ -120,3 +120,7 @@ export function getSalePrice(product) {
   const discounted = Math.round(product.price * (1 - product.salePercent / 100) * 100) / 100;
   return { original: product.price, discounted, percent: product.salePercent };
 }
+
+export function getSaleProducts() {
+  return PRODUCTS.filter((p) => !!getSalePrice(p));
+}

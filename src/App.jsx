@@ -1,18 +1,22 @@
 import { useState } from 'react';
 import './App.css';
+import Home from './components/Home';
 import StoreMap from './components/StoreMap';
 import ShoppingList from './components/ShoppingList';
+import PriceComparison from './components/PriceComparison';
 import Navigation from './components/Navigation';
 import { useShoppingList } from './lib/useShoppingList';
 
 const TABS = [
+  { id: 'home', label: '🏠 דף בית' },
   { id: 'map', label: '🗺️ מפת חנות' },
   { id: 'list', label: '📝 רשימת קניות' },
+  { id: 'compare', label: '💰 השוואת מחירים' },
   { id: 'nav', label: '🧭 ניווט' },
 ];
 
 export default function App() {
-  const [tab, setTab] = useState('list');
+  const [tab, setTab] = useState('home');
   const list = useShoppingList();
 
   return (
@@ -38,8 +42,10 @@ export default function App() {
       </nav>
 
       <main className="app-main">
+        {tab === 'home' && <Home list={list} onNavigate={setTab} />}
         {tab === 'map' && <StoreMap />}
         {tab === 'list' && <ShoppingList list={list} onGoNavigate={() => setTab('nav')} />}
+        {tab === 'compare' && <PriceComparison list={list} />}
         {tab === 'nav' && <Navigation list={list} onBack={() => setTab('list')} />}
       </main>
     </div>
