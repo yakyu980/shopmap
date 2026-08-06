@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react';
 import { computeRoute, dist, reorderRemainingStops, GRID_UNIT_METERS } from '../lib/route';
 import { locationLabel } from '../data/storeData';
-import { getDepartment } from '../lib/storeConfig';
+import { getDepartment, getDepartments } from '../lib/storeConfig';
 import { markFound, markNotFound } from '../lib/verification';
 import { useStepCounter } from '../lib/useStepCounter';
+import { useGeolocationWatch } from '../lib/useGeolocationWatch';
+import { matchDepartmentByGps } from '../lib/geoMatch';
 import { useFamilyMembers } from '../lib/useFamilyMembers';
 import { addPoints } from '../lib/points';
 import { recordPurchase } from '../lib/purchaseHistory';
@@ -13,6 +15,8 @@ import LocationCheckin from './LocationCheckin';
 import ProductDetail from './ProductDetail';
 
 const CHECKIN_INTERVAL_MS = 90_000;
+const GPS_ACCURACY_THRESHOLD_M = 30; // מעל זה — לא סומכים על ה-fix
+const GPS_MATCH_MAX_M = 60; // מרחק מקסימלי ממחלקה-מכוילת כדי לזהות אותה
 
 function timeAgoLabel(ts) {
   if (!ts) return null;
@@ -36,15 +40,34 @@ export default function Navigation({ list, onBack }) {
   const [rerouteHint, setRerouteHint] = useState('');
   const [detailProduct, setDetailProduct] = useState(null);
   const stepCounter = useStepCounter();
+  const gps = useGeolocationWatch();
   const family = useFamilyMembers();
 
   const finished = stopIndex >= stops.length;
 
+  const gpsConfident =
+    gps.active && gps.position != null && gps.position.accuracy <= GPS_ACCURACY_THRESHOLD_M;
+  const gpsMatch = gpsConfident ? matchDepartmentByGps(gps.position, getDepartments(), GPS_MATCH_MAX_M) : null;
+  // "יש קליטת-GPS" = יש fix מדויק *וגם* הוא תואם למחלקה-מכוילת — בלי זה
+  // אין דרך לתרגם את הנקודה-על-כדור-הארץ למפה-הלוגית שלנו, אז מבחינת
+  // האפליקציה זה כמו "אין קליטה" והטיימר הידני חוזר להיות הגיבוי.
+  const gpsUsable = gpsConfident && gpsMatch != null;
+
+  // הטיימר-היזום רץ רק כשאין GPS-שמישה — ברגע ש-GPS מתחיל לעבוד, הוא
+  // מעדכן מיקום אוטומטית והפרומפט הידני מיותר.
   useEffect(() => {
-    if (finished) return;
+    if (finished || gpsUsable) return;
     const id = setInterval(() => setShowCheckinPrompt(true), CHECKIN_INTERVAL_MS);
     return () => clearInterval(id);
-  }, [finished]);
+  }, [finished, gpsUsable]);
+
+  // עדכון-מיקום אוטומטי מ-GPS כשיש קליטה שמישה, בלי לפתוח שום פרומפט.
+  useEffect(() => {
+    if (!gpsUsable || finished) return;
+    if (gpsMatch.id === currentLocationId) return;
+    handleCheckin(gpsMatch.id, { silent: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [gpsUsable, gpsMatch?.id, finished]);
 
   if (items.length === 0) {
     return (
@@ -89,18 +112,18 @@ export default function Navigation({ list, onBack }) {
     onBack();
   }
 
-  function handleCheckin(deptId) {
+  function handleCheckin(deptId, opts = {}) {
     setCurrentLocationId(deptId);
     setLastCheckinAt(Date.now());
     stepCounter.reset();
     setShowCheckinPrompt(false);
     setShowInlinePicker(false);
-    addPoints(1, 'עדכון מיקום');
+    if (!opts.silent) addPoints(1, 'עדכון מיקום');
 
     if (!finished && deptId !== stop.department.id) {
       const fromPoint = getDepartment(deptId);
       setStops((prev) => reorderRemainingStops(prev, stopIndex, fromPoint));
-      setRerouteHint('📍 המסלול עודכן לפי המיקום שדיווחת');
+      setRerouteHint(opts.silent ? '📡 המסלול עודכן אוטומטית לפי GPS' : '📍 המסלול עודכן לפי המיקום שדיווחת');
       setTimeout(() => setRerouteHint(''), 4000);
     }
   }
@@ -127,6 +150,22 @@ export default function Navigation({ list, onBack }) {
       </div>
 
       {showInlinePicker && <LocationCheckin variant="inline" onSelect={handleCheckin} />}
+
+      <div className="location-card-row location-card-steps">
+        {!gps.active ? (
+          <button className="btn btn--text btn--small" onClick={gps.start} disabled={!gps.supported}>
+            📡 הפעל GPS (אמיתי, תלוי-קליטה)
+          </button>
+        ) : gpsUsable ? (
+          <span className="step-info">📡 GPS פעיל — מעדכן מיקום אוטומטית</span>
+        ) : gpsConfident ? (
+          <span className="step-info">📡 יש קליטת-GPS, אך המחלקה כאן לא כוילה — הפרומפט הידני ממשיך</span>
+        ) : (
+          <span className="step-info">📡 מחפש קליטת-GPS… (בד"כ עובד רק ליד כניסה/חוץ)</span>
+        )}
+        {!gps.supported && <span className="step-unsupported">לא נתמך במכשיר זה</span>}
+      </div>
+      {gps.error && <p className="step-unsupported">שגיאת-GPS: {gps.error}</p>}
 
       <div className="location-card-row location-card-steps">
         {!stepCounter.active ? (

@@ -163,6 +163,32 @@ export function removeDepartment(config, id, products) {
   };
 }
 
+export function setDepartmentGps(config, id, { lat, lng }) {
+  const exists = config.departments.some((d) => d.id === id);
+  if (!exists) return { ok: false, reason: 'מחלקה לא נמצאה' };
+  return {
+    ok: true,
+    config: {
+      ...config,
+      departments: config.departments.map((d) => (d.id === id ? { ...d, lat, lng } : d)),
+    },
+  };
+}
+
+export function clearDepartmentGps(config, id) {
+  return {
+    ok: true,
+    config: {
+      ...config,
+      departments: config.departments.map((d) => {
+        if (d.id !== id) return d;
+        const { lat: _lat, lng: _lng, ...rest } = d;
+        return rest;
+      }),
+    },
+  };
+}
+
 export function resizeGrid(config, { cols, rows }) {
   const nextCols = Math.max(1, Math.min(MAX_GRID_SIZE, cols));
   const nextRows = Math.max(1, Math.min(MAX_GRID_SIZE, rows));

@@ -3,12 +3,14 @@ import { PRODUCTS } from '../data/storeData';
 import { useStoreConfig } from '../lib/useStoreConfig';
 import {
   addDepartment,
+  clearDepartmentGps,
   getStoreConfig,
   moveDepartment,
   removeDepartment,
   renameDepartment,
   resetStoreConfig,
   resizeGrid,
+  setDepartmentGps,
   updateStoreConfig,
   MAX_GRID_SIZE,
 } from '../lib/storeConfig';
@@ -21,6 +23,7 @@ export default function StoreMap({ activeDeptId }) {
   const [formName, setFormName] = useState('');
   const [formIcon, setFormIcon] = useState('');
   const [hint, setHint] = useState('');
+  const [gpsBusy, setGpsBusy] = useState(false);
 
   function showHint(text) {
     setHint(text);
@@ -71,6 +74,39 @@ export default function StoreMap({ activeDeptId }) {
     const res = resizeGrid(getStoreConfig(), { cols, rows });
     if (res.ok) updateStoreConfig(() => res.config);
     else showHint(res.reason);
+  }
+
+  function handleSetGps(deptId) {
+    if (!navigator.geolocation) {
+      showHint('GPS לא נתמך בדפדפן הזה');
+      return;
+    }
+    setGpsBusy(true);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setGpsBusy(false);
+        const res = setDepartmentGps(getStoreConfig(), deptId, {
+          lat: pos.coords.latitude,
+          lng: pos.coords.longitude,
+        });
+        if (res.ok) {
+          updateStoreConfig(() => res.config);
+          showHint(`📍 GPS נקבע (דיוק ~${Math.round(pos.coords.accuracy)} מ')`);
+        } else {
+          showHint(res.reason);
+        }
+      },
+      (err) => {
+        setGpsBusy(false);
+        showHint('לא ניתן לקבל מיקום-GPS: ' + (err.message || 'שגיאה'));
+      },
+      { enableHighAccuracy: true, timeout: 10000 }
+    );
+  }
+
+  function handleClearGps(deptId) {
+    const res = clearDepartmentGps(getStoreConfig(), deptId);
+    if (res.ok) updateStoreConfig(() => res.config);
   }
 
   function handleReset() {
@@ -181,7 +217,12 @@ export default function StoreMap({ activeDeptId }) {
         })}
       </div>
 
-      {editingCell && (
+      {editingCell &&
+        (() => {
+          const liveDept = editingCell.dept
+            ? config.departments.find((d) => d.id === editingCell.dept.id)
+            : null;
+          return (
         <div className="map-edit-form">
           <input
             className="map-edit-input"
@@ -222,8 +263,40 @@ export default function StoreMap({ activeDeptId }) {
               ✖ ביטול
             </button>
           </div>
+
+          {liveDept && (
+            <div className="map-edit-gps">
+              <p className="map-edit-gps-hint">
+                GPS אמיתי — עובד רק כשיש קליטה בפועל (בד"כ ליד כניסה/חלונות/חוץ, לא באמצע
+                המבנה). אופציונלי לכל מחלקה.
+              </p>
+              <div className="map-edit-actions">
+                <button
+                  className="btn btn--ghost btn--small"
+                  onClick={() => handleSetGps(liveDept.id)}
+                  disabled={gpsBusy}
+                >
+                  📍 {gpsBusy ? 'מאתר…' : 'קבע GPS למיקום הנוכחי'}
+                </button>
+                {typeof liveDept.lat === 'number' && (
+                  <button
+                    className="btn btn--text btn--small"
+                    onClick={() => handleClearGps(liveDept.id)}
+                  >
+                    🗑️ נקה GPS
+                  </button>
+                )}
+              </div>
+              {typeof liveDept.lat === 'number' && (
+                <p className="map-edit-gps-status">
+                  ✅ GPS מכויל: {liveDept.lat.toFixed(5)}, {liveDept.lng.toFixed(5)}
+                </p>
+              )}
+            </div>
+          )}
         </div>
-      )}
+          );
+        })()}
     </div>
   );
 }
