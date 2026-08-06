@@ -12,6 +12,19 @@
   text-align: center;
 }
 
+.app-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  position: relative;
+}
+
+.app-header-row .points-badge-wrap {
+  position: absolute;
+  left: 0;
+}
+
 .app-header h1 {
   margin: 0;
   font-size: 26px;
@@ -1344,5 +1357,177 @@
   }
   .sale-banner-list {
     color: #fecaca;
+  }
+}
+
+/* --- מצב משפחתי (מקומי) --- */
+.family-manager {
+  margin-bottom: 10px;
+}
+
+.family-panel {
+  margin-top: 8px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.family-disclaimer {
+  margin: 0;
+  font-size: 11px;
+  color: var(--text-dim);
+}
+
+.family-member-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.family-member-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.family-member-select {
+  flex: 1;
+  text-align: right;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 6px 10px;
+  font-size: 13px;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.family-member-row--active .family-member-select {
+  border-color: var(--primary);
+  font-weight: 700;
+}
+
+.family-add-row {
+  display: flex;
+  gap: 6px;
+}
+
+.assignee-select {
+  font-size: 11px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  padding: 2px 4px;
+  max-width: 70px;
+}
+
+.assignee-badge {
+  font-size: 0.9em;
+}
+
+/* --- חיזוי-קניות --- */
+.predictions-panel {
+  background: #eef2ff;
+  border-radius: 12px;
+  padding: 10px 12px;
+  margin-bottom: 10px;
+}
+
+.predictions-title {
+  margin: 0 0 8px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.predictions-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.prediction-chip {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 6px 10px;
+  font-size: 12px;
+  cursor: pointer;
+  color: var(--text);
+}
+
+.prediction-chip:hover {
+  border-color: var(--primary);
+}
+
+.prediction-add {
+  color: var(--primary-dark);
+  font-weight: 700;
+}
+
+/* --- ניקוד ותגמולים --- */
+.points-badge-wrap {
+  position: relative;
+}
+
+.points-badge {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 6px 12px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  color: var(--text);
+}
+
+.points-popover {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  z-index: 20;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 10px 12px;
+  min-width: 200px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+  text-align: right;
+}
+
+.points-tier {
+  margin: 0 0 4px;
+  font-weight: 700;
+  font-size: 13px;
+}
+
+.points-disclaimer {
+  margin: 0 0 8px;
+  font-size: 10px;
+  color: var(--text-dim);
+}
+
+.points-log {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  font-size: 11px;
+  color: var(--text-dim);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+@media (prefers-color-scheme: dark) {
+  .predictions-panel {
+    background: #1e2340;
   }
 }

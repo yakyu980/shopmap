@@ -3,6 +3,7 @@ import { locationLabel } from '../data/storeData';
 import { getDepartment } from '../lib/storeConfig';
 import { computeDirection } from '../lib/direction';
 import { useCameraStream, CAMERA_STATUS as STATUS } from '../lib/useCameraStream';
+import { useFamilyMembers } from '../lib/useFamilyMembers';
 import LocationCheckin from './LocationCheckin';
 
 export default function CameraNav({
@@ -19,6 +20,7 @@ export default function CameraNav({
 }) {
   const { videoRef, status } = useCameraStream();
   const [showPicker, setShowPicker] = useState(false);
+  const family = useFamilyMembers();
 
   const dir = computeDirection(fromDept, stop.department);
   const allPicked = stop.items.every((i) => items.find((x) => x.id === i.id)?.picked);
@@ -98,7 +100,14 @@ export default function CameraNav({
                     onChange={() => togglePicked(item.id)}
                   />
                   <span>
-                    <span className="nav-item-name">{item.name}</span>
+                    <span className="nav-item-name">
+                      {item.name}
+                      {item.assignee &&
+                        (() => {
+                          const member = family.members.find((m) => m.id === item.assignee);
+                          return member ? <span className="assignee-badge"> {member.emoji}</span> : null;
+                        })()}
+                    </span>
                     <span className="nav-item-loc">{locationLabel(item)}</span>
                   </span>
                 </label>

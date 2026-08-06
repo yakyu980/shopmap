@@ -3,6 +3,7 @@ import { getDepartment } from '../lib/storeConfig';
 import { locationLabel } from '../data/storeData';
 import { useCameraStream, CAMERA_STATUS } from '../lib/useCameraStream';
 import { pickCandidates } from '../lib/imageRecognitionMock';
+import { addPoints } from '../lib/points';
 import PriceTag from './PriceTag';
 
 const SAMPLE_SIZE = 24;
@@ -34,6 +35,7 @@ export default function ImageProductSearch({ onAdd, onClose, onFallbackToSearch 
 
   function handlePick(product) {
     onAdd(product);
+    addPoints(2, 'חיפוש לפי תמונה');
     setAdded(product.name);
   }
 

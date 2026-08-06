@@ -4,6 +4,9 @@ import { locationLabel } from '../data/storeData';
 import { getDepartment } from '../lib/storeConfig';
 import { markFound, markNotFound } from '../lib/verification';
 import { useStepCounter } from '../lib/useStepCounter';
+import { useFamilyMembers } from '../lib/useFamilyMembers';
+import { addPoints } from '../lib/points';
+import { recordPurchase } from '../lib/purchaseHistory';
 import StoreMap from './StoreMap';
 import CameraNav from './CameraNav';
 import LocationCheckin from './LocationCheckin';
@@ -19,7 +22,7 @@ function timeAgoLabel(ts) {
 }
 
 export default function Navigation({ list, onBack }) {
-  const { items, togglePicked, addItem, removeItem } = list;
+  const { items, togglePicked, addItem, removeItem, clear } = list;
   const [routeInit] = useState(() => computeRoute(items));
   const { entrance } = routeInit;
   const [stops, setStops] = useState(routeInit.stops);
@@ -33,6 +36,7 @@ export default function Navigation({ list, onBack }) {
   const [rerouteHint, setRerouteHint] = useState('');
   const [detailProduct, setDetailProduct] = useState(null);
   const stepCounter = useStepCounter();
+  const family = useFamilyMembers();
 
   const finished = stopIndex >= stops.length;
 
@@ -66,14 +70,23 @@ export default function Navigation({ list, onBack }) {
 
   function reportFound(productId) {
     markFound(productId);
+    addPoints(1, 'אימות מוצר');
   }
   function reportNotFound(item) {
     markNotFound(item.id);
+    addPoints(1, 'אימות מוצר');
     setDetailProduct(item);
   }
   function goNext() {
     setStopIndex((i) => i + 1);
     if (stopIndex + 1 >= stops.length) setArMode(false);
+  }
+
+  function handleFinish() {
+    recordPurchase(items.map((i) => i.id));
+    addPoints(10, 'השלמת קנייה');
+    clear();
+    onBack();
   }
 
   function handleCheckin(deptId) {
@@ -82,6 +95,7 @@ export default function Navigation({ list, onBack }) {
     stepCounter.reset();
     setShowCheckinPrompt(false);
     setShowInlinePicker(false);
+    addPoints(1, 'עדכון מיקום');
 
     if (!finished && deptId !== stop.department.id) {
       const fromPoint = getDepartment(deptId);
@@ -205,7 +219,7 @@ export default function Navigation({ list, onBack }) {
         <div className="nav-finished">
           <h2>🎉 הגעת לקופות!</h2>
           <p>כל המחלקות הוקפו במסלול היעיל ביותר.</p>
-          <button className="btn btn--primary" onClick={onBack}>
+          <button className="btn btn--primary" onClick={handleFinish}>
             סיום קנייה
           </button>
         </div>
@@ -234,7 +248,14 @@ export default function Navigation({ list, onBack }) {
                       }}
                     />
                     <span>
-                      <span className="nav-item-name">{item.name}</span>
+                      <span className="nav-item-name">
+                        {item.name}
+                        {item.assignee &&
+                          (() => {
+                            const member = family.members.find((m) => m.id === item.assignee);
+                            return member ? <span className="assignee-badge"> {member.emoji}</span> : null;
+                          })()}
+                      </span>
                       <span className="nav-item-loc">{locationLabel(item)}</span>
                     </span>
                   </label>

@@ -1,23 +1,29 @@
 import { useState } from 'react';
 import { locationLabel } from '../data/storeData';
 import { getDepartment } from '../lib/storeConfig';
+import { useFamilyMembers } from '../lib/useFamilyMembers';
 import ProductSearch from './ProductSearch';
 import VoiceAddPanel from './VoiceAddPanel';
 import BarcodeScanner from './BarcodeScanner';
 import ImageProductSearch from './ImageProductSearch';
 import ProductDetail from './ProductDetail';
 import PriceTag from './PriceTag';
+import FamilyManager from './FamilyManager';
+import PurchasePredictions from './PurchasePredictions';
 
 export default function ShoppingList({ list, onGoNavigate }) {
-  const { items, addItem, removeItem, clear } = list;
+  const { items, addItem, removeItem, assignItem, clear } = list;
   const listedIds = new Set(items.map((i) => i.id));
   const total = items.reduce((sum, i) => sum + i.price, 0);
   const [scannerOpen, setScannerOpen] = useState(false);
   const [imageSearchOpen, setImageSearchOpen] = useState(false);
   const [detailProduct, setDetailProduct] = useState(null);
+  const family = useFamilyMembers();
 
   return (
     <div className="shopping-list-page">
+      <FamilyManager />
+      <PurchasePredictions onAdd={addItem} listedIds={listedIds} />
       <VoiceAddPanel onAdd={addItem} />
 
       <div className="scan-buttons-row">
@@ -70,6 +76,21 @@ export default function ShoppingList({ list, onGoNavigate }) {
                   <span className="cart-row-price">
                     <PriceTag product={item} size="small" />
                   </span>
+                  {family.members.length > 0 && (
+                    <select
+                      className="assignee-select"
+                      value={item.assignee || ''}
+                      onChange={(e) => assignItem(item.id, e.target.value || null)}
+                      aria-label="שייך לבן-משפחה"
+                    >
+                      <option value="">ללא</option>
+                      {family.members.map((m) => (
+                        <option key={m.id} value={m.id}>
+                          {m.emoji} {m.name}
+                        </option>
+                      ))}
+                    </select>
+                  )}
                   <button
                     className="btn btn--icon btn--danger"
                     onClick={() => removeItem(item.id)}

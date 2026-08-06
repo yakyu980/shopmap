@@ -23,7 +23,9 @@ export function useShoppingList() {
 
   const addItem = useCallback((product) => {
     setItems((prev) =>
-      prev.some((i) => i.id === product.id) ? prev : [...prev, { ...product, picked: false }]
+      prev.some((i) => i.id === product.id)
+        ? prev
+        : [...prev, { ...product, picked: false, assignee: null }]
     );
   }, []);
 
@@ -37,7 +39,13 @@ export function useShoppingList() {
     );
   }, []);
 
+  const assignItem = useCallback((productId, memberId) => {
+    setItems((prev) =>
+      prev.map((i) => (i.id === productId ? { ...i, assignee: memberId } : i))
+    );
+  }, []);
+
   const clear = useCallback(() => setItems([]), []);
 
-  return { items, addItem, removeItem, togglePicked, clear };
+  return { items, addItem, removeItem, togglePicked, assignItem, clear };
 }
