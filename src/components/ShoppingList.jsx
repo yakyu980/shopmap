@@ -1,5 +1,6 @@
 import { getDepartment, locationLabel } from '../data/storeData';
 import ProductSearch from './ProductSearch';
+import VoiceAddPanel from './VoiceAddPanel';
 
 export default function ShoppingList({ list, onGoNavigate }) {
   const { items, addItem, removeItem, clear } = list;
@@ -8,6 +9,7 @@ export default function ShoppingList({ list, onGoNavigate }) {
 
   return (
     <div className="shopping-list-page">
+      <VoiceAddPanel onAdd={addItem} />
       <ProductSearch onAdd={addItem} listedIds={listedIds} />
 
       <div className="shopping-list-section">

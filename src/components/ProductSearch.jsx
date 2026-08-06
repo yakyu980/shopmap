@@ -1,10 +1,16 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { PRODUCTS, getDepartment, locationLabel, searchProducts } from '../data/storeData';
+import { useSpeechRecognition } from '../lib/useSpeechRecognition';
 import ProductDetail from './ProductDetail';
 
 export default function ProductSearch({ onAdd, listedIds }) {
   const [query, setQuery] = useState('');
   const [selected, setSelected] = useState(null);
+  const speech = useSpeechRecognition();
+
+  useEffect(() => {
+    if (speech.transcript) setQuery(speech.transcript);
+  }, [speech.transcript]);
 
   const results = useMemo(() => {
     if (!query.trim()) return PRODUCTS.slice(0, 8);
@@ -13,13 +19,25 @@ export default function ProductSearch({ onAdd, listedIds }) {
 
   return (
     <div className="product-search">
-      <input
-        className="search-input"
-        type="text"
-        placeholder="🔍 חפש מוצר… (למשל: חלב, קטשופ)"
-        value={query}
-        onChange={(e) => setQuery(e.target.value)}
-      />
+      <div className="search-input-row">
+        <input
+          className="search-input"
+          type="text"
+          placeholder="🔍 חפש מוצר… (למשל: חלב, קטשופ)"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+        />
+        {speech.supported && (
+          <button
+            className={'btn btn--icon voice-search-btn' + (speech.listening ? ' voice-search-btn--live' : '')}
+            onClick={() => (speech.listening ? speech.stop() : speech.start())}
+            aria-label="חיפוש קולי"
+            title="חיפוש קולי"
+          >
+            🎤
+          </button>
+        )}
+      </div>
       <ul className="product-list">
         {results.map((p) => {
           const dept = getDepartment(p.department);
