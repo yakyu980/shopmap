@@ -11,6 +11,7 @@ import venueRoutes from './routes/venues.js';
 import tripRoutes from './routes/trips.js';
 import priceObservationRoutes from './routes/priceObservations.js';
 import priceImportRoutes from './routes/priceImport.js';
+import dealsRoutes from './routes/deals.js';
 
 const app = express();
 app.use(cors());
@@ -24,6 +25,7 @@ app.use('/api/venues', venueRoutes);
 app.use('/api/trips', tripRoutes);
 app.use('/api/price-observations', priceObservationRoutes);
 app.use('/api/price-import', priceImportRoutes);
+app.use('/api/deals', dealsRoutes);
 
 app.get('/api/health', (req, res) => res.json({ ok: true }));
 
