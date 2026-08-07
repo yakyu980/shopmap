@@ -4,6 +4,9 @@ import { useCameraStream, CAMERA_STATUS } from '../lib/useCameraStream';
 import { recognizeReceiptText } from '../lib/receiptOcr';
 import { parseReceiptText, matchReceiptItemsToCatalog } from '../lib/receiptParse';
 import { saveReceipt } from '../lib/receiptHistory';
+import { useAuth } from '../lib/useAuth';
+import { useVenues } from '../lib/useVenues';
+import { api } from '../lib/apiClient';
 import Icon from './Icon';
 import CloseButton from './CloseButton';
 
@@ -17,6 +20,10 @@ export default function ReceiptScanner({ onClose }) {
   const [progress, setProgress] = useState(0);
   const [rows, setRows] = useState([]);
   const [error, setError] = useState('');
+  const [venueId, setVenueId] = useState('');
+  const [syncedToServer, setSyncedToServer] = useState(false);
+  const { token } = useAuth();
+  const { venues } = useVenues();
 
   async function runOcr(imageSource) {
     setStage(STAGE.OCR);
@@ -64,9 +71,24 @@ export default function ReceiptScanner({ onClose }) {
     setRows((prev) => [...prev, { name: '', price: 0, discountPercent: null, matchedProductId: null }]);
   }
 
-  function handleSave() {
+  async function handleSave() {
     const valid = rows.filter((r) => r.name.trim() && r.price > 0);
-    saveReceipt(valid);
+
+    // סנכרון-לשרת: רק כשמחוברים *וגם* נבחרה חנות מפורשת — בלעדיהם
+    // הקבלה נשארת מקומית-בלבד, כמו שהייתה עד עכשיו (ר' CLAUDE.md §16).
+    // venueId מועבר להיסטוריה המקומית *רק* אם הסנכרון הצליח באמת —
+    // כדי שלא תיווצר שורה-כפולה (מקומית+שרת) לאותה קנייה בפועל.
+    let synced = false;
+    if (token && venueId) {
+      try {
+        await api.post('/price-observations', { venueId, items: valid, purchasedAt: Date.now() });
+        synced = true;
+      } catch {
+        /* השרת לא זמין — נשמור מקומית-בלבד, לא חוסמים */
+      }
+    }
+    saveReceipt(valid, synced ? venueId : null);
+    setSyncedToServer(synced);
     setStage(STAGE.SAVED);
   }
 
@@ -187,6 +209,25 @@ export default function ReceiptScanner({ onClose }) {
             <button className="btn btn--ghost btn--small" onClick={addManualRow}>
               <Icon name="plus" /> הוסף שורה ידנית
             </button>
+
+            {token && (
+              <label className="receipt-venue-label">
+                באיזו חנות קניתם? (כדי שההשוואה תכלול גם סניפים/רשתות אחרות)
+                <select
+                  className="map-edit-input"
+                  value={venueId}
+                  onChange={(e) => setVenueId(e.target.value)}
+                >
+                  <option value="">— לא צוין (נשאר מקומי-בלבד) —</option>
+                  {venues.map((v) => (
+                    <option key={v.id} value={v.id}>
+                      {v.chainName} · {v.branchName}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            )}
+
             <button className="btn btn--primary receipt-save-btn" onClick={handleSave} disabled={rows.length === 0}>
               <Icon name="check" /> שמור קבלה
             </button>
@@ -197,6 +238,11 @@ export default function ReceiptScanner({ onClose }) {
           <div className="receipt-saved">
             <p>
               <Icon name="check" /> הקבלה נשמרה ({rows.filter((r) => r.name.trim() && r.price > 0).length} פריטים).
+            </p>
+            <p className="settings-hint">
+              {syncedToServer
+                ? 'שותפה גם עם בני-המשפחה, לצורך השוואה בין החנות הזו לחנויות אחרות.'
+                : 'נשמרה במכשיר הזה בלבד (לא צוינה חנות, או שהמשתמש לא מחובר).'}
             </p>
             <button className="btn btn--primary" onClick={onClose}>
               סגור

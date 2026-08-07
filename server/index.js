@@ -9,6 +9,7 @@ import productRoutes from './routes/products.js';
 import imageSearchRoutes from './routes/imageSearch.js';
 import venueRoutes from './routes/venues.js';
 import tripRoutes from './routes/trips.js';
+import priceObservationRoutes from './routes/priceObservations.js';
 
 const app = express();
 app.use(cors());
@@ -20,6 +21,7 @@ app.use('/api/products', productRoutes);
 app.use('/api/image-search', imageSearchRoutes);
 app.use('/api/venues', venueRoutes);
 app.use('/api/trips', tripRoutes);
+app.use('/api/price-observations', priceObservationRoutes);
 
 app.get('/api/health', (req, res) => res.json({ ok: true }));
 

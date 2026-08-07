@@ -26,6 +26,7 @@ export default function ProductDetail({ product, onClose, onAdd, onSwap }) {
   const [pickShelf, setPickShelf] = useState(product.shelf);
   const [locationSaved, setLocationSaved] = useState(false);
   const [verifiedViaServer, setVerifiedViaServer] = useState(false);
+  const [serverPriceRows, setServerPriceRows] = useState([]);
 
   useEffect(() => {
     let cancelled = false;
@@ -37,10 +38,37 @@ export default function ProductDetail({ product, onClose, onAdd, onSwap }) {
       .catch(() => {
         /* השרת לא זמין — פשוט לא מציגים היסטוריית-מיקום */
       });
+    if (user) {
+      api
+        .get(`/price-observations/${product.id}`)
+        .then((data) => {
+          if (!cancelled) setServerPriceRows(data.rows || []);
+        })
+        .catch(() => {
+          /* השרת לא זמין — נשארים רק עם ההיסטוריה המקומית */
+        });
+    }
     return () => {
       cancelled = true;
     };
-  }, [product.id]);
+  }, [product.id, user]);
+
+  // ממזג היסטוריית-קבלות מקומית (בלי שם-חנות) עם שורות ששותפו לשרת
+  // (עם שם-חנות, אם נבחרה חנות בזמן-הסריקה) — לרשימה אחת ממוינת,
+  // ומסמן את הזול-ביותר כשיש 2+ מקורות שונים. ר' CLAUDE.md §16.
+  const combinedRealHistory = [
+    ...realHistory.map((p) => ({ date: p.date, price: p.price, discountPercent: p.discountPercent, venueName: null })),
+    ...serverPriceRows.map((r) => ({
+      date: r.purchasedAt,
+      price: r.price,
+      discountPercent: r.discountPercent,
+      venueName: r.venueName,
+    })),
+  ].sort((a, b) => a.date - b.date);
+  const cheapestPrice = combinedRealHistory.length
+    ? Math.min(...combinedRealHistory.map((p) => p.price))
+    : null;
+  const hasMultipleVenues = new Set(combinedRealHistory.map((p) => p.venueName).filter(Boolean)).size > 1;
 
   async function handleVerify(found) {
     if (user) {
@@ -110,16 +138,18 @@ export default function ProductDetail({ product, onClose, onAdd, onSwap }) {
           ))}
         </div>
 
-        {realHistory.length > 0 && (
+        {combinedRealHistory.length > 0 && (
           <div className="real-price-history">
             <p className="settings-hint">
-              <Icon name="receipt" /> המחיר ששילמתם בפועל (מהקבלות שסרקתם):
+              <Icon name="receipt" /> המחיר ששילמתם בפועל — מהקבלות שסרקתם, לא מול מחיר-רשמי חי:
             </p>
             <ul className="real-price-history-list">
-              {realHistory.map((p, i) => (
+              {combinedRealHistory.map((p, i) => (
                 <li key={i}>
                   {new Date(p.date).toLocaleDateString('he-IL')} · ₪{p.price.toFixed(2)}
                   {p.discountPercent ? ` (הנחה ${p.discountPercent}%)` : ''}
+                  {p.venueName ? ` · ${p.venueName}` : ''}
+                  {hasMultipleVenues && p.price === cheapestPrice ? ' 🏆 הכי-זול שראית' : ''}
                 </li>
               ))}
             </ul>
