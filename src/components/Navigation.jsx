@@ -12,6 +12,7 @@ import StoreMap from './StoreMap';
 import CameraNav from './CameraNav';
 import LocationCheckin from './LocationCheckin';
 import ProductDetail from './ProductDetail';
+import CheckpointScanner from './CheckpointScanner';
 import Icon from './Icon';
 import DeptIcon from './DeptIcon';
 
@@ -38,6 +39,9 @@ export default function Navigation({ list, onBack }) {
   const [showInlinePicker, setShowInlinePicker] = useState(false);
   const [rerouteHint, setRerouteHint] = useState('');
   const [detailProduct, setDetailProduct] = useState(null);
+  const [checkpointPosition, setCheckpointPosition] = useState(null); // {x,y,floor} | null
+  const [currentCheckpointId, setCurrentCheckpointId] = useState(null);
+  const [checkpointScannerOpen, setCheckpointScannerOpen] = useState(false);
   const stepCounter = useStepCounter();
   const gps = useGeolocationWatch();
   const family = useFamilyMembers();
@@ -75,7 +79,13 @@ export default function Navigation({ list, onBack }) {
   const stop = !finished ? stops[stopIndex] : null;
   const allPickedAtStop = stop ? stop.items.every((i) => items.find((x) => x.id === i.id)?.picked) : false;
   const saleItemsAtStop = stop ? stop.items.filter((i) => i.salePercent) : [];
+  // מיקום-מדויק-אמיתי מסריקת-צ'ק-פוינט (לא הדמיה) גובר על מרכז-תא-
+  // המחלקה — אבל רק כשהיעד באותה קומה; אחרת חישוב-הכיוון הדו-ממדי
+  // לא משמעותי בין קומות (ר' floorMismatch למטה, שמציג רמז-קומה
+  // במקום חץ מטעה).
+  const floorMismatch = checkpointPosition && stop && stop.department.floor !== checkpointPosition.floor;
   const fromDept =
+    (checkpointPosition && !floorMismatch && { x: checkpointPosition.x, y: checkpointPosition.y }) ||
     (currentLocationId && getDepartment(currentLocationId)) ||
     (stopIndex === 0 ? entrance : stops[stopIndex - 1].department);
 
@@ -106,13 +116,45 @@ export default function Navigation({ list, onBack }) {
     setLastCheckinAt(Date.now());
     stepCounter.reset();
     setShowInlinePicker(false);
+    if (!opts.viaCheckpoint) {
+      setCheckpointPosition(null);
+      setCurrentCheckpointId(null);
+    }
 
     if (!finished && deptId !== stop.department.id) {
       const fromPoint = getDepartment(deptId);
       setStops((prev) => reorderRemainingStops(prev, stopIndex, fromPoint));
-      setRerouteHint(opts.silent ? '📡 המסלול עודכן אוטומטית לפי GPS' : '📍 המסלול עודכן לפי המיקום שדיווחת');
+      setRerouteHint(
+        opts.viaCheckpoint
+          ? '📷 המסלול עודכן לפי סריקת הצ׳ק-פוינט'
+          : opts.silent
+            ? '📡 המסלול עודכן אוטומטית לפי GPS'
+            : '📍 המסלול עודכן לפי המיקום שדיווחת'
+      );
       setTimeout(() => setRerouteHint(''), 4000);
     }
+  }
+
+  // סריקת-QR של צ'ק-פוינט אמיתי (ר' CheckpointScanner.jsx) — לא GPS
+  // ולא הדמיה. אין מחלקה-מדויקת לצ'ק-פוינט עצמו (הוא נקודת-ניווט, לא
+  // מדף), אז לצורך "מיקום נוכחי" בכרטיס+לוגיקת-מסלול-מחדש משתמשים
+  // במחלקה הקרובה-ביותר אליו על אותה קומה; לחישוב-הכיוון המדויק
+  // (החץ ב-AR) עצמו כן משתמשים בקואורדינטות-הצ'ק-פוינט המדויקות
+  // (ר' fromDept למעלה) — לא רק "המחלקה הקרובה".
+  function handleCheckpointScan(checkpoint) {
+    setCheckpointPosition({ x: checkpoint.x, y: checkpoint.y, floor: checkpoint.floor });
+    setCurrentCheckpointId(checkpoint.id);
+    const deptsOnFloor = getDepartments().filter((d) => d.floor === checkpoint.floor);
+    let nearest = null;
+    let nearestDist = Infinity;
+    for (const d of deptsOnFloor) {
+      const dd = Math.hypot(d.x - checkpoint.x, d.y - checkpoint.y);
+      if (dd < nearestDist) {
+        nearestDist = dd;
+        nearest = d;
+      }
+    }
+    if (nearest) handleCheckin(nearest.id, { viaCheckpoint: true });
   }
 
   const locationCard = (
@@ -135,9 +177,18 @@ export default function Navigation({ list, onBack }) {
         >
           <Icon name="pin" /> עדכן מיקום
         </button>
+        <button className="btn btn--ghost btn--small" onClick={() => setCheckpointScannerOpen(true)}>
+          <Icon name="camera" /> סרוק צ׳ק-פוינט
+        </button>
       </div>
 
       {showInlinePicker && <LocationCheckin onSelect={handleCheckin} />}
+      {floorMismatch && (
+        <p className="step-hint">
+          <Icon name="pin" /> הצ׳ק-פוינט האחרון שסרקת הוא בקומה אחרת מהיעד הבא — עלו/רדו קומה ואז
+          סרקו צ׳ק-פוינט שם לניווט מדויק.
+        </p>
+      )}
 
       <div className="location-card-row location-card-steps">
         {!gps.active ? (
@@ -188,21 +239,27 @@ export default function Navigation({ list, onBack }) {
 
   if (arMode && stop) {
     return (
-      <CameraNav
-        fromDept={fromDept}
-        stop={stop}
-        items={items}
-        togglePicked={(id) => {
-          togglePicked(id);
-          reportFound(id);
-        }}
-        onNext={goNext}
-        isLast={stopIndex + 1 >= stops.length}
-        onExit={() => setArMode(false)}
-        currentLocationId={currentLocationId}
-        onCheckin={handleCheckin}
-        stepCounter={stepCounter}
-      />
+      <>
+        <CameraNav
+          fromDept={fromDept}
+          stop={stop}
+          items={items}
+          togglePicked={(id) => {
+            togglePicked(id);
+            reportFound(id);
+          }}
+          onNext={goNext}
+          isLast={stopIndex + 1 >= stops.length}
+          onExit={() => setArMode(false)}
+          currentLocationId={currentLocationId}
+          onCheckin={handleCheckin}
+          stepCounter={stepCounter}
+          onScanCheckpoint={() => setCheckpointScannerOpen(true)}
+        />
+        {checkpointScannerOpen && (
+          <CheckpointScanner onScan={handleCheckpointScan} onClose={() => setCheckpointScannerOpen(false)} />
+        )}
+      </>
     );
   }
 
@@ -219,8 +276,11 @@ export default function Navigation({ list, onBack }) {
       </div>
 
       {locationCard}
+      {checkpointScannerOpen && (
+        <CheckpointScanner onScan={handleCheckpointScan} onClose={() => setCheckpointScannerOpen(false)} />
+      )}
 
-      <StoreMap activeDeptId={stop?.department.id} />
+      <StoreMap activeDeptId={stop?.department.id} currentCheckpointId={currentCheckpointId} />
 
       <ol className="route-steps">
         {stops.map((s, idx) => (

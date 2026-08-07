@@ -19,6 +19,7 @@ export default function CameraNav({
   currentLocationId,
   onCheckin,
   stepCounter,
+  onScanCheckpoint,
 }) {
   const { videoRef, status } = useCameraStream();
   const [showPicker, setShowPicker] = useState(false);
@@ -67,6 +68,11 @@ export default function CameraNav({
           <Icon name="pin" />
           {currentLocationId ? <DeptIcon dept={getDepartment(currentLocationId)} /> : ''}
         </button>
+        {onScanCheckpoint && (
+          <button className="btn btn--ghost btn--small ar-location-btn" onClick={onScanCheckpoint}>
+            <Icon name="camera" />
+          </button>
+        )}
       </div>
 
       {showPicker && (
