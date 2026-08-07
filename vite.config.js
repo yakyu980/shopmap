@@ -20,6 +20,18 @@ export default defineConfig({
       },
     },
   },
+  build: {
+    rollupOptions: {
+      output: {
+        // שם-קובץ נבדל לחבילות tfjs/mobilenet (זיהוי-תמונה אמיתי) —
+        // כדי שאפשר יהיה לא לכלול אותן ב-precache הנטען-מראש (~1MB),
+        // אותו עיקרון בדיוק כמו tesseract/** למטה.
+        manualChunks(id) {
+          if (id.includes('@tensorflow') || id.includes('mobilenet')) return 'tfjs-vendor';
+        },
+      },
+    },
+  },
   plugins: [
     react(),
     VitePWA({
@@ -49,7 +61,10 @@ export default defineConfig({
         // ראשון בפועל (CacheFirst), כדי לא להכביד על עמידה-לטעינה-
         // ראשונית של האפליקציה. אחרי שימוש-ראשון הם נשמרים ל-cache
         // ועובדים אופליין כמו כל שאר האפליקציה.
-        globIgnores: ['tesseract/**'],
+        // אותו עיקרון בדיוק ל-tfjs-vendor (זיהוי-תמונה אמיתי, ~1.1MB) —
+        // נטען-מראש-ל-cache רק בשימוש-ראשון בפועל (פתיחת "חפש לפי
+        // תמונה" וצילום), לא בהתקנת ה-service-worker.
+        globIgnores: ['tesseract/**', 'mobilenet/**', '**/tfjs-vendor-*.js'],
         runtimeCaching: [
           {
             urlPattern: ({ url }) => url.pathname.startsWith('/tesseract/'),
@@ -57,6 +72,22 @@ export default defineConfig({
             options: {
               cacheName: 'tesseract-ocr-assets',
               expiration: { maxEntries: 10 },
+            },
+          },
+          {
+            urlPattern: ({ url }) => url.pathname.startsWith('/mobilenet/'),
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'mobilenet-model-assets',
+              expiration: { maxEntries: 10 },
+            },
+          },
+          {
+            urlPattern: ({ url }) => /\/tfjs-vendor-.*\.js$/.test(url.pathname),
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'tfjs-vendor-assets',
+              expiration: { maxEntries: 5 },
             },
           },
         ],

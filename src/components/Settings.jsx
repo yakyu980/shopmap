@@ -3,6 +3,7 @@ import { useAuth } from '../lib/useAuth';
 import { logout } from '../lib/auth';
 import { resetStoreConfig } from '../lib/storeConfig';
 import Login from './Login';
+import PriceImport from './PriceImport';
 import Icon from './Icon';
 import CloseButton from './CloseButton';
 
@@ -19,6 +20,7 @@ export default function Settings({ onClose }) {
   const [confirmClear, setConfirmClear] = useState(false);
   const [cleared, setCleared] = useState(false);
   const [mapReset, setMapReset] = useState(false);
+  const [priceImportOpen, setPriceImportOpen] = useState(false);
 
   useEffect(() => {
     if (!navigator.permissions?.query) return;
@@ -128,12 +130,27 @@ export default function Settings({ onClose }) {
           )}
         </section>
 
+        {user && (
+          <section className="settings-section">
+            <h3>מחירים-רשמיים</h3>
+            <p className="settings-hint">
+              ייבוא קובץ-CSV שהכנתם בעצמכם (למשל בעזרת כלי-קוד-פתוח כמו israeli-supermarket-scraper)
+              — לא מושך שום דבר מהאינטרנט מכאן.
+            </p>
+            <button className="btn btn--ghost" onClick={() => setPriceImportOpen(true)}>
+              <Icon name="receipt" /> ייבוא מחירים-רשמיים
+            </button>
+          </section>
+        )}
+        {priceImportOpen && <PriceImport onClose={() => setPriceImportOpen(false)} />}
+
         <section className="settings-section">
           <h3>מה אמיתי ומה הדגמה, בכנות</h3>
           <ul className="settings-honesty-list">
-            <li>✅ אמיתי: מסלול-ניווט, GPS (כשמכויל), חיפוש/הוספה קולית, סריקת ברקוד, עבודה בלי אינטרנט</li>
-            <li>✅ אמיתי (כשמחוברים): סנכרון-משפחה, עדכון-מיקום-מוצר, היסטוריית-מחיר, אימות-קהילתי — דרך שרת-הדגמה מקומי</li>
-            <li>🎭 הדגמה מוצהרת: זיהוי-מוצר-מתמונה (עדיין ניחוש-דטרמיניסטי, לא AI-ראייה אמיתי)</li>
+            <li>✅ אמיתי: מסלול-ניווט, GPS (כשמכויל), חיפוש/הוספה קולית, סריקת ברקוד (+זיהוי מול Open Food Facts כשלא בקטלוג שלנו), OCR-קבלות, סריקת QR-צ'ק-פוינט, עבודה בלי אינטרנט</li>
+            <li>✅ אמיתי: זיהוי-מוצר-מתמונה (TensorFlow.js/MobileNet, רץ בדפדפן) — קטגוריה חזותית-כללית, לא מותג-מדויק; נופל לניחוש-הדמה אם המודל לא נטען</li>
+            <li>✅ אמיתי (כשמחוברים): סנכרון-משפחה, טיול-קניות משותף, עדכון-מיקום-מוצר, השוואת-מחירים חוצת-סניפים מקבלות שסרקתם, ייבוא מחירים-רשמיים — דרך שרת-הדגמה מקומי</li>
+            <li>⚠️ אין כאן חיבור-חי למחירים-רשמיים של הרשתות (חסום ברשת הסביבה הזו) — רק ייבוא-ידני של CSV שהכנתם בעצמכם</li>
             <li>⚠️ שרת-ההדגמה רץ מקומית בלבד בסביבה הזו — לא פרוס לאינטרנט</li>
           </ul>
         </section>

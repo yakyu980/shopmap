@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { getDepartment } from '../lib/storeConfig';
 import { getProductByBarcode, locationLabel } from '../data/storeData';
 import { useCameraStream, CAMERA_STATUS } from '../lib/useCameraStream';
+import { lookupBarcodeExternal } from '../lib/openFoodFacts';
 import ProductDetail from './ProductDetail';
 import PriceTag from './PriceTag';
 import Icon from './Icon';
@@ -14,14 +15,32 @@ const SCAN_INTERVAL_MS = 400;
 export default function BarcodeScanner({ onAdd, onClose }) {
   const { videoRef, status } = useCameraStream();
   const [manualCode, setManualCode] = useState('');
-  const [result, setResult] = useState(null); // {found, product?, code}
+  const [result, setResult] = useState(null); // {found, product?, externalProduct?, code}
   const [detectorSupported, setDetectorSupported] = useState(typeof window.BarcodeDetector !== 'undefined');
   const [showDetail, setShowDetail] = useState(false);
+  const [checkingExternal, setCheckingExternal] = useState(false);
   const detectorRef = useRef(null);
 
-  function lookup(code) {
+  async function lookup(code) {
     const product = getProductByBarcode(code);
-    setResult({ found: !!product, product, code });
+    if (product) {
+      setResult({ found: true, product, code });
+      return;
+    }
+    // לא בקטלוג-שלנו — ננסה זיהוי אמיתי מול Open Food Facts (מסד-
+    // ברקודים גלובלי, לא מומצא). אם זה נכשל (בלי-רשת/ברקוד-לא-קיים-
+    // גם-שם) חוזרים לתשובת "לא נמצא" הרגילה. ⚠️ הזיהוי-הזה הוא רק
+    // *שם-מוצר* אמיתי — אין לו מחיר/מיקום בסניף שלנו (זה לא בקטלוג).
+    setCheckingExternal(true);
+    setResult(null);
+    let externalProduct = null;
+    try {
+      externalProduct = await lookupBarcodeExternal(code);
+    } catch {
+      /* אין רשת/השירות לא זמין — נופלים ל"לא נמצא" הרגיל */
+    }
+    setCheckingExternal(false);
+    setResult({ found: false, externalProduct, code });
   }
 
   useEffect(() => {
@@ -97,6 +116,12 @@ export default function BarcodeScanner({ onAdd, onClose }) {
           </button>
         </div>
 
+        {checkingExternal && (
+          <p className="barcode-hint">
+            <Icon name="search" /> לא בקטלוג שלנו — בודק זיהוי-אמיתי מול Open Food Facts…
+          </p>
+        )}
+
         {result && (
           <div className="barcode-result">
             {result.found ? (
@@ -134,9 +159,18 @@ export default function BarcodeScanner({ onAdd, onClose }) {
               </>
             ) : (
               <>
-                <p className="barcode-not-found">
-                  <Icon name="close" /> לא נמצא מוצר עם ברקוד "{result.code}"
-                </p>
+                {result.externalProduct ? (
+                  <p className="barcode-not-found">
+                    <Icon name="check" /> זוהה כ-"{result.externalProduct.name}"
+                    {result.externalProduct.brand ? ` (${result.externalProduct.brand})` : ''} — ברקוד אמיתי
+                    (Open Food Facts), אבל <strong>לא בקטלוג של הסניף הזה</strong> (אין לו מחיר/מיקום-מדף
+                    אצלנו).
+                  </p>
+                ) : (
+                  <p className="barcode-not-found">
+                    <Icon name="close" /> לא נמצא מוצר עם ברקוד "{result.code}" (גם לא בזיהוי-חיצוני)
+                  </p>
+                )}
                 <button
                   className="btn btn--text btn--small"
                   onClick={() => {

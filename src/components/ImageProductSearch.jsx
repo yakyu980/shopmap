@@ -1,8 +1,10 @@
 import { useRef, useState } from 'react';
 import { getDepartment } from '../lib/storeConfig';
-import { locationLabel } from '../data/storeData';
+import { locationLabel, PRODUCTS } from '../data/storeData';
 import { useCameraStream, CAMERA_STATUS } from '../lib/useCameraStream';
 import { pickCandidates } from '../lib/imageRecognitionMock';
+import { classifyImage } from '../lib/imageClassify';
+import { matchPredictionsToCatalog } from '../lib/imageClassifyMatch';
 import { useAuth } from '../lib/useAuth';
 import { api } from '../lib/apiClient';
 import PriceTag from './PriceTag';
@@ -18,11 +20,44 @@ export default function ImageProductSearch({ onAdd, onClose, onFallbackToSearch 
   const canvasRef = useRef(null);
   const [candidates, setCandidates] = useState(null);
   const [added, setAdded] = useState(null);
+  const [realMatch, setRealMatch] = useState(null); // {predictedLabel} | null — כשהזיהוי אמיתי (לא mock)
+  const [noMatchLabel, setNoMatchLabel] = useState(null); // הזיהוי-האמיתי *כן* רץ בהצלחה, פשוט בלי התאמה בקטלוג
+  const [classifying, setClassifying] = useState(false);
 
   async function handleCapture() {
     const video = videoRef.current;
     const canvas = canvasRef.current;
     if (!video || !canvas) return;
+
+    // ניסיון-ראשון: זיהוי אמיתי (MobileNet, רץ בדפדפן) על תמונה מלאה
+    // (לא ה-24×24 המקטין-לצורך-seed). שני מצבי-כישלון שונים לגמרי,
+    // וחשוב להבחין ביניהם בממשק כדי לא להטעות: (1) המודל לא נטען
+    // בכלל (אופליין/רשת) — noMatchLabel נשאר null; (2) המודל רץ
+    // בהצלחה אבל לא זיהה משהו שיש לו התאמה בקטלוג המצומצם שלנו
+    // (noMatchLabel נשמר עם התווית-האמיתית-שזוהתה). שניהם נופלים
+    // לזיהוי-הדמה למטה, אבל ההודעה למשתמש שונה ונכונה לכל מצב.
+    setClassifying(true);
+    setNoMatchLabel(null);
+    try {
+      const fullCanvas = document.createElement('canvas');
+      fullCanvas.width = video.videoWidth || 320;
+      fullCanvas.height = video.videoHeight || 240;
+      fullCanvas.getContext('2d').drawImage(video, 0, 0, fullCanvas.width, fullCanvas.height);
+      const predictions = await classifyImage(fullCanvas, 5);
+      const result = matchPredictionsToCatalog(predictions, PRODUCTS);
+      if (result) {
+        setCandidates(result.matched);
+        setRealMatch({ predictedLabel: result.predictedLabel });
+        setAdded(null);
+        setClassifying(false);
+        return;
+      }
+      if (predictions.length > 0) setNoMatchLabel(predictions[0].className);
+    } catch {
+      /* המודל לא נטען (אופליין/רשת) — noMatchLabel נשאר null */
+    }
+    setClassifying(false);
+
     canvas.width = SAMPLE_SIZE;
     canvas.height = SAMPLE_SIZE;
     const ctx = canvas.getContext('2d');
@@ -35,6 +70,7 @@ export default function ImageProductSearch({ onAdd, onClose, onFallbackToSearch 
       seed = String(Date.now());
     }
 
+    setRealMatch(null);
     if (user) {
       try {
         const data = await api.post('/image-search', { seed });
@@ -85,8 +121,8 @@ export default function ImageProductSearch({ onAdd, onClose, onFallbackToSearch 
             )}
             <canvas ref={canvasRef} style={{ display: 'none' }} />
             {status === CAMERA_STATUS.READY && (
-              <button className="btn btn--primary" onClick={handleCapture}>
-                <Icon name="camera" /> צלם
+              <button className="btn btn--primary" onClick={handleCapture} disabled={classifying}>
+                <Icon name="camera" /> {classifying ? 'מזהה…' : 'צלם'}
               </button>
             )}
           </>
@@ -94,9 +130,21 @@ export default function ImageProductSearch({ onAdd, onClose, onFallbackToSearch 
 
         {candidates && (
           <div className="image-search-result">
-            <p className="mock-disclaimer">
-              🔮 זיהוי-מוצר לפי תמונה (דמה — לא AI אמיתי). בחרו את המוצר הנכון מבין המועמדים:
-            </p>
+            {realMatch ? (
+              <p className="mock-disclaimer">
+                <Icon name="check" /> זיהוי-תמונה אמיתי (TensorFlow.js/MobileNet, רץ בדפדפן) — זוהה כ-"
+                {realMatch.predictedLabel}". זו קטגוריה חזותית-כללית, לא מותג-מדויק — בחרו את המוצר הנכון:
+              </p>
+            ) : noMatchLabel ? (
+              <p className="mock-disclaimer">
+                <Icon name="check" /> הזיהוי-האמיתי רץ בהצלחה וזיהה "{noMatchLabel}" — אבל אין לזה התאמה
+                בקטלוג המצומצם שלנו. הצעות-הדמה במקום. בחרו את המוצר הנכון:
+              </p>
+            ) : (
+              <p className="mock-disclaimer">
+                🔮 הזיהוי-האמיתי לא רץ (מודל לא נטען/אופליין) — הצעות-הדמה במקום. בחרו את המוצר הנכון:
+              </p>
+            )}
             <ul className="candidate-list">
               {candidates.map((p) => {
                 const dept = getDepartment(p.department);
@@ -131,6 +179,8 @@ export default function ImageProductSearch({ onAdd, onClose, onFallbackToSearch 
                 onClick={() => {
                   setCandidates(null);
                   setAdded(null);
+                  setRealMatch(null);
+                  setNoMatchLabel(null);
                 }}
               >
                 <Icon name="reset" /> צלם שוב
