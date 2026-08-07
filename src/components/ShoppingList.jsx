@@ -2,27 +2,41 @@ import { useState } from 'react';
 import { locationLabel } from '../data/storeData';
 import { getDepartment } from '../lib/storeConfig';
 import { useFamilyMembers } from '../lib/useFamilyMembers';
+import { useAuth } from '../lib/useAuth';
+import { useTripSync } from '../lib/useTripSync';
 import ProductSearch from './ProductSearch';
 import VoiceAddPanel from './VoiceAddPanel';
 import BarcodeScanner from './BarcodeScanner';
 import ImageProductSearch from './ImageProductSearch';
 import ProductDetail from './ProductDetail';
+import TripVenuePicker from './TripVenuePicker';
 import PriceTag from './PriceTag';
 import Icon from './Icon';
 import DeptIcon from './DeptIcon';
 
 export default function ShoppingList({ list, onGoNavigate }) {
   const { items, addItem, removeItem, assignItem, clear } = list;
-  const listedIds = new Set(items.map((i) => i.id));
-  const total = items.reduce((sum, i) => sum + i.price, 0);
+  const { token } = useAuth();
+  const { trip, startTrip, addTripItem, toggleTripItem, removeTripItem, finishTrip } = useTripSync();
+  const listedIds = new Set((trip ? trip.items : items).map((i) => i.productId || i.id));
+  const total = (trip ? trip.items : items).reduce((sum, i) => sum + i.price, 0);
   const [scannerOpen, setScannerOpen] = useState(false);
   const [imageSearchOpen, setImageSearchOpen] = useState(false);
   const [detailProduct, setDetailProduct] = useState(null);
+  const [venuePickerOpen, setVenuePickerOpen] = useState(false);
   const family = useFamilyMembers();
+
+  // כשיש טיול-משותף-פעיל, כל הוספה הולכת לטיול (משותף-לכולם, נשמר
+  // בשרת) במקום לרשימה המקומית — ללא טיול-פעיל ההתנהגות בדיוק כמו
+  // היום (מקומית-בלבד, offline-first).
+  function handleAdd(product) {
+    if (trip) addTripItem(product);
+    else addItem(product);
+  }
 
   return (
     <div className="shopping-list-page">
-      <VoiceAddPanel onAdd={addItem} />
+      <VoiceAddPanel onAdd={handleAdd} />
 
       <div className="scan-buttons-row">
         <button className="btn btn--ghost" onClick={() => setScannerOpen(true)}>
@@ -33,14 +47,43 @@ export default function ShoppingList({ list, onGoNavigate }) {
         </button>
       </div>
 
-      <ProductSearch onAdd={addItem} listedIds={listedIds} />
+      <ProductSearch onAdd={handleAdd} listedIds={listedIds} />
+
+      {token && (
+        <div className="trip-banner">
+          {trip ? (
+            <>
+              <span className="trip-banner-label">
+                <Icon name="family" /> טיול-קניות משותף פעיל
+              </span>
+              <button className="btn btn--text" onClick={finishTrip}>
+                🏁 סיים טיול
+              </button>
+            </>
+          ) : (
+            <button className="btn btn--ghost btn--small" onClick={() => setVenuePickerOpen(true)}>
+              🛒 התחל טיול-קניות משותף
+            </button>
+          )}
+        </div>
+      )}
+
+      {venuePickerOpen && (
+        <TripVenuePicker
+          onClose={() => setVenuePickerOpen(false)}
+          onPick={async (venueId) => {
+            await startTrip(venueId);
+            setVenuePickerOpen(false);
+          }}
+        />
+      )}
 
       {scannerOpen && (
-        <BarcodeScanner onAdd={addItem} onClose={() => setScannerOpen(false)} />
+        <BarcodeScanner onAdd={handleAdd} onClose={() => setScannerOpen(false)} />
       )}
       {imageSearchOpen && (
         <ImageProductSearch
-          onAdd={addItem}
+          onAdd={handleAdd}
           onClose={() => setImageSearchOpen(false)}
           onFallbackToSearch={() => setImageSearchOpen(false)}
         />
@@ -48,35 +91,41 @@ export default function ShoppingList({ list, onGoNavigate }) {
 
       <div className="shopping-list-section">
         <div className="shopping-list-header">
-          <h3>רשימת הקניות שלי ({items.length})</h3>
-          {items.length > 0 && (
+          <h3>
+            {trip ? 'רשימת הטיול המשותף' : 'רשימת הקניות שלי'} ({(trip ? trip.items : items).length})
+          </h3>
+          {!trip && items.length > 0 && (
             <button className="btn btn--text" onClick={clear}>
               נקה הכל
             </button>
           )}
         </div>
 
-        {items.length === 0 ? (
+        {(trip ? trip.items : items).length === 0 ? (
           <p className="empty-hint">הרשימה ריקה — חפשו מוצרים למעלה והוסיפו אותם.</p>
         ) : (
           <ul className="cart-list">
-            {items.map((item) => {
+            {(trip ? trip.items : items).map((item) => {
               const dept = getDepartment(item.department);
               return (
                 <li className="cart-row" key={item.id}>
                   <span className="cart-row-icon">
                     <DeptIcon dept={dept} />
                   </span>
-                  <button className="cart-row-info cart-row-info--btn" onClick={() => setDetailProduct(item)}>
+                  <button
+                    className="cart-row-info cart-row-info--btn"
+                    onClick={() => !trip && setDetailProduct(item)}
+                  >
                     <span className="cart-row-name">{item.name}</span>
                     <span className="cart-row-loc">
                       {dept.name} · {locationLabel(item)}
+                      {trip && ` · הוסיף/ה ${item.addedBy}`}
                     </span>
                   </button>
                   <span className="cart-row-price">
                     <PriceTag product={item} size="small" />
                   </span>
-                  {family.members.length > 0 && (
+                  {!trip && family.members.length > 0 && (
                     <select
                       className="assignee-select"
                       value={item.assignee || ''}
@@ -91,9 +140,18 @@ export default function ShoppingList({ list, onGoNavigate }) {
                       ))}
                     </select>
                   )}
+                  {trip && (
+                    <input
+                      type="checkbox"
+                      className="trip-item-picked"
+                      checked={item.picked}
+                      onChange={() => toggleTripItem(item.id)}
+                      aria-label="נקנה"
+                    />
+                  )}
                   <button
                     className="btn btn--icon btn--danger"
-                    onClick={() => removeItem(item.id)}
+                    onClick={() => (trip ? removeTripItem(item.id) : removeItem(item.id))}
                     aria-label="הסר"
                   >
                     <Icon name="trash" />
@@ -104,7 +162,7 @@ export default function ShoppingList({ list, onGoNavigate }) {
           </ul>
         )}
 
-        {items.length > 0 && (
+        {(trip ? trip.items : items).length > 0 && (
           <div className="shopping-list-footer">
             <span className="cart-total">סה"כ: ₪{total.toFixed(2)}</span>
             <button className="btn btn--primary" onClick={onGoNavigate}>
@@ -119,12 +177,12 @@ export default function ShoppingList({ list, onGoNavigate }) {
           product={detailProduct}
           onClose={() => setDetailProduct(null)}
           onAdd={(p) => {
-            addItem(p);
+            handleAdd(p);
             setDetailProduct(null);
           }}
           onSwap={(alt) => {
             removeItem(detailProduct.id);
-            addItem(alt);
+            handleAdd(alt);
             setDetailProduct(null);
           }}
         />

@@ -7,6 +7,8 @@ import authRoutes from './routes/auth.js';
 import householdRoutes from './routes/household.js';
 import productRoutes from './routes/products.js';
 import imageSearchRoutes from './routes/imageSearch.js';
+import venueRoutes from './routes/venues.js';
+import tripRoutes from './routes/trips.js';
 
 const app = express();
 app.use(cors());
@@ -16,6 +18,8 @@ app.use('/api/auth', authRoutes);
 app.use('/api/household', householdRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/image-search', imageSearchRoutes);
+app.use('/api/venues', venueRoutes);
+app.use('/api/trips', tripRoutes);
 
 app.get('/api/health', (req, res) => res.json({ ok: true }));
 

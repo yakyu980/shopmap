@@ -36,6 +36,9 @@ function emptyDb() {
     priceHistory: [],
     locationHistory: [],
     verifications: {}, // productId -> {confirmed, notFound}
+    venues: [], // {id, householdId, chainName, branchName, storeType, address, createdBy, createdAt}
+    trips: [], // {id, householdId, venueId, status, createdBy, createdAt, items: [...]}
+    priceObservations: [], // {id, householdId, userId, venueId, items:[...], purchasedAt, createdAt}
   };
 }
 
