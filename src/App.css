@@ -2143,3 +2143,75 @@
   color: var(--text-dim);
   margin: 4px 0 12px;
 }
+
+.favorites-modal {
+  max-width: 420px;
+}
+
+.favorites-list,
+.custom-item-list {
+  list-style: none;
+  margin: 8px 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.favorite-row,
+.custom-item-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.favorite-photo {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  object-fit: cover;
+  flex: 0 0 auto;
+}
+
+.favorite-photo--empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--primary-tint);
+  color: var(--primary);
+  font-size: 16px;
+}
+
+.favorite-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.favorite-name {
+  font-size: 13px;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.favorite-brand {
+  font-size: 11px;
+  color: var(--text-dim);
+}
+
+.favorite-photo-preview {
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  object-fit: cover;
+}

@@ -10,6 +10,7 @@ import BarcodeScanner from './BarcodeScanner';
 import ImageProductSearch from './ImageProductSearch';
 import ProductDetail from './ProductDetail';
 import TripVenuePicker from './TripVenuePicker';
+import FavoritesManager from './FavoritesManager';
 import PriceTag from './PriceTag';
 import Icon from './Icon';
 import DeptIcon from './DeptIcon';
@@ -18,19 +19,27 @@ export default function ShoppingList({ list, onGoNavigate }) {
   const { items, addItem, removeItem, assignItem, clear } = list;
   const { token } = useAuth();
   const { trip, startTrip, addTripItem, toggleTripItem, removeTripItem, finishTrip } = useTripSync();
-  const listedIds = new Set((trip ? trip.items : items).map((i) => i.productId || i.id));
-  const total = (trip ? trip.items : items).reduce((sum, i) => sum + i.price, 0);
+  // "פריטים אישיים" (מ-⭐ מועדפים, לא בקטלוג — ר' FavoritesManager.jsx)
+  // אין להם department/price אמיתיים, אז הם לא יכולים לעבור דרך
+  // DeptIcon/PriceTag הרגילים; מוצגים בסעיף-נפרד למטה ותמיד מקומיים
+  // בלבד (גם כשיש טיול-משותף-פעיל — השרת דורש מחיר-מספרי אמיתי).
+  const displayItems = trip ? trip.items : items.filter((i) => !i.custom);
+  const customItems = trip ? [] : items.filter((i) => i.custom);
+  const listedIds = new Set(displayItems.map((i) => i.productId || i.id));
+  const total = displayItems.reduce((sum, i) => sum + i.price, 0);
   const [scannerOpen, setScannerOpen] = useState(false);
   const [imageSearchOpen, setImageSearchOpen] = useState(false);
   const [detailProduct, setDetailProduct] = useState(null);
   const [venuePickerOpen, setVenuePickerOpen] = useState(false);
+  const [favoritesOpen, setFavoritesOpen] = useState(false);
   const family = useFamilyMembers();
 
   // כשיש טיול-משותף-פעיל, כל הוספה הולכת לטיול (משותף-לכולם, נשמר
   // בשרת) במקום לרשימה המקומית — ללא טיול-פעיל ההתנהגות בדיוק כמו
   // היום (מקומית-בלבד, offline-first).
   function handleAdd(product) {
-    if (trip) addTripItem(product);
+    if (product.custom) addItem(product);
+    else if (trip) addTripItem(product);
     else addItem(product);
   }
 
@@ -45,7 +54,14 @@ export default function ShoppingList({ list, onGoNavigate }) {
         <button className="btn btn--ghost" onClick={() => setImageSearchOpen(true)}>
           <Icon name="camera" /> חפש לפי תמונה
         </button>
+        <button className="btn btn--ghost" onClick={() => setFavoritesOpen(true)}>
+          <Icon name="star" /> המועדפים שלי
+        </button>
       </div>
+
+      {favoritesOpen && (
+        <FavoritesManager onAddToList={handleAdd} onClose={() => setFavoritesOpen(false)} />
+      )}
 
       <ProductSearch onAdd={handleAdd} listedIds={listedIds} />
 
@@ -92,7 +108,7 @@ export default function ShoppingList({ list, onGoNavigate }) {
       <div className="shopping-list-section">
         <div className="shopping-list-header">
           <h3>
-            {trip ? 'רשימת הטיול המשותף' : 'רשימת הקניות שלי'} ({(trip ? trip.items : items).length})
+            {trip ? 'רשימת הטיול המשותף' : 'רשימת הקניות שלי'} ({displayItems.length})
           </h3>
           {!trip && items.length > 0 && (
             <button className="btn btn--text" onClick={clear}>
@@ -101,11 +117,11 @@ export default function ShoppingList({ list, onGoNavigate }) {
           )}
         </div>
 
-        {(trip ? trip.items : items).length === 0 ? (
+        {displayItems.length === 0 && customItems.length === 0 ? (
           <p className="empty-hint">הרשימה ריקה — חפשו מוצרים למעלה והוסיפו אותם.</p>
-        ) : (
+        ) : displayItems.length === 0 ? null : (
           <ul className="cart-list">
-            {(trip ? trip.items : items).map((item) => {
+            {displayItems.map((item) => {
               const dept = getDepartment(item.department);
               return (
                 <li className="cart-row" key={item.id}>
@@ -162,7 +178,39 @@ export default function ShoppingList({ list, onGoNavigate }) {
           </ul>
         )}
 
-        {(trip ? trip.items : items).length > 0 && (
+        {customItems.length > 0 && (
+          <>
+            <p className="settings-hint">
+              <Icon name="tag" /> פריטים אישיים, לא בקטלוג — לא מנווטים אליהם, זכרו לקחת אותם בעצמכם:
+            </p>
+            <ul className="custom-item-list">
+              {customItems.map((item) => (
+                <li className="custom-item-row" key={item.id}>
+                  {item.photo ? (
+                    <img className="favorite-photo" src={item.photo} alt={item.name} />
+                  ) : (
+                    <span className="favorite-photo favorite-photo--empty">
+                      <Icon name="tag" />
+                    </span>
+                  )}
+                  <span className="favorite-info">
+                    <span className="favorite-name">{item.name}</span>
+                    {item.brand && <span className="favorite-brand">{item.brand}</span>}
+                  </span>
+                  <button
+                    className="btn btn--icon btn--danger"
+                    onClick={() => removeItem(item.id)}
+                    aria-label="הסר"
+                  >
+                    <Icon name="trash" />
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </>
+        )}
+
+        {displayItems.length > 0 && (
           <div className="shopping-list-footer">
             <span className="cart-total">סה"כ: ₪{total.toFixed(2)}</span>
             <button className="btn btn--primary" onClick={onGoNavigate}>

@@ -28,6 +28,7 @@ function timeAgoLabel(ts) {
 
 export default function Navigation({ list, onBack }) {
   const { items, togglePicked, addItem, removeItem, clear } = list;
+  const customItemsCount = items.filter((i) => i.custom).length;
   const [routeInit] = useState(() => computeRoute(items));
   const { entrance } = routeInit;
   const [stops, setStops] = useState(routeInit.stops);
@@ -274,6 +275,11 @@ export default function Navigation({ list, onBack }) {
           <Icon name="arrow-left" /> חזרה לרשימה
         </button>
       </div>
+      {customItemsCount > 0 && (
+        <p className="settings-hint">
+          <Icon name="tag" /> +{customItemsCount} פריטים אישיים לא-מנווטים — זכרו לקחת אותם בעצמכם
+        </p>
+      )}
 
       {locationCard}
       {checkpointScannerOpen && (

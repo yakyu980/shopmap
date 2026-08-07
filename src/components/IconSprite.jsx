@@ -138,6 +138,13 @@ export default function IconSprite() {
           <path d="M12 2.5v19M3.8 7.2l16.4 9.6M20.2 7.2L3.8 16.8" />
           <path d="M12 2.5l-2 2.3M12 2.5l2 2.3M12 21.5l-2-2.3M12 21.5l2-2.3M3.8 7.2l2.9.2M3.8 7.2l1.1 2.7M20.2 7.2l-2.9.2M20.2 7.2l-1.1 2.7M3.8 16.8l2.9-.2M3.8 16.8l1.1-2.7M20.2 16.8l-2.9-.2M20.2 16.8l-1.1-2.7" />
         </symbol>
+        <symbol id="ic-star" viewBox="0 0 24 24">
+          <path d="M12 3.5l2.7 5.6 6.1.9-4.4 4.3 1 6.1-5.4-2.9-5.4 2.9 1-6.1-4.4-4.3 6.1-.9z" />
+        </symbol>
+        <symbol id="ic-sun" viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="4.5" />
+          <path d="M12 2.5v3M12 18.5v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2.5 12h3M18.5 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1" />
+        </symbol>
 
         {/* איורי-מוצר/מחלקה שטוחים — ל-DeptIcon.jsx ולתצוגת "תצלום"-מוצר */}
         <symbol id="ph-cottage" viewBox="0 0 24 24" className="icon--solid">
