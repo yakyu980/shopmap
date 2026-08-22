@@ -8,27 +8,31 @@
 }
 
 .app-header {
-  padding: 18px 20px 8px;
+  padding: 22px 20px 14px;
   text-align: center;
+  background: var(--gradient-brand);
+  border-radius: 0 0 26px 26px;
+  box-shadow: var(--shadow-md);
 }
 
 .app-header h1 {
   margin: 0;
   font-size: 26px;
-  color: var(--primary-dark);
+  color: #fff;
   letter-spacing: -0.5px;
+  font-weight: 800;
 }
 
 .app-tagline {
-  margin: 2px 0 0;
-  color: var(--text-dim);
+  margin: 4px 0 0;
+  color: rgba(255, 255, 255, 0.82);
   font-size: 13px;
 }
 
 .tabs {
   display: flex;
   gap: 6px;
-  padding: 8px 12px;
+  padding: 12px 12px 8px;
   position: sticky;
   top: 0;
   background: var(--bg);
@@ -41,15 +45,21 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 3px;
-  padding: 8px 4px 9px;
+  gap: 4px;
+  padding: 9px 4px 10px;
   border: 1px solid var(--border);
   background: var(--surface);
-  border-radius: 12px;
+  border-radius: 13px;
   cursor: pointer;
   font-size: 11px;
+  color: var(--text-dim);
+  box-shadow: var(--shadow-sm);
+  transition: background 0.18s, color 0.18s, border-color 0.18s, box-shadow 0.18s, transform 0.15s;
+}
+
+.tab:hover {
+  border-color: var(--primary-light);
   color: var(--text);
-  transition: background 0.15s, color 0.15s, border-color 0.15s;
 }
 
 .tab .icon {
@@ -58,10 +68,12 @@
 }
 
 .tab--active {
-  background: var(--primary);
-  border-color: var(--primary);
+  background: var(--gradient-brand);
+  border-color: transparent;
   color: #fff;
-  font-weight: 600;
+  font-weight: 700;
+  box-shadow: var(--shadow-md);
+  transform: translateY(-1px);
 }
 
 .tab-badge {
@@ -88,25 +100,34 @@
 /* --- כפתורים כלליים --- */
 .btn {
   border: none;
-  border-radius: 10px;
+  border-radius: var(--radius-sm);
   padding: 10px 16px;
   font-size: 14px;
   cursor: pointer;
   font-weight: 600;
+  transition: transform 0.12s, box-shadow 0.12s, background 0.15s, opacity 0.15s;
 }
 
 .btn--primary {
-  background: var(--primary);
+  background: var(--gradient-brand);
   color: #fff;
+  box-shadow: var(--shadow-sm);
 }
 .btn--primary:hover {
-  background: var(--primary-dark);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-1px);
+}
+.btn--primary:active {
+  transform: translateY(0);
 }
 
 .btn--ghost {
   background: var(--surface);
   border: 1px solid var(--border);
   color: var(--text);
+}
+.btn--ghost:hover {
+  border-color: var(--primary-light);
 }
 
 .btn--text {
@@ -148,6 +169,45 @@
   text-align: center;
   padding: 24px 12px;
   font-size: 14px;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 30px 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.empty-state-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 999px;
+  background: var(--primary-tint);
+  color: var(--primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 6px;
+}
+
+.empty-state-icon .icon {
+  width: 26px;
+  height: 26px;
+}
+
+.empty-state-title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.empty-state-sub {
+  margin: 0 0 8px;
+  font-size: 12.5px;
+  color: var(--text-dim);
 }
 
 /* --- מפת חנות --- */
@@ -1469,10 +1529,10 @@
 
 /* ---- דף בית ---- */
 .home-page {
-  padding: 12px 16px 24px;
+  padding: 14px 16px 28px;
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 16px;
 }
 
 .home-stats {
@@ -1482,20 +1542,27 @@
 
 .home-stat {
   flex: 1;
-  background: var(--surface);
+  background: var(--gradient-surface);
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  padding: 10px 6px;
+  padding: 12px 6px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 2px;
+  gap: 3px;
   text-align: center;
+  box-shadow: var(--shadow-sm);
+  transition: box-shadow 0.15s, transform 0.15s;
+}
+
+.home-stat:hover {
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
 }
 
 .home-stat-value {
-  font-size: 18px;
-  font-weight: 700;
+  font-size: 19px;
+  font-weight: 800;
   color: var(--primary-dark);
 }
 
@@ -1515,34 +1582,47 @@
 .home-shortcuts {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 8px;
+  gap: 10px;
 }
 
 .home-shortcut {
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  padding: 14px 8px;
+  padding: 16px 8px;
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 700;
   color: var(--text);
   cursor: pointer;
   text-align: center;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
+  box-shadow: var(--shadow-sm);
+  transition: box-shadow 0.15s, transform 0.15s, border-color 0.15s;
+}
+
+.home-shortcut-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  background: var(--primary-tint);
+  color: var(--primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .home-shortcut .icon {
   width: 20px;
   height: 20px;
-  color: var(--primary);
 }
 
 .home-shortcut:hover {
-  border-color: var(--primary);
-  color: var(--primary-dark);
+  border-color: var(--primary-light);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
 }
 
 .home-catalog-note {
@@ -1550,6 +1630,38 @@
   font-size: 11.5px;
   color: var(--text-dim);
   margin: 0;
+}
+
+.home-hero {
+  background: var(--gradient-brand);
+  border-radius: var(--radius);
+  padding: 18px;
+  box-shadow: var(--shadow-md);
+  color: #fff;
+}
+
+.home-hero-title {
+  margin: 0 0 4px;
+  font-size: 16px;
+  font-weight: 800;
+}
+
+.home-hero-sub {
+  margin: 0 0 14px;
+  font-size: 12.5px;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.home-hero-btn {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.16);
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  color: #fff;
+  backdrop-filter: blur(2px);
+}
+
+.home-hero-btn:hover {
+  background: rgba(255, 255, 255, 0.26);
 }
 
 /* ---- דף השוואת מחירים ---- */
@@ -1619,19 +1731,24 @@
 /* ---- כפתור הגדרות בכותרת ---- */
 .settings-gear-btn {
   position: absolute;
-  left: 12px;
-  top: 14px;
-  background: var(--surface);
-  border: 1px solid var(--border);
+  left: 14px;
+  top: 18px;
+  background: rgba(255, 255, 255, 0.16);
+  border: 1px solid rgba(255, 255, 255, 0.3);
   border-radius: 999px;
-  width: 34px;
-  height: 34px;
+  width: 36px;
+  height: 36px;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  color: var(--text-dim);
+  color: #fff;
   font-size: 17px;
+  transition: background 0.15s;
+}
+
+.settings-gear-btn:hover {
+  background: rgba(255, 255, 255, 0.28);
 }
 
 .app-header {
