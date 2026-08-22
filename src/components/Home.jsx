@@ -18,6 +18,18 @@ export default function Home({ list, onNavigate }) {
 
   return (
     <div className="home-page">
+      <div className="home-hero">
+        <p className="home-hero-title">מוכנים לקנייה חכמה? 🛒</p>
+        <p className="home-hero-sub">
+          {items.length > 0
+            ? `יש לכם ${items.length} פריטים ברשימה — בואו נצא לדרך`
+            : 'הוסיפו מוצרים לרשימה ונבנה לכם מסלול קנייה קצר ויעיל'}
+        </p>
+        <button className="btn home-hero-btn" onClick={() => onNavigate('nav')}>
+          <Icon name="compass" /> התחלת מסלול קנייה
+        </button>
+      </div>
+
       <div className="home-stats">
         <div className="home-stat">
           <span className="home-stat-value">{items.length}</span>
@@ -41,7 +53,9 @@ export default function Home({ list, onNavigate }) {
       <div className="home-shortcuts">
         {SHORTCUTS.map((s) => (
           <button key={s.tab} className="home-shortcut" onClick={() => onNavigate(s.tab)}>
-            <Icon name={s.icon} />
+            <span className="home-shortcut-icon">
+              <Icon name={s.icon} />
+            </span>
             {s.label}
           </button>
         ))}

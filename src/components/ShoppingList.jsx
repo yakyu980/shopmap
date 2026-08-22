@@ -118,7 +118,13 @@ export default function ShoppingList({ list, onGoNavigate }) {
         </div>
 
         {displayItems.length === 0 && customItems.length === 0 ? (
-          <p className="empty-hint">הרשימה ריקה — חפשו מוצרים למעלה והוסיפו אותם.</p>
+          <div className="empty-state">
+            <span className="empty-state-icon">
+              <Icon name="cart" />
+            </span>
+            <p className="empty-state-title">הרשימה שלך ריקה</p>
+            <p className="empty-state-sub">חפשו מוצר למעלה כדי להתחיל את רשימת הקניות</p>
+          </div>
         ) : displayItems.length === 0 ? null : (
           <ul className="cart-list">
             {displayItems.map((item) => {
