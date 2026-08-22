@@ -63,14 +63,14 @@ export default function Login({ onDone }) {
 
       <form className="login-form" onSubmit={submit}>
         <input
-          className="map-edit-input"
+          className="login-input"
           placeholder="שם-משתמש"
           value={username}
           onChange={(e) => setUsername(e.target.value)}
           autoComplete="username"
         />
         <input
-          className="map-edit-input"
+          className="login-input"
           type="password"
           placeholder="סיסמה"
           value={password}
@@ -101,14 +101,14 @@ export default function Login({ onDone }) {
 
             {householdMode === 'create' ? (
               <input
-                className="map-edit-input"
+                className="login-input"
                 placeholder="שם המשפחה (למשל: משפחת כהן)"
                 value={householdName}
                 onChange={(e) => setHouseholdName(e.target.value)}
               />
             ) : (
               <input
-                className="map-edit-input"
+                className="login-input"
                 placeholder="קוד-משפחה (קיבלת מבן-משפחה אחר)"
                 value={householdCode}
                 onChange={(e) => setHouseholdCode(e.target.value.toUpperCase())}
