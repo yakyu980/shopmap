@@ -98,6 +98,30 @@ export default function IconSprite() {
           <path d="M8.2 7l1.3-2.3h5l1.3 2.3" />
           <circle cx="12" cy="13.3" r="3.4" />
         </symbol>
+        <symbol id="ic-user" viewBox="0 0 24 24">
+          <circle cx="12" cy="8" r="3.5" />
+          <path d="M5 20a7 7 0 0 1 14 0" />
+        </symbol>
+        <symbol id="ic-lock" viewBox="0 0 24 24">
+          <rect x="5" y="10.5" width="14" height="9" rx="2.2" />
+          <path d="M8 10.5V7a4 4 0 0 1 8 0v3.5" />
+          <circle cx="12" cy="14.7" r="1.3" fill="currentColor" stroke="none" />
+        </symbol>
+        <symbol id="ic-eye" viewBox="0 0 24 24">
+          <path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z" />
+          <circle cx="12" cy="12" r="3" />
+        </symbol>
+        <symbol id="ic-eye-off" viewBox="0 0 24 24">
+          <path d="M3 3l18 18" />
+          <path d="M9.9 5.7A10.7 10.7 0 0 1 12 5.5c6 0 9.5 6.5 9.5 6.5a15.7 15.7 0 0 1-3.2 4.1M6.6 6.6C4 8.3 2.5 12 2.5 12s3.5 6.5 9.5 6.5a10 10 0 0 0 3.4-.6" />
+          <path d="M9.9 14.1a3 3 0 0 0 4.2-4.2" />
+        </symbol>
+        <symbol id="ic-store" viewBox="0 0 24 24">
+          <path d="M4.5 9l1-5.5h13l1 5.5" />
+          <path d="M4.5 9a2 2 0 0 0 4 .2 2 2 0 0 0 3.9 0 2 2 0 0 0 3.9 0 2 2 0 0 0 4-.2" />
+          <path d="M5.5 9.3V20h13V9.3" />
+          <path d="M10 20v-5.2h4V20" />
+        </symbol>
         <symbol id="ph-barcode" viewBox="0 0 24 24" className="icon--solid">
           <rect x="3.5" y="5" width="1.4" height="14" />
           <rect x="6.3" y="5" width="2.4" height="14" />
