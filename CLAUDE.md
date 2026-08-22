@@ -31,6 +31,13 @@ preview) to `http://localhost:8787`. There is no test suite and no server lint s
 There is no single-test command — verify changes via `npm run lint` and manual exercise
 of the affected feature.
 
+## UI design rules
+
+`DESIGN_GUIDELINES.md` (Hebrew) codifies the design system already implemented in
+`src/index.css`/`src/App.css` — color/spacing tokens, card/button/modal/list patterns,
+icon usage, and status-color conventions. Read it before adding or restyling any page or
+component, and follow its patterns instead of introducing new ad-hoc styles.
+
 ## Architecture
 
 ### Client/server split and the offline guarantee
