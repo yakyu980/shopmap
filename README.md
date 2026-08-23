@@ -175,6 +175,26 @@ Express + מסד-נתונים-קובץ (JSON, לא SQLite/Postgres — החלט�
   מה-cache. זה **לא mock** — עובד גם ב-production build אמיתי
   (`npm run build && npm run preview`).
 
+## תיעוד-כוונות לכל דף
+
+לכל אחד מ-5 דפי-האפליקציה יש זוג-קבצי-MD ב-`docs/pages/`: קובץ
+"כוונות" (מה ממומש היום + מה מתוכנן/נדרש-הבהרה) וקובץ "חוקים" (חוקי-
+מוצר/לוגיקה לאותו דף — לא חוקי-עיצוב, אלה ב-`DESIGN_GUIDELINES.md`).
+
+| דף | כוונות | חוקים |
+|---|---|---|
+| התחברות | [`docs/pages/login.md`](docs/pages/login.md) | [`docs/pages/login.rules.md`](docs/pages/login.rules.md) |
+| בית | [`docs/pages/home.md`](docs/pages/home.md) | [`docs/pages/home.rules.md`](docs/pages/home.rules.md) |
+| השוואת מחירים | [`docs/pages/price-comparison.md`](docs/pages/price-comparison.md) | [`docs/pages/price-comparison.rules.md`](docs/pages/price-comparison.rules.md) |
+| ניווט | [`docs/pages/navigation.md`](docs/pages/navigation.md) | [`docs/pages/navigation.rules.md`](docs/pages/navigation.rules.md) |
+| הגדרות מתקדמות | [`docs/pages/settings.md`](docs/pages/settings.md) | [`docs/pages/settings.rules.md`](docs/pages/settings.rules.md) |
+
+בפרט, `docs/pages/navigation.md` מתעד כוונה משמעותית שעדיין לא ממומשת:
+**מיפוי-חנות אוטומטי דרך Gemini** (סרטון+חיישנים במקום עריכה ידנית)
+ו**ניתוח-שח-מדפים** נפרד (זיהוי-תמונה אמיתי במקום ה-mock הקיים) —
+שני אלה דורשים מפתח-API חיצוני ונשארים מחוץ להיקף עד שיוחלט אחרת (ר'
+"מה לא בהיקף" למטה).
+
 ## מה לא בהיקף (במכוון)
 
 **עודכן:** עדכון-מיקום-מוצר, סנכרון-משפחה בין מכשירים, ואימות-קהילתי
