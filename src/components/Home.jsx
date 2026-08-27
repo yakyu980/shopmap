@@ -16,7 +16,7 @@ export default function Home({ list }) {
           <span className="home-stat-value">{items.length}</span>
           <span className="home-stat-label">פריטים ברשימה</span>
         </div>
-        <div className="home-stat">
+        <div className="home-stat home-stat--hero">
           <span className="home-stat-value">₪{total.toFixed(2)}</span>
           <span className="home-stat-label">סה״כ בעגלה</span>
         </div>

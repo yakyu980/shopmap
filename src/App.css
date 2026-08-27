@@ -1512,6 +1512,17 @@
   height: 12px;
 }
 
+.home-stat--hero {
+  background: linear-gradient(0deg, rgba(9, 20, 45, 0.55), rgba(9, 20, 45, 0.4)),
+    url('./assets/cart-hero.png') center / cover no-repeat;
+  border-color: transparent;
+}
+
+.home-stat--hero .home-stat-value,
+.home-stat--hero .home-stat-label {
+  color: #fff;
+}
+
 .home-catalog-note {
   text-align: center;
   font-size: 11.5px;
