@@ -1525,6 +1525,36 @@
   font-weight: 800;
 }
 
+/* קטן וכחלחל, בגוון-דומה לתמונת-הבאנר שמעליו — ר' דרישת המשתמש. */
+.home-quick-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.home-quick-actions .voice-panel {
+  margin-bottom: 0;
+  padding: 6px 10px;
+  background: var(--primary-tint);
+  border-color: transparent;
+}
+
+.home-quick-actions .scan-buttons-row {
+  margin-bottom: 0;
+}
+
+.btn--tinted {
+  background: var(--primary-tint);
+  border: 1px solid transparent;
+  color: var(--primary-dark);
+  font-size: 12px;
+  padding: 8px 6px;
+}
+
+.btn--tinted:hover {
+  border-color: var(--primary);
+}
+
 .home-product-rows {
   display: flex;
   flex-direction: column;
