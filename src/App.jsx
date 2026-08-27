@@ -6,6 +6,7 @@ import PriceComparison from './components/PriceComparison';
 import Navigation from './components/Navigation';
 import Icon from './components/Icon';
 import IconSprite from './components/IconSprite';
+import UserButton from './components/UserButton';
 import { useShoppingList } from './lib/useShoppingList';
 import { useHouseholdSync } from './lib/useHouseholdSync';
 
@@ -26,6 +27,7 @@ export default function App() {
     <div className="app">
       <IconSprite />
       <header className="app-header">
+        <UserButton />
         <h1>SuperNav AI</h1>
         <p className="app-tagline">ה-Waze של הסופר — MVP הדגמה</p>
       </header>

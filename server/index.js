@@ -5,6 +5,7 @@ import express from 'express';
 import cors from 'cors';
 import authRoutes from './routes/auth.js';
 import householdRoutes from './routes/household.js';
+import groupsRoutes from './routes/groups.js';
 import productRoutes from './routes/products.js';
 import imageSearchRoutes from './routes/imageSearch.js';
 import venueRoutes from './routes/venues.js';
@@ -19,6 +20,7 @@ app.use(express.json({ limit: '2mb' }));
 
 app.use('/api/auth', authRoutes);
 app.use('/api/household', householdRoutes);
+app.use('/api/groups', groupsRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/image-search', imageSearchRoutes);
 app.use('/api/venues', venueRoutes);
