@@ -9,6 +9,7 @@ import { api } from '../lib/apiClient';
 import PriceTag from './PriceTag';
 import ProductDetail from './ProductDetail';
 import ReceiptScanner from './ReceiptScanner';
+import MultiProductCompare from './MultiProductCompare';
 import Icon from './Icon';
 import DeptIcon from './DeptIcon';
 
@@ -67,6 +68,11 @@ export default function PriceComparison({ list }) {
 
   return (
     <div className="compare-page">
+      <p className="section-title">
+        <Icon name="tag" /> השוואת מוצרים מרובים בין רשתות
+      </p>
+      <MultiProductCompare />
+
       <p className="compare-intro">
         השוואת מחירים והיסטוריית-מחיר לכל מוצר בקטלוג. נתוני ההיסטוריה הכללית כאן הם
         הדמיה (mock) — אבל אפשר לבנות היסטוריה אמיתית משלכם, לפי מה ששילמתם בפועל.
