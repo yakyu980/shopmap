@@ -618,22 +618,24 @@
   text-align: center;
 }
 
-/* --- מודל פרטי מוצר --- */
+/* --- מודל (משותף לכל חלון/פיצ'ר-נפתח באפליקציה — סריקת ברקוד,
+   חיפוש-לפי-תמונה, מועדפים, פרטי-מוצר, ועוד, ר' CLAUDE.md: כל חלון
+   נפתח תמיד במרכז המסך, לא כ-bottom sheet) --- */
 .modal-backdrop {
   position: fixed;
   inset: 0;
   background: rgba(0, 0, 0, 0.45);
   display: flex;
-  align-items: flex-end;
+  align-items: center;
   justify-content: center;
   z-index: 50;
 }
 
 .modal {
   background: var(--surface);
-  width: 100%;
+  width: calc(100% - 32px);
   max-width: 480px;
-  border-radius: 20px 20px 0 0;
+  border-radius: 20px;
   padding: 20px;
   position: relative;
   max-height: 88vh;
@@ -1497,6 +1499,9 @@
   overflow: hidden;
   background: linear-gradient(100deg, rgba(9, 20, 45, 0.15) 40%, rgba(9, 20, 45, 0.75) 100%),
     url('./assets/cart-hero.png') center / cover no-repeat;
+  /* יחס-הגובה-רוחב של קובץ-התמונה עצמו (1774×887) — כדי ש-"cover"
+     ימלא את הריבוע בלי לחתוך אותה (המשתמש דיווח על חיתוך). */
+  aspect-ratio: 1774 / 887;
   padding: 22px 18px;
   display: flex;
   align-items: center;
