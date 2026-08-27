@@ -2,7 +2,6 @@ import { useState } from 'react';
 import './App.css';
 import Home from './components/Home';
 import StoreMap from './components/StoreMap';
-import ShoppingList from './components/ShoppingList';
 import PriceComparison from './components/PriceComparison';
 import Navigation from './components/Navigation';
 import Icon from './components/Icon';
@@ -10,10 +9,10 @@ import IconSprite from './components/IconSprite';
 import { useShoppingList } from './lib/useShoppingList';
 import { useHouseholdSync } from './lib/useHouseholdSync';
 
+// "רשימת קניות" אוחדה לתוך "דף בית" (הוסרה כטאב נפרד) — ר' Home.jsx.
 const TABS = [
   { id: 'home', icon: 'home', label: 'דף בית' },
   { id: 'map', icon: 'map', label: 'מפת חנות' },
-  { id: 'list', icon: 'list', label: 'רשימת קניות' },
   { id: 'compare', icon: 'tag', label: 'השוואת מחירים' },
   { id: 'nav', icon: 'compass', label: 'ניווט' },
 ];
@@ -40,7 +39,7 @@ export default function App() {
           >
             <Icon name={t.icon} />
             {t.label}
-            {t.id === 'list' && list.items.length > 0 && (
+            {t.id === 'home' && list.items.length > 0 && (
               <span className="tab-badge">{list.items.length}</span>
             )}
           </button>
@@ -50,9 +49,8 @@ export default function App() {
       <main className="app-main">
         {tab === 'home' && <Home list={list} onNavigate={setTab} />}
         {tab === 'map' && <StoreMap />}
-        {tab === 'list' && <ShoppingList list={list} onGoNavigate={() => setTab('nav')} />}
         {tab === 'compare' && <PriceComparison list={list} />}
-        {tab === 'nav' && <Navigation list={list} onBack={() => setTab('list')} />}
+        {tab === 'nav' && <Navigation list={list} onBack={() => setTab('home')} />}
       </main>
     </div>
   );
