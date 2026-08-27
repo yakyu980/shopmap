@@ -1,11 +1,9 @@
-import { useEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import { PRODUCTS, getSaleProducts, locationLabel } from '../data/storeData';
 import { getDepartment } from '../lib/storeConfig';
 import { getPriceHistory, priceTrend } from '../lib/priceHistory';
 import { useReceiptHistory } from '../lib/useReceiptHistory';
 import { deleteReceipt } from '../lib/receiptHistory';
-import { useAuth } from '../lib/useAuth';
-import { api } from '../lib/apiClient';
 import { addCompareProduct } from '../lib/compareProducts';
 import PriceTag from './PriceTag';
 import ReceiptScanner from './ReceiptScanner';
@@ -51,40 +49,12 @@ export default function PriceComparison() {
   const justAddedTimer = useRef(null);
   const saleProducts = getSaleProducts();
   const receipts = useReceiptHistory();
-  const { user } = useAuth();
-  const [deals, setDeals] = useState(null); // null = לא-נטען-עדיין/לא-מחובר
-
-  useEffect(() => {
-    if (!user) {
-      setDeals(null);
-      return;
-    }
-    let cancelled = false;
-    api
-      .get('/deals')
-      .then((data) => {
-        if (!cancelled) setDeals(data.deals);
-      })
-      .catch(() => {
-        /* השרת לא זמין — נשארים במצב-לא-נטען */
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [user]);
-
-  useEffect(() => () => clearTimeout(justAddedTimer.current), []);
 
   function handleAddToCompare(product) {
     addCompareProduct({ id: `catalog-${product.barcode}`, barcode: product.barcode, name: product.name, price: product.price });
     setJustAddedId(product.id);
     clearTimeout(justAddedTimer.current);
     justAddedTimer.current = setTimeout(() => setJustAddedId(null), 1500);
-  }
-
-  function openDealProduct(deal) {
-    const product = PRODUCTS.find((p) => p.id === deal.productId);
-    if (product) handleAddToCompare(product);
   }
 
   return (
@@ -104,32 +74,9 @@ export default function PriceComparison() {
       </button>
       {scannerOpen && <ReceiptScanner onClose={() => setScannerOpen(false)} />}
 
-      <p className="section-title">
-        <Icon name="tag" /> דילים בין הרשתות שלך
+      <p className="settings-hint">
+        <Icon name="tag" /> מחפשים דילים אמיתיים בין הרשתות? עברו ללשונית "דילים" למעלה.
       </p>
-      {!user ? (
-        <p className="settings-hint">התחברו (⚙️ הגדרות) כדי לראות דילים משותפים למשפחה בין הרשתות.</p>
-      ) : deals === null ? (
-        <p className="settings-hint">טוען…</p>
-      ) : deals.length === 0 ? (
-        <p className="settings-hint">
-          אין עדיין מספיק נתונים להשוואה — ייבאו מחירים-רשמיים (⚙️ הגדרות) או סרקו קבלות מכמה חנויות
-          שונות כדי לראות כאן דילים אמיתיים.
-        </p>
-      ) : (
-        <ul className="deals-list">
-          {deals.map((deal) => (
-            <li key={deal.productId} className="deal-row" onClick={() => openDealProduct(deal)}>
-              <span className="deal-name">{deal.name}</span>
-              <span className="deal-prices">
-                <span className="deal-cheapest">₪{deal.cheapest.price.toFixed(2)} · {deal.cheapest.venueName}</span>
-                <span className="deal-priciest">₪{deal.priciest.price.toFixed(2)} · {deal.priciest.venueName}</span>
-              </span>
-              {deal.diffPercent > 0 && <span className="deal-diff">-{deal.diffPercent}%</span>}
-            </li>
-          ))}
-        </ul>
-      )}
 
       {receipts.length > 0 && (
         <>

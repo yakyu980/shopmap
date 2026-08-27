@@ -57,10 +57,15 @@ router.get('/', requireAuth, (req, res) => {
     const priciest = sorted[sorted.length - 1];
     deals.push({
       productId: product.id,
+      barcode: product.barcode,
       name: product.name,
       cheapest: { price: cheapest.price, venueName: cheapest.venueName },
       priciest: { price: priciest.price, venueName: priciest.venueName },
       diffPercent: priciest.price > 0 ? Math.round(((priciest.price - cheapest.price) / priciest.price) * 100) : 0,
+      // כל השורות (לא רק זול/יקר ביותר) — כדי לאפשר סינון לפי רשת/סניף
+      // בצד-הלקוח (ר' src/components/DealsTab.jsx) בלי לפגוע בהתנהגות
+      // הקיימת של השדות למעלה.
+      rows: sorted.map((r) => ({ price: r.price, venueName: r.venueName })),
     });
   }
 

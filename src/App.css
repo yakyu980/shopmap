@@ -33,10 +33,12 @@
   top: 0;
   background: var(--bg);
   z-index: 5;
+  overflow-x: auto;
+  scrollbar-width: none;
 }
 
 .tab {
-  flex: 1;
+  flex: 1 0 68px;
   position: relative;
   display: flex;
   flex-direction: column;
