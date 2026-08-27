@@ -26,7 +26,7 @@ export default function ShoppingList({ list, onGoNavigate }) {
   const displayItems = trip ? trip.items : items.filter((i) => !i.custom);
   const customItems = trip ? [] : items.filter((i) => i.custom);
   const listedIds = new Set(displayItems.map((i) => i.productId || i.id));
-  const total = displayItems.reduce((sum, i) => sum + i.price, 0);
+  const total = displayItems.reduce((sum, i) => sum + i.price * (i.qty || 1), 0);
   const [scannerOpen, setScannerOpen] = useState(false);
   const [imageSearchOpen, setImageSearchOpen] = useState(false);
   const [detailProduct, setDetailProduct] = useState(null);

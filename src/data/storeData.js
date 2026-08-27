@@ -91,10 +91,13 @@ export function getProductByBarcode(code) {
   return PRODUCTS.find((p) => p.barcode === code.trim());
 }
 
+// חיפוש לפי תחילית (prefix) בלבד — לא בכל מקום בשם: הקלדת "ג" מציגה
+// רק מוצרים שהשם שלהם *מתחיל* ב-ג (למשל "גבינה צהובה"), לא כל מוצר
+// שמכיל ג׳ באמצע השם.
 export function searchProducts(query) {
   const q = query.trim().toLowerCase();
   if (!q) return [];
-  return PRODUCTS.filter((p) => p.name.toLowerCase().includes(q));
+  return PRODUCTS.filter((p) => p.name.toLowerCase().startsWith(q));
 }
 
 // מיקום קריא: "מדף 4, אזור 8"

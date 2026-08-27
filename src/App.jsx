@@ -5,7 +5,6 @@ import StoreMap from './components/StoreMap';
 import ShoppingList from './components/ShoppingList';
 import PriceComparison from './components/PriceComparison';
 import Navigation from './components/Navigation';
-import Settings from './components/Settings';
 import Icon from './components/Icon';
 import IconSprite from './components/IconSprite';
 import { useShoppingList } from './lib/useShoppingList';
@@ -21,7 +20,6 @@ const TABS = [
 
 export default function App() {
   const [tab, setTab] = useState('home');
-  const [settingsOpen, setSettingsOpen] = useState(false);
   const list = useShoppingList();
   useHouseholdSync();
 
@@ -29,18 +27,9 @@ export default function App() {
     <div className="app">
       <IconSprite />
       <header className="app-header">
-        <button
-          className="settings-gear-btn"
-          onClick={() => setSettingsOpen(true)}
-          aria-label="הגדרות"
-        >
-          <Icon name="gear" />
-        </button>
         <h1>SuperNav AI</h1>
         <p className="app-tagline">ה-Waze של הסופר — MVP הדגמה</p>
       </header>
-
-      {settingsOpen && <Settings onClose={() => setSettingsOpen(false)} />}
 
       <nav className="tabs">
         {TABS.map((t) => (
@@ -59,7 +48,7 @@ export default function App() {
       </nav>
 
       <main className="app-main">
-        {tab === 'home' && <Home list={list} />}
+        {tab === 'home' && <Home list={list} onNavigate={setTab} />}
         {tab === 'map' && <StoreMap />}
         {tab === 'list' && <ShoppingList list={list} onGoNavigate={() => setTab('nav')} />}
         {tab === 'compare' && <PriceComparison list={list} />}
