@@ -22,6 +22,53 @@ import {
   MAX_FLOORS,
 } from '../lib/storeConfig';
 
+function MappingDeviceReadiness() {
+  const [status, setStatus] = useState({ camera: 'idle', location: 'idle', motion: 'idle' });
+  const [checking, setChecking] = useState(false);
+
+  async function prepareDevice() {
+    setChecking(true);
+    const next = { camera: 'unavailable', location: 'unavailable', motion: 'unavailable' };
+    try {
+      const stream = await navigator.mediaDevices?.getUserMedia({ video: { facingMode: 'environment' }, audio: false });
+      stream?.getTracks().forEach((track) => track.stop());
+      next.camera = stream ? 'ready' : 'unavailable';
+    } catch { next.camera = 'blocked'; }
+
+    if ('geolocation' in navigator) {
+      next.location = await new Promise((resolve) => navigator.geolocation.getCurrentPosition(
+        () => resolve('ready'),
+        (error) => resolve(error.code === 1 ? 'blocked' : 'unavailable'),
+        { enableHighAccuracy: true, timeout: 8000, maximumAge: 60000 }
+      ));
+    }
+
+    if (typeof DeviceMotionEvent !== 'undefined') {
+      try {
+        next.motion = typeof DeviceMotionEvent.requestPermission === 'function'
+          ? (await DeviceMotionEvent.requestPermission()) === 'granted' ? 'ready' : 'blocked'
+          : 'ready';
+      } catch { next.motion = 'blocked'; }
+    }
+    setStatus(next);
+    setChecking(false);
+  }
+
+  const copy = (value) => ({ idle: 'טרם נבדק', ready: 'מוכן', blocked: 'נחסם', unavailable: 'לא זמין' }[value]);
+  return (
+    <section className="mapping-readiness" aria-label="מוכנות המכשיר למיפוי">
+      <div className="mapping-readiness__heading"><span><Icon name="camera" /></span><div><strong>הכנת המכשיר למיפוי</strong><small>בדקו את היכולות לפני שמתחילים ללכת בחנות</small></div></div>
+      <ul>
+        <li><Icon name="camera" /><span>מצלמה</span><b className={`is-${status.camera}`}>{copy(status.camera)}</b></li>
+        <li><Icon name="pin" /><span>מיקום הסניף</span><b className={`is-${status.location}`}>{copy(status.location)}</b></li>
+        <li><Icon name="compass" /><span>חיישני תנועה</span><b className={`is-${status.motion}`}>{copy(status.motion)}</b></li>
+      </ul>
+      <button type="button" className="btn btn--primary" onClick={prepareDevice} disabled={checking}>{checking ? 'בודק וממתין לאישור…' : 'בדוק ואשר הרשאות'}</button>
+      <small className="mapping-readiness__privacy">בקשות המערכת יוצגו רק לאחר הלחיצה. המצלמה נסגרת מיד בסיום הבדיקה ולא נשמר צילום.</small>
+    </section>
+  );
+}
+
 export default function StoreMap({ activeDeptId, currentCheckpointId }) {
   const config = useStoreConfig();
   const [activeFloor, setActiveFloor] = useState(config.floors[0].id);
@@ -168,6 +215,7 @@ export default function StoreMap({ activeDeptId, currentCheckpointId }) {
 
   return (
     <div className="store-map store-map--satellite">
+      <MappingDeviceReadiness />
       {config.floors.length > 1 && (
         <div className="floor-switcher" role="tablist" aria-label="קומות">
           {config.floors.map((f) => (
