@@ -71,20 +71,6 @@ export default function Home({ list, onNavigate }) {
 
   return (
     <div className="home-page">
-      <VoiceAddPanel onAdd={handleAdd} />
-
-      <div className="scan-buttons-row">
-        <button className="btn btn--ghost" onClick={() => setScannerOpen(true)}>
-          <Icon name="barcode" solid /> סרוק ברקוד
-        </button>
-        <button className="btn btn--ghost" onClick={() => setImageSearchOpen(true)}>
-          <Icon name="camera" /> חפש לפי תמונה
-        </button>
-        <button className="btn btn--ghost" onClick={() => setFavoritesOpen(true)}>
-          <Icon name="star" /> המועדפים שלי
-        </button>
-      </div>
-
       {favoritesOpen && (
         <FavoritesManager onAddToList={handleAdd} onClose={() => setFavoritesOpen(false)} />
       )}
@@ -141,6 +127,22 @@ export default function Home({ list, onNavigate }) {
         <div className="home-hero-stat">
           <span className="home-hero-count">{itemCount} פריטים</span>
           <span className="home-hero-price">₪{total.toFixed(2)}</span>
+        </div>
+      </div>
+
+      <div className="home-quick-actions">
+        <VoiceAddPanel onAdd={handleAdd} />
+
+        <div className="scan-buttons-row">
+          <button className="btn btn--tinted" onClick={() => setScannerOpen(true)}>
+            <Icon name="barcode" solid /> סרוק ברקוד
+          </button>
+          <button className="btn btn--tinted" onClick={() => setImageSearchOpen(true)}>
+            <Icon name="camera" /> חפש לפי תמונה
+          </button>
+          <button className="btn btn--tinted" onClick={() => setFavoritesOpen(true)}>
+            <Icon name="star" /> המועדפים שלי
+          </button>
         </div>
       </div>
 
