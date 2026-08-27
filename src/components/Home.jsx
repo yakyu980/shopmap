@@ -111,6 +111,13 @@ export default function Home({ list, onNavigate }) {
         />
       )}
 
+      <div className="home-hero">
+        <div className="home-hero-stat">
+          <span className="home-hero-count">{itemCount} פריטים</span>
+          <span className="home-hero-price">₪{total.toFixed(2)}</span>
+        </div>
+      </div>
+
       <div className="home-search-row">
         <div className="search-input-row">
           <input
@@ -120,13 +127,6 @@ export default function Home({ list, onNavigate }) {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
           />
-        </div>
-      </div>
-
-      <div className="home-hero">
-        <div className="home-hero-stat">
-          <span className="home-hero-count">{itemCount} פריטים</span>
-          <span className="home-hero-price">₪{total.toFixed(2)}</span>
         </div>
       </div>
 
