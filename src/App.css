@@ -2455,6 +2455,14 @@
 .compare-search-row { display: flex; align-items: flex-start; gap: 8px; }
 .compare-search-row .official-product-search { flex: 1; min-width: 0; }
 .compare-camera-button { min-width: 48px; font-size: 20px; }
+.compare-venues-button { align-self: flex-start; font-size: 11px; }
+.venue-filter-modal { display: grid; gap: 10px; max-height: 80vh; overflow-y: auto; }
+.venue-filter-toggle { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; }
+.venue-filter-chain-list, .venue-filter-branch-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.venue-filter-branch-list { margin-inline-start: 22px; margin-top: 4px; }
+.venue-filter-branch-list--flat { margin-inline-start: 0; }
+.venue-filter-chain-row, .venue-filter-branch-row { display: flex; align-items: center; gap: 8px; font-size: 13px; }
+.venue-filter-branch-row { font-size: 12px; color: var(--text-dim); }
 .official-product-search__field { display: flex; align-items: center; gap: 8px; min-height: 44px; border: 1px solid var(--border); border-radius: 12px; padding: 0 12px; background: var(--surface); }
 .official-product-search__field input { flex: 1; min-width: 0; border: 0; background: transparent; font: inherit; color: inherit; }
 .official-product-search__field input:focus { outline: none; }

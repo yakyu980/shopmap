@@ -1,9 +1,15 @@
 import { useEffect, useMemo, useState, useSyncExternalStore } from 'react';
 import OfficialProductSearch from './OfficialProductSearch';
 import ScanProductModal from './ScanProductModal';
+import VenueFilterPanel from './VenueFilterPanel';
 import Icon from './Icon';
 import { api } from '../lib/apiClient';
-import { getHiddenComparisonVenues, subscribeComparisonVenues } from '../lib/comparisonVenues';
+import {
+  getChainFilter,
+  getHiddenComparisonVenues,
+  isVenueVisible,
+  subscribeComparisonVenues,
+} from '../lib/comparisonVenues';
 
 const STORAGE_KEY = 'supernav_price_comparison_products_v1';
 
@@ -23,7 +29,9 @@ export default function MultiProductCompare() {
   const [products, setProducts] = useState(loadSavedProducts);
   const [priceRows, setPriceRows] = useState({});
   const [scanOpen, setScanOpen] = useState(false);
+  const [venueFilterOpen, setVenueFilterOpen] = useState(false);
   const [filter, setFilter] = useState('all');
+  const chainFilter = useSyncExternalStore(subscribeComparisonVenues, getChainFilter);
   const hiddenVenues = useSyncExternalStore(subscribeComparisonVenues, getHiddenComparisonVenues);
 
   useEffect(() => {
@@ -55,13 +63,22 @@ export default function MultiProductCompare() {
     setPriceRows((current) => { const next = { ...current }; delete next[barcode]; return next; });
   }
 
-  const venues = useMemo(() => {
+  const allVenueNames = useMemo(() => {
     const names = new Set();
     Object.values(priceRows).forEach((entry) => entry.rows.forEach((row) => {
-      if (Number.isFinite(row.price) && !hiddenVenues.includes(row.venueName)) names.add(row.venueName);
+      if (Number.isFinite(row.price)) names.add(row.venueName);
     }));
     return [...names];
-  }, [hiddenVenues, priceRows]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [priceRows]);
+
+  const venues = useMemo(
+    () => allVenueNames.filter(isVenueVisible),
+    // תלוי גם ב-chainFilter/hiddenVenues כדי להתעדכן כשהמסנן משתנה
+    // (isVenueVisible קורא ישירות מה-module state, לא מקבל אותו כפרמטר).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [allVenueNames, chainFilter, hiddenVenues],
+  );
 
   const productStats = useMemo(() => products.map((product) => {
     const rows = priceRows[product.barcode]?.rows || [];
@@ -85,7 +102,11 @@ export default function MultiProductCompare() {
         <OfficialProductSearch onSelect={addProduct} placeholder="חפשו מוצר והוסיפו להשוואה…" />
         <button type="button" className="btn btn--ghost compare-camera-button" onClick={() => setScanOpen(true)} aria-label="סריקת ברקוד להשוואה"><Icon name="camera" /></button>
       </div>
+      <button type="button" className="btn btn--ghost compare-venues-button" onClick={() => setVenueFilterOpen(true)}>
+        <Icon name="tag" /> רשתות: {chainFilter.showAllChains ? 'כל הרשתות' : (chainFilter.selectedChains.join(', ') || 'לא נבחרה רשת')}
+      </button>
       {scanOpen && <ScanProductModal onAdd={(selected) => { addProduct(selected); setScanOpen(false); }} onClose={() => setScanOpen(false)} />}
+      {venueFilterOpen && <VenueFilterPanel venueNames={allVenueNames} onClose={() => setVenueFilterOpen(false)} />}
       {!products.length ? (
         <div className="price-compare-focus__empty"><Icon name="tag" /><strong>בחרו מוצרים להשוואה</strong><span>חפשו או סרקו מוצר. אפשר להוסיף כמה מוצרים ולקבל טבלת מחירים וסיכום חיסכון.</span></div>
       ) : (
@@ -102,11 +123,19 @@ export default function MultiProductCompare() {
                 const cells = venues.map((venue) => priceForVenue(rows, venue));
                 const available = cells.filter(Number.isFinite);
                 const cheapest = available.length ? Math.min(...available) : null;
+                const cheapestVenue = cheapest == null ? null : venues.find((venue) => priceForVenue(rows, venue) === cheapest);
                 const status = priceRows[product.barcode]?.status;
                 return <tr key={product.barcode}>
                   <th scope="row"><span>{product.name}</span><small dir="ltr">{product.barcode}</small><button type="button" onClick={() => removeProduct(product.barcode)} aria-label={`הסרת ${product.name} מההשוואה`}>הסרה</button></th>
                   {venues.map((venue) => { const price = priceForVenue(rows, venue); return <td key={venue} className={price != null && price === cheapest ? 'is-cheapest' : ''}>{price == null ? <span className="compare-no-price">—</span> : <><strong>₪{price.toFixed(2)}</strong>{price === cheapest && <small>הכי זול</small>}</>}</td>; })}
-                  <td className="compare-best-cell">{status === 'loading' ? 'טוען…' : status === 'error' ? 'שגיאה' : cheapest == null ? 'אין מחיר' : `₪${cheapest.toFixed(2)}`}</td>
+                  <td className="compare-best-cell">
+                    {status === 'loading' ? 'טוען…' : status === 'error' ? 'שגיאה' : cheapest == null ? 'אין מחיר' : (
+                      <>
+                        <strong>₪{cheapest.toFixed(2)}</strong>
+                        {cheapestVenue && <small>{cheapestVenue}</small>}
+                      </>
+                    )}
+                  </td>
                 </tr>;
               })}</tbody>
             </table>
