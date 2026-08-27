@@ -4,7 +4,6 @@ import { getDepartment } from '../lib/storeConfig';
 import { useAuth } from '../lib/useAuth';
 import { useTripSync } from '../lib/useTripSync';
 import { useFamilyMembers } from '../lib/useFamilyMembers';
-import FamilyManager from './FamilyManager';
 import PurchasePredictions from './PurchasePredictions';
 import ProductImage from './ProductImage';
 import BarcodeScanner from './BarcodeScanner';
@@ -182,7 +181,6 @@ export default function Home({ list, onNavigate }) {
         </div>
       )}
 
-      <FamilyManager />
       <PurchasePredictions onAdd={handleAdd} listedIds={new Set(displayItems.map((i) => i.productId || i.id))} />
 
       <div className="home-shopping-list">

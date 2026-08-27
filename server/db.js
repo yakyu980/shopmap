@@ -40,12 +40,17 @@ function emptyDb() {
     trips: [], // {id, householdId, venueId, status, createdBy, createdAt, items: [...]}
     priceObservations: [], // {id, householdId, userId, venueId, items:[...], purchasedAt, createdAt}
     officialPrices: [], // {barcode, venueId, name, price, importedAt} — snapshot מיובא-CSV, לא audit-log
+    groups: [], // {id, name, photo, ownerId, createdAt} — "קבוצת-קניות" (שונה מ-household: משתמש יכול להיות בכמה)
+    groupMemberships: [], // {id, groupId, userId, role: 'admin'|'member'|'restricted', restriction: null|{type,...}, status: 'active'|'blocked', joinedAt}
+    groupInvites: [], // {token, groupId, createdBy, createdAt}
   };
 }
 
 let db;
 try {
-  db = JSON.parse(fs.readFileSync(DATA_FILE, 'utf8'));
+  // מיזוג עם emptyDb() כדי שקובץ-data.json ישן (בלי מפתחות שנוספו
+  // מאוחר-יותר, כמו groups) לא יקריס את השרת בפרישה-אמיתית.
+  db = { ...emptyDb(), ...JSON.parse(fs.readFileSync(DATA_FILE, 'utf8')) };
 } catch {
   db = emptyDb();
 }

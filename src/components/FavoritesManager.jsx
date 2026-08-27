@@ -14,21 +14,30 @@ const TABS = [
 
 // "מועדפים" — רשימת-משאלות חופשית (לא תלויה בקטלוג הקבוע), 3
 // לשוניות ידניות (כללי/קיץ/חורף — בלי זיהוי-תאריך אוטומטי, לפי בקשת
-// המשתמש המפורשת). "הוסף לרשימה" מנסה להתאים לקטלוג שלנו קודם
-// (שימוש-חוזר ב-matchReceiptItemsToCatalog הקיים) — אם יש התאמה,
-// המוצר-האמיתי-מהקטלוג נוסף (מחיר/מיקום מלאים); אם אין, נוסף "פריט
-// אישי" (ר' ShoppingList.jsx לטיפול בפריטים כאלה).
+// המשתמש המפורשת). כמו ברשימת-הקניות בדף-הבית: מסמנים (checkbox) מה
+// רוצים, וכפתור אחד מעביר את כל המסומן לרשימת-הקניות בבת-אחת —
+// "הוסף לרשימה" מנסה להתאים לקטלוג שלנו קודם (שימוש-חוזר ב-
+// matchReceiptItemsToCatalog הקיים); אם אין התאמה, נוסף "פריט אישי".
 export default function FavoritesManager({ onAddToList, onClose }) {
   const favorites = useFavorites();
   const fileInputRef = useRef(null);
   const [activeTab, setActiveTab] = useState(SEASONS.ALL);
+  const [checkedIds, setCheckedIds] = useState(new Set());
   const [formOpen, setFormOpen] = useState(false);
   const [name, setName] = useState('');
   const [brand, setBrand] = useState('');
   const [photo, setPhoto] = useState(null);
-  const [added, setAdded] = useState(null);
 
   const shown = favorites.filter((f) => f.season === activeTab);
+
+  function toggleChecked(id) {
+    setCheckedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
 
   function handlePhotoChange(e) {
     const file = e.target.files?.[0];
@@ -47,7 +56,7 @@ export default function FavoritesManager({ onAddToList, onClose }) {
     setFormOpen(false);
   }
 
-  function handleAdd(fav) {
+  function addOne(fav) {
     const [matched] = matchReceiptItemsToCatalog([{ name: fav.name }], PRODUCTS);
     if (matched.matchedProductId) {
       const product = PRODUCTS.find((p) => p.id === matched.matchedProductId);
@@ -63,8 +72,11 @@ export default function FavoritesManager({ onAddToList, onClose }) {
         custom: true,
       });
     }
-    setAdded(fav.id);
-    setTimeout(() => setAdded(null), 1500);
+  }
+
+  function handleTransfer() {
+    shown.filter((f) => checkedIds.has(f.id)).forEach(addOne);
+    setCheckedIds(new Set());
   }
 
   return (
@@ -75,8 +87,8 @@ export default function FavoritesManager({ onAddToList, onClose }) {
           <Icon name="star" /> המועדפים שלי
         </h2>
         <p className="settings-hint">
-          רשימת-משאלות אישית — לא חייבת להיות בקטלוג שלנו. כל פריט אפשר להוסיף לרשימת-הקניות
-          כשמתחשק, או להשאיר לזכר.
+          רשימת-משאלות אישית — לא חייבת להיות בקטלוג שלנו. סמנו מה רוצים ולחצו "העבר לרשימת-
+          הקניות", בדיוק כמו בדף הבית.
         </p>
 
         <div className="floor-switcher" role="tablist" aria-label="עונות">
@@ -86,7 +98,10 @@ export default function FavoritesManager({ onAddToList, onClose }) {
               role="tab"
               aria-selected={t.id === activeTab}
               className={'floor-tab' + (t.id === activeTab ? ' floor-tab--active' : '')}
-              onClick={() => setActiveTab(t.id)}
+              onClick={() => {
+                setActiveTab(t.id);
+                setCheckedIds(new Set());
+              }}
             >
               <Icon name={t.icon} /> {t.label}
             </button>
@@ -97,36 +112,42 @@ export default function FavoritesManager({ onAddToList, onClose }) {
           <p className="empty-hint">אין עדיין מועדפים ב"{TABS.find((t) => t.id === activeTab).label}".</p>
         ) : (
           <>
-            <button className="btn btn--primary favorites-add-all-btn" onClick={() => shown.forEach(handleAdd)}>
-              <Icon name="plus" /> הוסף את כל מועדפי {TABS.find((t) => t.id === activeTab).label} לרשימה
-            </button>
-            <ul className="favorites-list">
-            {shown.map((fav) => (
-              <li key={fav.id} className="favorite-row">
-                {fav.photo ? (
-                  <img className="favorite-photo" src={fav.photo} alt={fav.name} />
-                ) : (
-                  <span className="favorite-photo favorite-photo--empty">
-                    <Icon name="star" />
-                  </span>
-                )}
-                <span className="favorite-info">
-                  <span className="favorite-name">{fav.name}</span>
-                  {fav.brand && <span className="favorite-brand">{fav.brand}</span>}
-                </span>
-                <button className="btn btn--ghost btn--small" onClick={() => handleAdd(fav)}>
-                  <Icon name="plus" /> {added === fav.id ? 'נוסף!' : 'הוסף לרשימה'}
-                </button>
-                <button
-                  className="btn btn--icon btn--danger"
-                  onClick={() => removeFavorite(fav.id)}
-                  aria-label="מחק ממועדפים"
-                >
-                  <Icon name="trash" />
-                </button>
-              </li>
-            ))}
+            <ul className="home-check-list">
+              {shown.map((fav) => (
+                <li className="home-check-row" key={fav.id}>
+                  <label className="home-check-label">
+                    <input
+                      type="checkbox"
+                      checked={checkedIds.has(fav.id)}
+                      onChange={() => toggleChecked(fav.id)}
+                    />
+                    {fav.photo ? (
+                      <img className="favorite-photo" src={fav.photo} alt={fav.name} />
+                    ) : (
+                      <span className="favorite-photo favorite-photo--empty">
+                        <Icon name="star" />
+                      </span>
+                    )}
+                    <span className="favorite-info">
+                      <span className="favorite-name">{fav.name}</span>
+                      {fav.brand && <span className="favorite-brand">{fav.brand}</span>}
+                    </span>
+                  </label>
+                  <button
+                    className="btn btn--icon btn--danger"
+                    onClick={() => removeFavorite(fav.id)}
+                    aria-label="מחק ממועדפים"
+                  >
+                    <Icon name="trash" />
+                  </button>
+                </li>
+              ))}
             </ul>
+            {checkedIds.size > 0 && (
+              <button className="btn btn--primary favorites-add-all-btn" onClick={handleTransfer}>
+                <Icon name="check" /> העבר {checkedIds.size} לרשימת-הקניות
+              </button>
+            )}
           </>
         )}
 

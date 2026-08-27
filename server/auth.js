@@ -49,5 +49,11 @@ export function requireAuth(req, res, next) {
 }
 
 export function publicUser(user) {
-  return { id: user.id, username: user.username, emoji: user.emoji, householdId: user.householdId };
+  return {
+    id: user.id,
+    username: user.username,
+    emoji: user.emoji,
+    photo: user.photo || null,
+    householdId: user.householdId,
+  };
 }

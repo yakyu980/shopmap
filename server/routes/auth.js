@@ -62,4 +62,13 @@ router.get('/me', requireAuth, (req, res) => {
   res.json({ user: publicUser(req.user), household: req.household });
 });
 
+// עדכון תמונת-פרופיל (data-URL מהמצלמה/מהעלאה, כמו favorites) — לא
+// מעלים לאחסון-קבצים נפרד, שומרים ישירות ב-JSON כמו שאר-האפליקציה.
+router.patch('/me/photo', requireAuth, (req, res) => {
+  const { photo } = req.body || {};
+  req.user.photo = photo || null;
+  save();
+  res.json({ user: publicUser(req.user) });
+});
+
 export default router;
