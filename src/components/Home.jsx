@@ -3,7 +3,14 @@ import FamilyManager from './FamilyManager';
 import PurchasePredictions from './PurchasePredictions';
 import Icon from './Icon';
 
-export default function Home({ list }) {
+const SHORTCUTS = [
+  { tab: 'map', icon: 'map', label: 'מפת חנות' },
+  { tab: 'list', icon: 'list', label: 'רשימת קניות' },
+  { tab: 'compare', icon: 'tag', label: 'השוואת מחירים' },
+  { tab: 'nav', icon: 'compass', label: 'ניווט' },
+];
+
+export default function Home({ list, onNavigate }) {
   const { items, addItem } = list;
   const listedIds = new Set(items.map((i) => i.id));
   const total = items.reduce((sum, i) => sum + i.price, 0);
@@ -30,6 +37,15 @@ export default function Home({ list }) {
 
       <FamilyManager />
       <PurchasePredictions onAdd={addItem} listedIds={listedIds} />
+
+      <div className="home-shortcuts">
+        {SHORTCUTS.map((s) => (
+          <button key={s.tab} className="home-shortcut" onClick={() => onNavigate(s.tab)}>
+            <Icon name={s.icon} />
+            {s.label}
+          </button>
+        ))}
+      </div>
 
       <p className="home-catalog-note">קטלוג הסניף: {PRODUCTS.length} מוצרים בעשר מחלקות.</p>
     </div>
