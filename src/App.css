@@ -2312,6 +2312,15 @@
   max-width: 420px;
 }
 
+.favorites-add-all-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 6px;
+}
+
 .favorites-list,
 .custom-item-list {
   list-style: none;

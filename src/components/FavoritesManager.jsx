@@ -96,7 +96,11 @@ export default function FavoritesManager({ onAddToList, onClose }) {
         {shown.length === 0 ? (
           <p className="empty-hint">אין עדיין מועדפים ב"{TABS.find((t) => t.id === activeTab).label}".</p>
         ) : (
-          <ul className="favorites-list">
+          <>
+            <button className="btn btn--primary favorites-add-all-btn" onClick={() => shown.forEach(handleAdd)}>
+              <Icon name="plus" /> הוסף את כל מועדפי {TABS.find((t) => t.id === activeTab).label} לרשימה
+            </button>
+            <ul className="favorites-list">
             {shown.map((fav) => (
               <li key={fav.id} className="favorite-row">
                 {fav.photo ? (
@@ -122,7 +126,8 @@ export default function FavoritesManager({ onAddToList, onClose }) {
                 </button>
               </li>
             ))}
-          </ul>
+            </ul>
+          </>
         )}
 
         {!formOpen ? (
