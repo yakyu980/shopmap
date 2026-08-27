@@ -32,9 +32,17 @@ export default function Home({ list, onNavigate }) {
     setScannerOpen(false);
   }
 
-  function goNavigateTo(product) {
+  // לחיצה על שורת-תוצאה (לא בתוך שומרתה, ר' עצירת-הבועה בכפתורים
+  // עצמם) מוסיפה אותה לרשימה ומאפסת את החיפוש — חוזרים לראות את
+  // הרשימה, בדיוק כמו אפליקציות-קניות אחרות.
+  function handleRowSelect(product) {
     if (!items.some((i) => i.id === product.id)) addItem(product);
-    onNavigate('nav');
+    setQuery('');
+  }
+
+  function handleSearchKeyDown(e) {
+    if (e.key !== 'Enter' || showingList || rows.length === 0) return;
+    handleRowSelect(rows[0]);
   }
 
   return (
@@ -44,9 +52,10 @@ export default function Home({ list, onNavigate }) {
           <input
             className="search-input"
             type="text"
-            placeholder="חפש מוצר לפי אות ראשונה… (למשל: ג)"
+            placeholder="חפש מוצר לפי אות ראשונה… (למשל: ג) — Enter מוסיף את הראשון"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
+            onKeyDown={handleSearchKeyDown}
           />
         </div>
         <button
@@ -98,14 +107,20 @@ export default function Home({ list, onNavigate }) {
                   <Icon name="grip" />
                 </span>
               )}
-              <ProductImage product={p} />
-              <div className="home-product-info">
-                <span className="home-product-name">{p.name}</span>
-                <span className="home-product-loc">
-                  {dept.name} · {locationLabel(p)}
+              <button
+                className="home-product-main"
+                onClick={() => handleRowSelect(p)}
+                aria-label={inList ? p.name : `הוסף ${p.name} לרשימה`}
+              >
+                <ProductImage product={p} />
+                <span className="home-product-info">
+                  <span className="home-product-name">{p.name}</span>
+                  <span className="home-product-loc">
+                    {dept.name} · {locationLabel(p)}
+                  </span>
+                  <PriceTag product={p} size="small" />
                 </span>
-                <PriceTag product={p} size="small" />
-              </div>
+              </button>
 
               {inList ? (
                 <div className="home-product-qty">
@@ -125,11 +140,7 @@ export default function Home({ list, onNavigate }) {
                     <Icon name="plus" />
                   </button>
                 </div>
-              ) : (
-                <button className="btn btn--icon" onClick={() => addItem(p)} aria-label="הוסף לרשימה">
-                  <Icon name="plus" />
-                </button>
-              )}
+              ) : null}
 
               {inList && (
                 <button
@@ -141,19 +152,16 @@ export default function Home({ list, onNavigate }) {
                   <Icon name="trash" />
                 </button>
               )}
-
-              <button
-                className="btn btn--icon"
-                onClick={() => goNavigateTo(p)}
-                aria-label="נווט למוצר"
-                title="נווט למוצר"
-              >
-                <Icon name="compass" />
-              </button>
             </div>
           );
         })}
       </div>
+
+      {items.length > 0 && (
+        <button className="btn btn--primary home-nav-cta" onClick={() => onNavigate('nav')}>
+          <Icon name="compass" /> נווט לרשימה שלי
+        </button>
+      )}
 
       <p className="home-catalog-note">קטלוג הסניף: {PRODUCTS.length} מוצרים בעשר מחלקות.</p>
     </div>

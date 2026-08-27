@@ -1567,6 +1567,20 @@
   font-size: 18px;
 }
 
+.home-product-main {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  background: none;
+  border: none;
+  padding: 0;
+  text-align: right;
+  cursor: pointer;
+  color: var(--text);
+}
+
 .home-product-info {
   flex: 1;
   display: flex;
@@ -1602,6 +1616,16 @@
   text-align: center;
   font-weight: 700;
   font-size: 13px;
+}
+
+.home-nav-cta {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 14px;
+  font-size: 15px;
 }
 
 .home-catalog-note {
