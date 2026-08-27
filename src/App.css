@@ -618,22 +618,24 @@
   text-align: center;
 }
 
-/* --- מודל פרטי מוצר --- */
+/* --- מודל (משותף לכל חלון/פיצ'ר-נפתח באפליקציה — סריקת ברקוד,
+   חיפוש-לפי-תמונה, מועדפים, פרטי-מוצר, ועוד, ר' CLAUDE.md: כל חלון
+   נפתח תמיד במרכז המסך, לא כ-bottom sheet) --- */
 .modal-backdrop {
   position: fixed;
   inset: 0;
   background: rgba(0, 0, 0, 0.45);
   display: flex;
-  align-items: flex-end;
+  align-items: center;
   justify-content: center;
   z-index: 50;
 }
 
 .modal {
   background: var(--surface);
-  width: 100%;
+  width: calc(100% - 32px);
   max-width: 480px;
-  border-radius: 20px 20px 0 0;
+  border-radius: 20px;
   padding: 20px;
   position: relative;
   max-height: 88vh;
@@ -1495,12 +1497,17 @@
 .home-hero {
   border-radius: var(--radius);
   overflow: hidden;
-  background: linear-gradient(0deg, rgba(9, 20, 45, 0.6), rgba(9, 20, 45, 0.35)),
+  background: linear-gradient(100deg, rgba(9, 20, 45, 0.15) 40%, rgba(9, 20, 45, 0.75) 100%),
     url('./assets/cart-hero.png') center / cover no-repeat;
+  /* יחס-הגובה-רוחב של קובץ-התמונה עצמו (1774×887) — כדי ש-"cover"
+     ימלא את הריבוע בלי לחתוך אותה (המשתמש דיווח על חיתוך). */
+  aspect-ratio: 1774 / 887;
   padding: 22px 18px;
   display: flex;
   align-items: center;
-  justify-content: center;
+  /* בהקשר RTL, "flex-end" של שורה = הצד השמאלי-פיזי של המסך — בדיוק
+     איפה שביקשו שיהיה מידע-הקנייה, לצד התמונה. */
+  justify-content: flex-end;
 }
 
 .home-hero-stat {
@@ -1521,6 +1528,36 @@
   color: #ffd23f;
   font-size: 28px;
   font-weight: 800;
+}
+
+/* קטן וכחלחל, בגוון-דומה לתמונת-הבאנר שמעליו — ר' דרישת המשתמש. */
+.home-quick-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.home-quick-actions .voice-panel {
+  margin-bottom: 0;
+  padding: 6px 10px;
+  background: var(--primary-tint);
+  border-color: transparent;
+}
+
+.home-quick-actions .scan-buttons-row {
+  margin-bottom: 0;
+}
+
+.btn--tinted {
+  background: var(--primary-tint);
+  border: 1px solid transparent;
+  color: var(--primary-dark);
+  font-size: 12px;
+  padding: 8px 6px;
+}
+
+.btn--tinted:hover {
+  border-color: var(--primary);
 }
 
 .home-product-rows {
@@ -1616,6 +1653,72 @@
   text-align: center;
   font-weight: 700;
   font-size: 13px;
+}
+
+.home-section-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.home-section-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-dim);
+  margin: 0 0 6px;
+}
+
+.home-search-results {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.home-check-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.home-check-row {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+
+.home-check-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  cursor: pointer;
+}
+
+.home-check-label input[type='checkbox'] {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  accent-color: var(--primary);
+}
+
+.home-confirm-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.home-shopping-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 }
 
 .home-nav-cta {
@@ -2207,6 +2310,15 @@
 
 .favorites-modal {
   max-width: 420px;
+}
+
+.favorites-add-all-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 6px;
 }
 
 .favorites-list,
