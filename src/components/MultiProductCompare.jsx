@@ -10,15 +10,13 @@ import {
   isVenueVisible,
   subscribeComparisonVenues,
 } from '../lib/comparisonVenues';
-
-const STORAGE_KEY = 'supernav_price_comparison_products_v1';
-
-function loadSavedProducts() {
-  try {
-    const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
-    return Array.isArray(saved) ? saved.filter((product) => product?.barcode && product?.name).slice(0, 20) : [];
-  } catch { return []; }
-}
+import {
+  addCompareProduct,
+  clearCompareProducts,
+  getCompareProducts,
+  removeCompareProduct,
+  subscribeCompareProducts,
+} from '../lib/compareProducts';
 
 function priceForVenue(rows, venueName) {
   const matches = rows.filter((row) => row.venueName === venueName && Number.isFinite(row.price));
@@ -26,17 +24,13 @@ function priceForVenue(rows, venueName) {
 }
 
 export default function MultiProductCompare() {
-  const [products, setProducts] = useState(loadSavedProducts);
+  const products = useSyncExternalStore(subscribeCompareProducts, getCompareProducts);
   const [priceRows, setPriceRows] = useState({});
   const [scanOpen, setScanOpen] = useState(false);
   const [venueFilterOpen, setVenueFilterOpen] = useState(false);
   const [filter, setFilter] = useState('all');
   const chainFilter = useSyncExternalStore(subscribeComparisonVenues, getChainFilter);
   const hiddenVenues = useSyncExternalStore(subscribeComparisonVenues, getHiddenComparisonVenues);
-
-  useEffect(() => {
-    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(products)); } catch { /* storage may be unavailable */ }
-  }, [products]);
 
   useEffect(() => {
     const missing = products.filter((product) => !priceRows[product.barcode]);
@@ -54,12 +48,8 @@ export default function MultiProductCompare() {
     return undefined;
   }, [products, priceRows]);
 
-  function addProduct(product) {
-    setProducts((current) => current.some((item) => item.barcode === product.barcode) ? current : [...current, product]);
-  }
-
   function removeProduct(barcode) {
-    setProducts((current) => current.filter((product) => product.barcode !== barcode));
+    removeCompareProduct(barcode);
     setPriceRows((current) => { const next = { ...current }; delete next[barcode]; return next; });
   }
 
@@ -99,13 +89,13 @@ export default function MultiProductCompare() {
   return (
     <section className="price-compare-focus" aria-label="השוואת מחירי מוצרים מרובים בין רשתות">
       <div className="compare-search-row">
-        <OfficialProductSearch onSelect={addProduct} placeholder="חפשו מוצר והוסיפו להשוואה…" />
+        <OfficialProductSearch onSelect={addCompareProduct} placeholder="חפשו מוצר והוסיפו להשוואה…" />
         <button type="button" className="btn btn--ghost compare-camera-button" onClick={() => setScanOpen(true)} aria-label="סריקת ברקוד להשוואה"><Icon name="camera" /></button>
       </div>
       <button type="button" className="btn btn--ghost compare-venues-button" onClick={() => setVenueFilterOpen(true)}>
         <Icon name="tag" /> רשתות: {chainFilter.showAllChains ? 'כל הרשתות' : (chainFilter.selectedChains.join(', ') || 'לא נבחרה רשת')}
       </button>
-      {scanOpen && <ScanProductModal onAdd={(selected) => { addProduct(selected); setScanOpen(false); }} onClose={() => setScanOpen(false)} />}
+      {scanOpen && <ScanProductModal onAdd={(selected) => { addCompareProduct(selected); setScanOpen(false); }} onClose={() => setScanOpen(false)} />}
       {venueFilterOpen && <VenueFilterPanel venueNames={allVenueNames} onClose={() => setVenueFilterOpen(false)} />}
       {!products.length ? (
         <div className="price-compare-focus__empty"><Icon name="tag" /><strong>בחרו מוצרים להשוואה</strong><span>חפשו או סרקו מוצר. אפשר להוסיף כמה מוצרים ולקבל טבלת מחירים וסיכום חיסכון.</span></div>
@@ -114,7 +104,7 @@ export default function MultiProductCompare() {
           <div className="compare-filter-bar" role="group" aria-label="סינון מוצרי ההשוואה">
             <span>{products.length} מוצרים</span>
             {[['all', 'הכול'], ['priced', 'עם מחיר'], ['savings', 'עם פער מחיר']].map(([id, label]) => <button type="button" key={id} className={filter === id ? 'is-active' : ''} aria-pressed={filter === id} onClick={() => setFilter(id)}>{label}</button>)}
-            <button type="button" className="compare-clear-button" onClick={() => { setProducts([]); setPriceRows({}); }}>ניקוי</button>
+            <button type="button" className="compare-clear-button" onClick={() => { clearCompareProducts(); setPriceRows({}); }}>ניקוי</button>
           </div>
           <div className="compare-matrix-wrap" tabIndex="0" aria-label="טבלת השוואת מחירים, ניתן לגלול לצדדים">
             <table className="compare-matrix">

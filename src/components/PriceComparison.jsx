@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { PRODUCTS, getSaleProducts, locationLabel } from '../data/storeData';
 import { getDepartment } from '../lib/storeConfig';
 import { getPriceHistory, priceTrend } from '../lib/priceHistory';
@@ -6,18 +6,21 @@ import { useReceiptHistory } from '../lib/useReceiptHistory';
 import { deleteReceipt } from '../lib/receiptHistory';
 import { useAuth } from '../lib/useAuth';
 import { api } from '../lib/apiClient';
+import { addCompareProduct } from '../lib/compareProducts';
 import PriceTag from './PriceTag';
-import ProductDetail from './ProductDetail';
 import ReceiptScanner from './ReceiptScanner';
 import MultiProductCompare from './MultiProductCompare';
 import Icon from './Icon';
 import DeptIcon from './DeptIcon';
 
-function ProductRow({ product, onOpen }) {
+// לחיצה על מוצר בטאב הזה מוסיפה אותו ישירות לטבלת ההשוואה-המרובה
+// שלמעלה (MultiProductCompare) — לא פותחת חלון-פרטים נפרד (ProductDetail
+// עדיין קיים, ומשמש בניווט ובסורק-הברקוד, פשוט לא כאן).
+function ProductRow({ product, onAdd, justAdded }) {
   const dept = getDepartment(product.department);
   const trend = priceTrend(getPriceHistory(product));
   return (
-    <li className="compare-row" onClick={() => onOpen(product)}>
+    <li className="compare-row" onClick={() => onAdd(product)}>
       <span className="compare-icon">
         <DeptIcon dept={dept} />
       </span>
@@ -27,16 +30,25 @@ function ProductRow({ product, onOpen }) {
           {dept.name} · {locationLabel(product)}
         </span>
       </span>
-      {trend.rising && <span className="trend trend--up">↑ {trend.diffPct}%</span>}
-      {trend.falling && <span className="trend trend--down">↓ {Math.abs(trend.diffPct)}%</span>}
+      {justAdded ? (
+        <span className="compare-added-badge">
+          <Icon name="check" /> נוסף להשוואה
+        </span>
+      ) : (
+        <>
+          {trend.rising && <span className="trend trend--up">↑ {trend.diffPct}%</span>}
+          {trend.falling && <span className="trend trend--down">↓ {Math.abs(trend.diffPct)}%</span>}
+        </>
+      )}
       <PriceTag product={product} size="small" />
     </li>
   );
 }
 
-export default function PriceComparison({ list }) {
-  const [detailProduct, setDetailProduct] = useState(null);
+export default function PriceComparison() {
   const [scannerOpen, setScannerOpen] = useState(false);
+  const [justAddedId, setJustAddedId] = useState(null);
+  const justAddedTimer = useRef(null);
   const saleProducts = getSaleProducts();
   const receipts = useReceiptHistory();
   const { user } = useAuth();
@@ -61,9 +73,18 @@ export default function PriceComparison({ list }) {
     };
   }, [user]);
 
+  useEffect(() => () => clearTimeout(justAddedTimer.current), []);
+
+  function handleAddToCompare(product) {
+    addCompareProduct({ id: `catalog-${product.barcode}`, barcode: product.barcode, name: product.name, price: product.price });
+    setJustAddedId(product.id);
+    clearTimeout(justAddedTimer.current);
+    justAddedTimer.current = setTimeout(() => setJustAddedId(null), 1500);
+  }
+
   function openDealProduct(deal) {
     const product = PRODUCTS.find((p) => p.id === deal.productId);
-    if (product) setDetailProduct(product);
+    if (product) handleAddToCompare(product);
   }
 
   return (
@@ -145,34 +166,19 @@ export default function PriceComparison({ list }) {
           </p>
           <ul className="compare-list">
             {saleProducts.map((p) => (
-              <ProductRow key={p.id} product={p} onOpen={setDetailProduct} />
+              <ProductRow key={p.id} product={p} onAdd={handleAddToCompare} justAdded={justAddedId === p.id} />
             ))}
           </ul>
         </>
       )}
 
       <p className="section-title">כל המוצרים</p>
+      <p className="settings-hint">לחצו על מוצר כדי להוסיף אותו לטבלת ההשוואה שלמעלה.</p>
       <ul className="compare-list">
         {PRODUCTS.map((p) => (
-          <ProductRow key={p.id} product={p} onOpen={setDetailProduct} />
+          <ProductRow key={p.id} product={p} onAdd={handleAddToCompare} justAdded={justAddedId === p.id} />
         ))}
       </ul>
-
-      {detailProduct && (
-        <ProductDetail
-          product={detailProduct}
-          onClose={() => setDetailProduct(null)}
-          onAdd={(p) => {
-            list.addItem(p);
-            setDetailProduct(null);
-          }}
-          onSwap={(alt) => {
-            list.removeItem(detailProduct.id);
-            list.addItem(alt);
-            setDetailProduct(null);
-          }}
-        />
-      )}
     </div>
   );
 }

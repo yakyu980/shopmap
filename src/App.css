@@ -697,6 +697,16 @@
   color: var(--primary-dark);
 }
 
+.compare-added-badge {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: #176b34;
+  font-size: 11px;
+  font-weight: 700;
+  flex: 0 0 auto;
+}
+
 .price-history {
   display: flex;
   align-items: flex-end;
@@ -2500,3 +2510,24 @@
   .compare-summary { grid-template-columns: 1fr 1fr; }
   .compare-summary > div:nth-child(2) { grid-column: 1 / -1; grid-row: 1; }
 }
+
+/* השוואה מעמיקה — מוצר מול חומר-גלם, לאורך חודשים/שנים */
+.deep-compare-page { display: grid; gap: 10px; padding: 10px 0 24px; }
+.deep-compare-search { margin-top: 4px; }
+.deep-compare-results { list-style: none; margin: -2px 0 0; padding: 0; display: grid; gap: 4px; border: 1px solid var(--border); border-radius: 12px; overflow: hidden; background: var(--surface); }
+.deep-compare-results button { display: block; width: 100%; min-height: 40px; border: 0; border-top: 1px solid var(--border); padding: 8px 12px; background: transparent; font: inherit; color: inherit; text-align: start; cursor: pointer; }
+.deep-compare-results li:first-child button { border-top: 0; }
+.deep-compare-header { display: flex; align-items: center; gap: 8px; margin-top: 6px; }
+.deep-compare-header-name { flex: 1; font-weight: 700; font-size: 15px; }
+.deep-compare-header-price { color: var(--primary-dark); font-weight: 800; }
+.deep-compare-chart { width: 100%; height: auto; border: 1px solid var(--border); border-radius: 14px; background: var(--surface); }
+.deep-compare-chart__zero { stroke: var(--border); stroke-width: 1; }
+.deep-compare-chart__line { fill: none; stroke-width: 2.5; }
+.deep-compare-chart__line--product { stroke: var(--primary); }
+.deep-compare-chart__line--ingredient { stroke: #d97706; }
+.deep-compare-legend { display: flex; flex-wrap: wrap; gap: 12px; font-size: 12px; }
+.deep-compare-legend-item { display: flex; align-items: center; gap: 6px; }
+.deep-compare-legend-item i { display: inline-block; width: 12px; height: 3px; border-radius: 2px; }
+.deep-compare-legend-item--product i { background: var(--primary); }
+.deep-compare-legend-item--ingredient i { background: #d97706; }
+.deep-compare-insight { display: flex; align-items: flex-start; gap: 6px; margin: 0; padding: 10px 12px; border-radius: 12px; background: var(--primary-tint); color: var(--primary-dark); font-size: 13px; line-height: 1.5; }
