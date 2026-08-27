@@ -59,7 +59,7 @@ export default function App() {
       </nav>
 
       <main className="app-main">
-        {tab === 'home' && <Home list={list} onNavigate={setTab} />}
+        {tab === 'home' && <Home list={list} />}
         {tab === 'map' && <StoreMap />}
         {tab === 'list' && <ShoppingList list={list} onGoNavigate={() => setTab('nav')} />}
         {tab === 'compare' && <PriceComparison list={list} />}
