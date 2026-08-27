@@ -291,14 +291,19 @@ export default function UserPanel({ onClose }) {
     <div className="modal-backdrop" onClick={onClose}>
       <div className="modal user-panel-modal" onClick={(e) => e.stopPropagation()}>
         <CloseButton onClick={onClose} />
-        <h2>
-          <Icon name="family" /> משתמש וקבוצות-קניות
-        </h2>
 
         {!user ? (
-          <Login onDone={() => {}} />
+          <>
+            <h2>
+              <Icon name="door" /> התחברות / הרשמה
+            </h2>
+            <Login onDone={() => {}} />
+          </>
         ) : (
           <>
+            <h2>
+              <Icon name="family" /> משתמש וקבוצות-קניות
+            </h2>
             <div className="user-profile-row">
               {user.photo ? (
                 <img className="favorite-photo" src={user.photo} alt="" />
