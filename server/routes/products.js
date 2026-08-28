@@ -1,106 +1,183 @@
 import { Router } from 'express';
-import { getDb, save } from '../db.js';
+import { supabase, h } from '../supabaseClient.js';
 import { requireAuth } from '../auth.js';
 
 const router = Router();
 
-function getVerification(db, productId) {
-  const rec = db.verifications[productId] || { confirmed: 0, notFound: 0 };
-  return { ...rec, flagged: rec.notFound - rec.confirmed >= 3 };
+function toProduct(row, verification) {
+  return {
+    id: row.id,
+    name: row.name,
+    barcode: row.barcode,
+    department: row.department,
+    shelf: row.shelf,
+    zone: row.zone,
+    price: row.price,
+    category: row.category,
+    salePercent: row.sale_percent || null,
+    updatedAt: row.updated_at,
+    verification,
+  };
+}
+
+function toVerification(row) {
+  const confirmed = row?.confirmed || 0;
+  const notFound = row?.not_found || 0;
+  return { confirmed, notFound, flagged: notFound - confirmed >= 3 };
 }
 
 // פתוח בלי טוקן — הקטלוג נגיש מיד גם למי שלא התחבר.
-router.get('/', (req, res) => {
-  const db = getDb();
-  const products = db.products.map((p) => ({ ...p, verification: getVerification(db, p.id) }));
-  res.json({ products });
-});
+router.get(
+  '/',
+  h(async (req, res) => {
+    const [{ data: products, error: prodErr }, { data: verifications, error: verErr }] = await Promise.all([
+      supabase.from('products').select('*'),
+      supabase.from('verifications').select('*'),
+    ]);
+    if (prodErr) throw prodErr;
+    if (verErr) throw verErr;
+    const verByProduct = new Map((verifications || []).map((v) => [v.product_id, v]));
+    res.json({ products: (products || []).map((p) => toProduct(p, toVerification(verByProduct.get(p.id)))) });
+  })
+);
 
-router.get('/:id/price-history', (req, res) => {
-  const db = getDb();
-  const history = db.priceHistory
-    .filter((h) => h.productId === req.params.id)
-    .sort((a, b) => a.createdAt - b.createdAt);
-  res.json({ history });
-});
+router.get(
+  '/:id/price-history',
+  h(async (req, res) => {
+    const { data, error } = await supabase
+      .from('price_history')
+      .select('*')
+      .eq('product_id', req.params.id)
+      .order('created_at', { ascending: true });
+    if (error) throw error;
+    res.json({
+      history: (data || []).map((r) => ({
+        id: r.id,
+        productId: r.product_id,
+        price: r.price,
+        salePercent: r.sale_percent,
+        changedBy: r.changed_by,
+        createdAt: r.created_at,
+        note: r.note,
+      })),
+    });
+  })
+);
 
-router.get('/:id/location-history', (req, res) => {
-  const db = getDb();
-  const history = db.locationHistory
-    .filter((h) => h.productId === req.params.id)
-    .sort((a, b) => b.createdAt - a.createdAt);
-  res.json({ history });
-});
+router.get(
+  '/:id/location-history',
+  h(async (req, res) => {
+    const { data, error } = await supabase
+      .from('location_history')
+      .select('*')
+      .eq('product_id', req.params.id)
+      .order('created_at', { ascending: false });
+    if (error) throw error;
+    res.json({
+      history: (data || []).map((r) => ({
+        id: r.id,
+        productId: r.product_id,
+        department: r.department,
+        shelf: r.shelf,
+        zone: r.zone,
+        changedBy: r.changed_by,
+        createdAt: r.created_at,
+        note: r.note,
+      })),
+    });
+  })
+);
 
-router.post('/:id/location', requireAuth, (req, res) => {
-  const db = getDb();
-  const product = db.products.find((p) => p.id === req.params.id);
-  if (!product) return res.status(404).json({ error: 'מוצר לא נמצא' });
+router.post(
+  '/:id/location',
+  requireAuth,
+  h(async (req, res) => {
+    const { data: product } = await supabase.from('products').select('*').eq('id', req.params.id).maybeSingle();
+    if (!product) return res.status(404).json({ error: 'מוצר לא נמצא' });
 
-  const { departmentId, shelf, zone } = req.body || {};
-  if (!departmentId || !shelf || !zone) {
-    return res.status(400).json({ error: 'departmentId/shelf/zone נדרשים' });
-  }
+    const { departmentId, shelf, zone } = req.body || {};
+    if (!departmentId || !shelf || !zone) {
+      return res.status(400).json({ error: 'departmentId/shelf/zone נדרשים' });
+    }
 
-  db.locationHistory.push({
-    id: 'lh' + Date.now(),
-    productId: product.id,
-    department: product.department,
-    shelf: product.shelf,
-    zone: product.zone,
-    changedBy: req.user.username,
-    createdAt: Date.now(),
-    note: 'מיקום-קודם, לפני העדכון הזה',
-  });
+    await supabase.from('location_history').insert({
+      id: 'lh' + Date.now(),
+      product_id: product.id,
+      department: product.department,
+      shelf: product.shelf,
+      zone: product.zone,
+      changed_by: req.user.username,
+      created_at: Date.now(),
+      note: 'מיקום-קודם, לפני העדכון הזה',
+    });
 
-  product.department = departmentId;
-  product.shelf = shelf;
-  product.zone = zone;
-  product.updatedAt = Date.now();
-  save();
-  res.json({ product });
-});
+    const { data: updated, error } = await supabase
+      .from('products')
+      .update({ department: departmentId, shelf, zone, updated_at: Date.now() })
+      .eq('id', product.id)
+      .select()
+      .single();
+    if (error) throw error;
+    res.json({ product: toProduct(updated) });
+  })
+);
 
-router.post('/:id/verify', requireAuth, (req, res) => {
-  const db = getDb();
-  const product = db.products.find((p) => p.id === req.params.id);
-  if (!product) return res.status(404).json({ error: 'מוצר לא נמצא' });
+router.post(
+  '/:id/verify',
+  requireAuth,
+  h(async (req, res) => {
+    const { data: product } = await supabase.from('products').select('id').eq('id', req.params.id).maybeSingle();
+    if (!product) return res.status(404).json({ error: 'מוצר לא נמצא' });
 
-  const rec = db.verifications[product.id] || { confirmed: 0, notFound: 0 };
-  if (req.body?.found) rec.confirmed += 1;
-  else rec.notFound += 1;
-  db.verifications[product.id] = rec;
-  save();
-  res.json({ verification: getVerification(db, product.id) });
-});
+    const { data: existing } = await supabase
+      .from('verifications')
+      .select('*')
+      .eq('product_id', product.id)
+      .maybeSingle();
+    const next = {
+      product_id: product.id,
+      confirmed: (existing?.confirmed || 0) + (req.body?.found ? 1 : 0),
+      not_found: (existing?.not_found || 0) + (req.body?.found ? 0 : 1),
+    };
+    const { error } = await supabase.from('verifications').upsert(next, { onConflict: 'product_id' });
+    if (error) throw error;
+    res.json({ verification: toVerification(next) });
+  })
+);
 
 // בהדגמה כל משתמש-מחובר יכול לעדכן מחיר; במוצר-אמיתי זה יוגבל
 // למנהל-חנות (דורש מודל-הרשאות שאין בהיקף הזה) — מתועד גם ב-UI.
-router.post('/:id/price', requireAuth, (req, res) => {
-  const db = getDb();
-  const product = db.products.find((p) => p.id === req.params.id);
-  if (!product) return res.status(404).json({ error: 'מוצר לא נמצא' });
+router.post(
+  '/:id/price',
+  requireAuth,
+  h(async (req, res) => {
+    const { data: product } = await supabase.from('products').select('*').eq('id', req.params.id).maybeSingle();
+    if (!product) return res.status(404).json({ error: 'מוצר לא נמצא' });
 
-  const { price, salePercent } = req.body || {};
-  if (typeof price !== 'number' || price <= 0) {
-    return res.status(400).json({ error: 'price חייב להיות מספר חיובי' });
-  }
+    const { price, salePercent } = req.body || {};
+    if (typeof price !== 'number' || price <= 0) {
+      return res.status(400).json({ error: 'price חייב להיות מספר חיובי' });
+    }
 
-  db.priceHistory.push({
-    id: 'ph' + Date.now(),
-    productId: product.id,
-    price: product.price,
-    salePercent: product.salePercent,
-    changedBy: req.user.username,
-    createdAt: Date.now(),
-    note: 'מחיר-קודם, לפני העדכון הזה',
-  });
+    await supabase.from('price_history').insert({
+      id: 'ph' + Date.now(),
+      product_id: product.id,
+      price: product.price,
+      sale_percent: product.sale_percent,
+      changed_by: req.user.username,
+      created_at: Date.now(),
+      note: 'מחיר-קודם, לפני העדכון הזה',
+    });
 
-  product.price = price;
-  product.salePercent = salePercent || null;
-  product.updatedAt = Date.now();
-  save();
-  res.json({ product });
-});
+    const { data: updated, error } = await supabase
+      .from('products')
+      .update({ price, sale_percent: salePercent || null, updated_at: Date.now() })
+      .eq('id', product.id)
+      .select()
+      .single();
+    if (error) throw error;
+    res.json({ product: toProduct(updated) });
+  })
+);
 
 export default router;

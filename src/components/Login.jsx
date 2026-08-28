@@ -100,11 +100,8 @@ function ForgotPassword({ onDone, onCancel }) {
 
 export default function Login({ onDone }) {
   const [mode, setMode] = useState('login'); // 'login' | 'register' | 'forgot'
-  const [householdMode, setHouseholdMode] = useState('create'); // 'create' | 'join'
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [householdName, setHouseholdName] = useState('');
-  const [householdCode, setHouseholdCode] = useState('');
   const [securityQuestion, setSecurityQuestion] = useState(SECURITY_QUESTIONS[0]);
   const [securityAnswer, setSecurityAnswer] = useState('');
   const [error, setError] = useState('');
@@ -118,15 +115,7 @@ export default function Login({ onDone }) {
       if (mode === 'login') {
         await login({ username, password });
       } else {
-        await register({
-          username,
-          password,
-          mode: householdMode,
-          householdName,
-          householdCode,
-          securityQuestion,
-          securityAnswer,
-        });
+        await register({ username, password, securityQuestion, securityAnswer });
       }
       onDone?.();
     } catch (err) {
@@ -187,41 +176,6 @@ export default function Login({ onDone }) {
 
         {mode === 'register' && (
           <>
-            <div className="login-household-mode">
-              <label>
-                <input
-                  type="radio"
-                  checked={householdMode === 'create'}
-                  onChange={() => setHouseholdMode('create')}
-                />
-                צור משפחה חדשה
-              </label>
-              <label>
-                <input
-                  type="radio"
-                  checked={householdMode === 'join'}
-                  onChange={() => setHouseholdMode('join')}
-                />
-                הצטרף למשפחה קיימת (עם קוד)
-              </label>
-            </div>
-
-            {householdMode === 'create' ? (
-              <input
-                className="map-edit-input"
-                placeholder="שם המשפחה (למשל: משפחת כהן)"
-                value={householdName}
-                onChange={(e) => setHouseholdName(e.target.value)}
-              />
-            ) : (
-              <input
-                className="map-edit-input"
-                placeholder="קוד-משפחה (קיבלת מבן-משפחה אחר)"
-                value={householdCode}
-                onChange={(e) => setHouseholdCode(e.target.value.toUpperCase())}
-              />
-            )}
-
             <select
               className="map-edit-input"
               value={securityQuestion}

@@ -9,3 +9,9 @@ services:
     envVars:
       - key: NODE_VERSION
         value: 20
+      # ערכים אמיתיים מוזנים ידנית ב-Render Dashboard (Environment)
+      # — לא בקוד/ב-git, ר' README.
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SECRET_KEY
+        sync: false
