@@ -8,7 +8,7 @@ const SCAN_FORMATS = ['ean_13', 'ean_8', 'upc_a', 'upc_e', 'code_128'];
 const SCAN_INTERVAL_MS = 400;
 
 export default function ScanProductModal({ onAdd, onClose }) {
-  const { videoRef, status } = useCameraStream();
+  const { videoRef, status, retry } = useCameraStream();
   const [manualCode, setManualCode] = useState('');
   const [lookupStatus, setLookupStatus] = useState('idle'); // idle | loading | found | empty | error
   const [match, setMatch] = useState(null); // {barcode, name, minPrice}
@@ -84,7 +84,12 @@ export default function ScanProductModal({ onAdd, onClose }) {
           <p className="barcode-hint"><Icon name="camera" /> מבקש הרשאת מצלמה…</p>
         )}
         {status === CAMERA_STATUS.DENIED && (
-          <p className="barcode-hint"><Icon name="warning" /> לא ניתנה הרשאת מצלמה — אפשר להקליד ברקוד ידנית למטה.</p>
+          <p className="barcode-hint">
+            <Icon name="warning" /> לא ניתנה הרשאת מצלמה — אפשר להקליד ברקוד ידנית למטה.
+            <button type="button" className="camera-retry-btn" onClick={retry}>
+              נסה שוב
+            </button>
+          </p>
         )}
         {status === CAMERA_STATUS.UNSUPPORTED && (
           <p className="barcode-hint">ℹ️ מצלמה לא זמינה כאן — אפשר להקליד ברקוד ידנית למטה.</p>

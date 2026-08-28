@@ -1162,6 +1162,18 @@
   padding: 4px;
 }
 
+.camera-retry-btn {
+  display: block;
+  margin: 6px auto 0;
+  padding: 4px 14px;
+  font-size: 12px;
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+
 .barcode-manual-row {
   display: flex;
   gap: 6px;

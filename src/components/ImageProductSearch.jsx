@@ -16,7 +16,7 @@ const SAMPLE_SIZE = 24;
 
 export default function ImageProductSearch({ onAdd, onClose, onFallbackToSearch }) {
   const { user } = useAuth();
-  const { videoRef, status } = useCameraStream();
+  const { videoRef, status, retry } = useCameraStream();
   const canvasRef = useRef(null);
   const [candidates, setCandidates] = useState(null);
   const [added, setAdded] = useState(null);
@@ -114,6 +114,9 @@ export default function ImageProductSearch({ onAdd, onClose, onFallbackToSearch 
             {status === CAMERA_STATUS.DENIED && (
               <p className="barcode-hint">
                 <Icon name="warning" /> לא ניתנה הרשאת מצלמה — נסו את החיפוש הרגיל.
+                <button type="button" className="camera-retry-btn" onClick={retry}>
+                  נסה שוב
+                </button>
               </p>
             )}
             {status === CAMERA_STATUS.UNSUPPORTED && (

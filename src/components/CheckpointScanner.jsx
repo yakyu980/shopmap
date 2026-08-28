@@ -11,7 +11,7 @@ const SCAN_INTERVAL_MS = 400;
 // סריקה מוצלחת של קוד שמזוהה כ-צ'ק-פוינט קיים מעדכנת מיקום אמיתי
 // (לא GPS/הדמיה) — ר' CLAUDE.md §16 "מפה רב-קומתית + צ'ק-פוינטים".
 export default function CheckpointScanner({ onScan, onClose }) {
-  const { videoRef, status } = useCameraStream();
+  const { videoRef, status, retry } = useCameraStream();
   const [manualCode, setManualCode] = useState('');
   const [result, setResult] = useState(null); // {found, checkpoint?, code}
   const [detectorSupported, setDetectorSupported] = useState(typeof window.BarcodeDetector !== 'undefined');
@@ -75,6 +75,9 @@ export default function CheckpointScanner({ onScan, onClose }) {
         {status === CAMERA_STATUS.DENIED && (
           <p className="barcode-hint">
             <Icon name="warning" /> לא ניתנה הרשאת מצלמה — אפשר להקליד קוד ידנית למטה.
+            <button type="button" className="camera-retry-btn" onClick={retry}>
+              נסה שוב
+            </button>
           </p>
         )}
         {status === CAMERA_STATUS.UNSUPPORTED && (

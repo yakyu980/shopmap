@@ -13,7 +13,7 @@ const SCAN_FORMATS = ['ean_13', 'ean_8', 'upc_a', 'upc_e', 'code_128'];
 const SCAN_INTERVAL_MS = 400;
 
 export default function BarcodeScanner({ onAdd, onClose }) {
-  const { videoRef, status } = useCameraStream();
+  const { videoRef, status, retry } = useCameraStream();
   const [manualCode, setManualCode] = useState('');
   const [result, setResult] = useState(null); // {found, product?, externalProduct?, code}
   const [detectorSupported, setDetectorSupported] = useState(typeof window.BarcodeDetector !== 'undefined');
@@ -88,6 +88,9 @@ export default function BarcodeScanner({ onAdd, onClose }) {
         {status === CAMERA_STATUS.DENIED && (
           <p className="barcode-hint">
             <Icon name="warning" /> לא ניתנה הרשאת מצלמה — אפשר להקליד ברקוד ידנית למטה.
+            <button type="button" className="camera-retry-btn" onClick={retry}>
+              נסה שוב
+            </button>
           </p>
         )}
         {status === CAMERA_STATUS.UNSUPPORTED && (
