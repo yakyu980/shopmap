@@ -1,9 +1,9 @@
 // hash/אימות-סיסמה עם crypto.scrypt המובנה (אין תלות-חיצונית כמו
-// bcrypt), וטוקן-התחברות אטום (crypto.randomBytes) בטבלת sessions —
-// לא JWT, כדי לא להוסיף תלות מיותרת לשרת-הדגמה.
+// bcrypt), וטוקן-התחברות אטום (crypto.randomBytes) — נשמר בטבלת
+// sessions בסופרבייס, לא JWT, כדי לא להוסיף תלות מיותרת לשרת-הדגמה.
 
 import crypto from 'node:crypto';
-import { getDb, save } from './db.js';
+import { supabase } from './supabaseClient.js';
 
 export function hashPassword(password) {
   const salt = crypto.randomBytes(16).toString('hex');
@@ -12,6 +12,7 @@ export function hashPassword(password) {
 }
 
 export function verifyPassword(password, stored) {
+  if (!stored) return false;
   const [salt, hash] = stored.split(':');
   const check = crypto.scryptSync(password, salt, 64).toString('hex');
   const a = Buffer.from(hash, 'hex');
@@ -23,29 +24,45 @@ export function makeToken() {
   return crypto.randomBytes(24).toString('hex');
 }
 
-export function createSession(userId) {
-  const db = getDb();
+export async function createSession(userId) {
   const token = makeToken();
-  db.sessions.push({ token, userId, createdAt: Date.now() });
-  save();
+  const { error } = await supabase
+    .from('sessions')
+    .insert({ token, user_id: userId, created_at: Date.now() });
+  if (error) throw error;
   return token;
 }
 
-export function requireAuth(req, res, next) {
+export async function requireAuth(req, res, next) {
   const header = req.headers.authorization || '';
   const token = header.startsWith('Bearer ') ? header.slice(7) : null;
   if (!token) return res.status(401).json({ error: 'לא מחובר' });
 
-  const db = getDb();
-  const session = db.sessions.find((s) => s.token === token);
+  const { data: session } = await supabase.from('sessions').select('user_id').eq('token', token).maybeSingle();
   if (!session) return res.status(401).json({ error: 'התחברות לא תקפה, יש להתחבר מחדש' });
 
-  const user = db.users.find((u) => u.id === session.userId);
+  const { data: user } = await supabase.from('users').select('*').eq('id', session.user_id).maybeSingle();
   if (!user) return res.status(401).json({ error: 'משתמש לא נמצא' });
 
   req.user = user;
-  req.household = db.households.find((h) => h.id === user.householdId);
+  if (user.household_id) {
+    const { data: household } = await supabase
+      .from('households')
+      .select('*')
+      .eq('id', user.household_id)
+      .maybeSingle();
+    req.household = household ? toHousehold(household) : null;
+  } else {
+    req.household = null;
+  }
   next();
+}
+
+// ---- ממירים snake_case (עמודות-Postgres) ל-camelCase (מה שכל שאר
+// השרת/הלקוח כבר מצפים לו) — נקודת-מעבר יחידה, כדי לא לפזר את זה
+// בכל route. ----
+export function toHousehold(row) {
+  return { id: row.id, name: row.name, joinCode: row.join_code, createdAt: row.created_at };
 }
 
 export function publicUser(user) {
@@ -54,6 +71,6 @@ export function publicUser(user) {
     username: user.username,
     emoji: user.emoji,
     photo: user.photo || null,
-    householdId: user.householdId,
+    householdId: user.household_id,
   };
 }

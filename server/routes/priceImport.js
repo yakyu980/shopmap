@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { getDb, save } from '../db.js';
+import { supabase, h } from '../supabaseClient.js';
 import { requireAuth } from '../auth.js';
 
 const router = Router();
@@ -9,73 +9,105 @@ const router = Router();
 // הרשמיים של הרשתות ומייצא CSV מנורמל; כאן רק שומרים את התוצאה,
 // keyed by barcode+venueId — "current price snapshot", לא audit-log
 // (בניגוד ל-priceObservations שהוא היסטוריית-קניות-אמיתית).
-router.post('/', requireAuth, (req, res) => {
-  const { venueId, rows } = req.body || {};
-  if (!venueId || !Array.isArray(rows) || rows.length === 0) {
-    return res.status(400).json({ error: 'venueId/rows נדרשים' });
-  }
-  if (rows.length > 20000) {
-    return res.status(400).json({ error: 'קובץ גדול מדי (מעל 20,000 שורות) — פצלו לכמה ייבואים' });
-  }
-
-  const db = getDb();
-  const venue = db.venues.find((v) => v.id === venueId && v.householdId === req.household.id);
-  if (!venue) return res.status(404).json({ error: 'venue לא נמצא' });
-
-  let imported = 0;
-  for (const row of rows) {
-    const { barcode, name, price } = row || {};
-    if (!barcode || !name || typeof price !== 'number' || !(price > 0)) continue;
-    const existing = db.officialPrices.find((p) => p.barcode === barcode && p.venueId === venueId);
-    if (existing) {
-      existing.name = name;
-      existing.price = price;
-      existing.importedAt = Date.now();
-    } else {
-      db.officialPrices.push({ barcode, venueId, name, price, importedAt: Date.now() });
+router.post(
+  '/',
+  requireAuth,
+  h(async (req, res) => {
+    const { venueId, rows } = req.body || {};
+    if (!venueId || !Array.isArray(rows) || rows.length === 0) {
+      return res.status(400).json({ error: 'venueId/rows נדרשים' });
     }
-    imported += 1;
-  }
-  save();
-  res.json({ imported, total: rows.length });
-});
+    if (rows.length > 20000) {
+      return res.status(400).json({ error: 'קובץ גדול מדי (מעל 20,000 שורות) — פצלו לכמה ייבואים' });
+    }
+
+    const { data: venue } = await supabase
+      .from('venues')
+      .select('id')
+      .eq('id', venueId)
+      .eq('household_id', req.household.id)
+      .maybeSingle();
+    if (!venue) return res.status(404).json({ error: 'venue לא נמצא' });
+
+    const validRows = rows.filter(
+      (row) => row?.barcode && row?.name && typeof row.price === 'number' && row.price > 0
+    );
+    const importedAt = Date.now();
+    const upsertRows = validRows.map((row) => ({
+      barcode: row.barcode,
+      venue_id: venueId,
+      name: row.name,
+      price: row.price,
+      imported_at: importedAt,
+    }));
+
+    // upsert לפי (barcode, venue_id) — טבלה שיש עליה unique constraint,
+    // ר' supabase-schema.sql, אותה סמנטיקה בדיוק כמו "עדכן אם קיים,
+    // הוסף אם לא" שהייתה בקובץ ה-JSON הישן.
+    if (upsertRows.length > 0) {
+      const { error } = await supabase.from('official_prices').upsert(upsertRows, { onConflict: 'barcode,venue_id' });
+      if (error) throw error;
+    }
+    res.json({ imported: upsertRows.length, total: rows.length });
+  })
+);
 
 // חיפוש-חופשי בקטלוג המחירים-הרשמיים (לא לפי ברקוד מדויק) — לצורך
 // הוספת מוצר להשוואה-מרובה לפי שם. מקבץ לפי ברקוד ומחזיר לכל מוצר
 // את שם-התצוגה (מהייבוא האחרון), מספר-הסניפים עם מחיר, והמחיר הזול
 // ביותר שנצפה — לא ממוצע, כדי לא להטעות לגבי "הכי משתלם".
-router.get('/catalog/search', requireAuth, (req, res) => {
-  const q = (req.query.q || '').trim().toLowerCase();
-  if (q.length < 2) return res.json({ products: [] });
+router.get(
+  '/catalog/search',
+  requireAuth,
+  h(async (req, res) => {
+    const q = (req.query.q || '').trim().toLowerCase();
+    if (q.length < 2) return res.json({ products: [] });
 
-  const db = getDb();
-  const byBarcode = new Map();
-  for (const row of db.officialPrices) {
-    if (!row.name.toLowerCase().includes(q)) continue;
-    const existing = byBarcode.get(row.barcode);
-    if (!existing || row.importedAt > existing.importedAt) {
-      byBarcode.set(row.barcode, { barcode: row.barcode, name: row.name, importedAt: row.importedAt });
+    const { data: matches, error } = await supabase.from('official_prices').select('*').ilike('name', `%${q}%`);
+    if (error) throw error;
+
+    const byBarcode = new Map();
+    for (const row of matches || []) {
+      const existing = byBarcode.get(row.barcode);
+      if (!existing || row.imported_at > existing.importedAt) {
+        byBarcode.set(row.barcode, { barcode: row.barcode, name: row.name, importedAt: row.imported_at });
+      }
     }
-  }
-  const products = [...byBarcode.values()]
-    .map(({ barcode, name }) => {
-      const prices = db.officialPrices.filter((p) => p.barcode === barcode).map((p) => p.price);
-      return { barcode, name, minPrice: Math.min(...prices), venueCount: prices.length };
-    })
-    .slice(0, 20);
-  res.json({ products });
-});
+    const products = [];
+    for (const { barcode, name } of byBarcode.values()) {
+      const { data: allForBarcode } = await supabase.from('official_prices').select('price').eq('barcode', barcode);
+      const prices = (allForBarcode || []).map((p) => p.price);
+      products.push({ barcode, name, minPrice: Math.min(...prices), venueCount: prices.length });
+      if (products.length >= 20) break;
+    }
+    res.json({ products });
+  })
+);
 
-router.get('/:barcode', requireAuth, (req, res) => {
-  const db = getDb();
-  const venueById = new Map(db.venues.map((v) => [v.id, v]));
-  const rows = db.officialPrices
-    .filter((p) => p.barcode === req.params.barcode)
-    .map((p) => ({
-      ...p,
-      venueName: venueById.get(p.venueId) ? `${venueById.get(p.venueId).chainName} · ${venueById.get(p.venueId).branchName}` : 'חנות לא ידועה',
-    }));
-  res.json({ rows });
-});
+router.get(
+  '/:barcode',
+  requireAuth,
+  h(async (req, res) => {
+    const [{ data: rows, error: rowsErr }, { data: venues, error: venuesErr }] = await Promise.all([
+      supabase.from('official_prices').select('*').eq('barcode', req.params.barcode),
+      supabase.from('venues').select('*'),
+    ]);
+    if (rowsErr) throw rowsErr;
+    if (venuesErr) throw venuesErr;
+    const venueById = new Map((venues || []).map((v) => [v.id, v]));
+    const result = (rows || []).map((p) => {
+      const v = venueById.get(p.venue_id);
+      return {
+        barcode: p.barcode,
+        venueId: p.venue_id,
+        name: p.name,
+        price: p.price,
+        importedAt: p.imported_at,
+        venueName: v ? `${v.chain_name} · ${v.branch_name}` : 'חנות לא ידועה',
+      };
+    });
+    res.json({ rows: result });
+  })
+);
 
 export default router;

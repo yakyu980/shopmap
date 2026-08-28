@@ -1,5 +1,5 @@
-// שרת-הדגמה מקומי אמיתי ל-SuperNav AI (Express + קובץ-JSON).
-// לא פרוס לאינטרנט — רץ מקומית לצד הלקוח, ניתן להרצה/בדיקה מלאה כאן.
+// שרת SuperNav AI — Express + סופרבייס (Postgres אמיתי, לא קובץ-JSON
+// מקומי יותר) — ר' server/supabaseClient.js ו-server/supabase-schema.sql.
 
 import express from 'express';
 import cors from 'cors';
@@ -13,6 +13,7 @@ import tripRoutes from './routes/trips.js';
 import priceObservationRoutes from './routes/priceObservations.js';
 import priceImportRoutes from './routes/priceImport.js';
 import dealsRoutes from './routes/deals.js';
+import { seedProducts } from './seedProducts.js';
 
 const app = express();
 app.use(cors());
@@ -32,6 +33,11 @@ app.use('/api/deals', dealsRoutes);
 app.get('/api/health', (req, res) => res.json({ ok: true }));
 
 const PORT = process.env.PORT || 8787;
-app.listen(PORT, () => {
-  console.log(`SuperNav AI server (demo, local-only) listening on http://localhost:${PORT}`);
-});
+
+seedProducts()
+  .catch((err) => console.error('SuperNav AI: product seeding failed —', err.message))
+  .finally(() => {
+    app.listen(PORT, () => {
+      console.log(`SuperNav AI server listening on http://localhost:${PORT}`);
+    });
+  });
