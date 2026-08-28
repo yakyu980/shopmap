@@ -14,6 +14,7 @@ export default function AuthGate() {
         <p className="app-tagline">ה-Waze של הסופר — MVP הדגמה</p>
       </header>
       <main className="app-main auth-gate-main">
+        <div className="auth-gate-hero" aria-hidden="true" />
         <p className="auth-gate-intro">
           <Icon name="family" /> כדי להשתמש באפליקציה יש להתחבר או להירשם.
         </p>
