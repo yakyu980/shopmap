@@ -33,19 +33,33 @@ export function useCameraStream() {
       return;
     }
 
+    const useStream = (stream) => {
+      if (cancelled) {
+        stream.getTracks().forEach((t) => t.stop());
+        return;
+      }
+      streamRef.current = stream;
+      if (videoRef.current) videoRef.current.srcObject = stream;
+      setStatus(CAMERA_STATUS.READY);
+    };
+
     navigator.mediaDevices
       .getUserMedia({ video: { facingMode: 'environment' }, audio: false })
-      .then((stream) => {
-        if (cancelled) {
-          stream.getTracks().forEach((t) => t.stop());
+      .then(useStream)
+      .catch((err) => {
+        if (cancelled) return;
+        // אין מצלמה אחורית (למשל מחשב-נייד) — לא באמת "הרשאה נדחתה",
+        // מנסים שוב עם כל מצלמה זמינה (בד"כ הקדמית) לפני שמוותרים.
+        if (err?.name === 'OverconstrainedError' || err?.name === 'NotFoundError') {
+          navigator.mediaDevices
+            .getUserMedia({ video: true, audio: false })
+            .then(useStream)
+            .catch(() => {
+              if (!cancelled) setStatus(CAMERA_STATUS.DENIED);
+            });
           return;
         }
-        streamRef.current = stream;
-        if (videoRef.current) videoRef.current.srcObject = stream;
-        setStatus(CAMERA_STATUS.READY);
-      })
-      .catch(() => {
-        if (!cancelled) setStatus(CAMERA_STATUS.DENIED);
+        setStatus(CAMERA_STATUS.DENIED);
       });
 
     return () => {

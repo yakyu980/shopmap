@@ -6,8 +6,7 @@ import { useTripSync } from '../lib/useTripSync';
 import { useFamilyMembers } from '../lib/useFamilyMembers';
 import PurchasePredictions from './PurchasePredictions';
 import ProductImage from './ProductImage';
-import BarcodeScanner from './BarcodeScanner';
-import ImageProductSearch from './ImageProductSearch';
+import ScanOrSearchModal from './ScanOrSearchModal';
 import VoiceAddPanel from './VoiceAddPanel';
 import FavoritesManager from './FavoritesManager';
 import TripVenuePicker from './TripVenuePicker';
@@ -23,7 +22,6 @@ export default function Home({ list, onNavigate }) {
   const [query, setQuery] = useState('');
   const [checkedIds, setCheckedIds] = useState(new Set());
   const [scannerOpen, setScannerOpen] = useState(false);
-  const [imageSearchOpen, setImageSearchOpen] = useState(false);
   const [favoritesOpen, setFavoritesOpen] = useState(false);
   const [venuePickerOpen, setVenuePickerOpen] = useState(false);
   const [draggedId, setDraggedId] = useState(null);
@@ -73,12 +71,11 @@ export default function Home({ list, onNavigate }) {
       {favoritesOpen && (
         <FavoritesManager onAddToList={handleAdd} onClose={() => setFavoritesOpen(false)} />
       )}
-      {scannerOpen && <BarcodeScanner onAdd={handleAddByScan} onClose={() => setScannerOpen(false)} />}
-      {imageSearchOpen && (
-        <ImageProductSearch
+      {scannerOpen && (
+        <ScanOrSearchModal
           onAdd={handleAddByScan}
-          onClose={() => setImageSearchOpen(false)}
-          onFallbackToSearch={() => setImageSearchOpen(false)}
+          onClose={() => setScannerOpen(false)}
+          onFallbackToSearch={() => setScannerOpen(false)}
         />
       )}
 
@@ -134,10 +131,7 @@ export default function Home({ list, onNavigate }) {
 
         <div className="scan-buttons-row">
           <button className="btn btn--tinted" onClick={() => setScannerOpen(true)}>
-            <Icon name="barcode" solid /> סרוק ברקוד
-          </button>
-          <button className="btn btn--tinted" onClick={() => setImageSearchOpen(true)}>
-            <Icon name="camera" /> חפש לפי תמונה
+            <Icon name="barcode" solid /> סרוק / זהה מוצר
           </button>
           <button className="btn btn--tinted" onClick={() => setFavoritesOpen(true)}>
             <Icon name="star" /> המועדפים שלי
