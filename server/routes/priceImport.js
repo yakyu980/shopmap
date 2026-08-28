@@ -40,6 +40,32 @@ router.post('/', requireAuth, (req, res) => {
   res.json({ imported, total: rows.length });
 });
 
+// חיפוש-חופשי בקטלוג המחירים-הרשמיים (לא לפי ברקוד מדויק) — לצורך
+// הוספת מוצר להשוואה-מרובה לפי שם. מקבץ לפי ברקוד ומחזיר לכל מוצר
+// את שם-התצוגה (מהייבוא האחרון), מספר-הסניפים עם מחיר, והמחיר הזול
+// ביותר שנצפה — לא ממוצע, כדי לא להטעות לגבי "הכי משתלם".
+router.get('/catalog/search', requireAuth, (req, res) => {
+  const q = (req.query.q || '').trim().toLowerCase();
+  if (q.length < 2) return res.json({ products: [] });
+
+  const db = getDb();
+  const byBarcode = new Map();
+  for (const row of db.officialPrices) {
+    if (!row.name.toLowerCase().includes(q)) continue;
+    const existing = byBarcode.get(row.barcode);
+    if (!existing || row.importedAt > existing.importedAt) {
+      byBarcode.set(row.barcode, { barcode: row.barcode, name: row.name, importedAt: row.importedAt });
+    }
+  }
+  const products = [...byBarcode.values()]
+    .map(({ barcode, name }) => {
+      const prices = db.officialPrices.filter((p) => p.barcode === barcode).map((p) => p.price);
+      return { barcode, name, minPrice: Math.min(...prices), venueCount: prices.length };
+    })
+    .slice(0, 20);
+  res.json({ products });
+});
+
 router.get('/:barcode', requireAuth, (req, res) => {
   const db = getDb();
   const venueById = new Map(db.venues.map((v) => [v.id, v]));

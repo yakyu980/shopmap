@@ -3,6 +3,8 @@ import './App.css';
 import Home from './components/Home';
 import StoreMap from './components/StoreMap';
 import PriceComparison from './components/PriceComparison';
+import DealsTab from './components/DealsTab';
+import DeepCompare from './components/DeepCompare';
 import Navigation from './components/Navigation';
 import Icon from './components/Icon';
 import IconSprite from './components/IconSprite';
@@ -17,6 +19,8 @@ const TABS = [
   { id: 'home', icon: 'home', label: 'דף בית' },
   { id: 'map', icon: 'map', label: 'מפת חנות' },
   { id: 'compare', icon: 'tag', label: 'השוואת מחירים' },
+  { id: 'deals', icon: 'star', label: 'דילים' },
+  { id: 'deep', icon: 'chart', label: 'השוואה מעמיקה' },
   { id: 'nav', icon: 'compass', label: 'ניווט' },
 ];
 
@@ -56,7 +60,9 @@ export default function App() {
       <main className="app-main">
         {tab === 'home' && <Home list={list} onNavigate={setTab} />}
         {tab === 'map' && <StoreMap />}
-        {tab === 'compare' && <PriceComparison list={list} />}
+        {tab === 'compare' && <PriceComparison />}
+        {tab === 'deals' && <DealsTab />}
+        {tab === 'deep' && <DeepCompare />}
         {tab === 'nav' && <Navigation list={list} onBack={() => setTab('home')} />}
       </main>
     </div>
