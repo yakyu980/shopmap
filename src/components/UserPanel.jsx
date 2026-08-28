@@ -14,7 +14,6 @@ import {
   blockGroup,
 } from '../lib/groups';
 import { PRODUCTS } from '../data/storeData';
-import Login from './Login';
 import Icon from './Icon';
 import CloseButton from './CloseButton';
 
@@ -292,19 +291,10 @@ export default function UserPanel({ onClose }) {
       <div className="modal user-panel-modal" onClick={(e) => e.stopPropagation()}>
         <CloseButton onClick={onClose} />
 
-        {!user ? (
-          <>
-            <h2>
-              <Icon name="door" /> התחברות / הרשמה
-            </h2>
-            <Login onDone={() => {}} />
-          </>
-        ) : (
-          <>
-            <h2>
-              <Icon name="family" /> משתמש וקבוצות-קניות
-            </h2>
-            <div className="user-profile-row">
+        <h2>
+          <Icon name="family" /> משתמש וקבוצות-קניות
+        </h2>
+        <div className="user-profile-row">
               {user.photo ? (
                 <img className="favorite-photo" src={user.photo} alt="" />
               ) : (
@@ -368,8 +358,6 @@ export default function UserPanel({ onClose }) {
                 </button>
               </div>
             </section>
-          </>
-        )}
       </div>
     </div>
   );

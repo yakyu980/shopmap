@@ -2606,3 +2606,24 @@
 .mapping-readiness { display: grid; gap: 10px; margin-bottom: 14px; padding: 14px; border: 1px solid var(--border); border-radius: 16px; background: var(--surface); box-shadow: 0 5px 18px rgba(22,50,79,.07); }
 .mapping-readiness__heading { display: flex; align-items: center; gap: 9px; }.mapping-readiness__heading > span { display: grid; width: 36px; height: 36px; place-items: center; border-radius: 10px; color: var(--primary); background: var(--primary-tint); }.mapping-readiness__heading div { display: grid; gap: 2px; }.mapping-readiness__heading strong { color: var(--text); font-size: 14px; }.mapping-readiness__heading small, .mapping-readiness__privacy { color: var(--text-dim); font-size: 10px; line-height: 1.45; }
 .mapping-readiness ul { display: grid; gap: 6px; margin: 0; padding: 0; list-style: none; }.mapping-readiness li { display: grid; grid-template-columns: 20px 1fr auto; min-height: 40px; align-items: center; gap: 7px; padding: 7px 9px; border-radius: 10px; background: var(--bg); font-size: 12px; }.mapping-readiness li .icon { color: var(--primary); }.mapping-readiness li b { color: var(--text-dim); font-size: 10px; }.mapping-readiness li b.is-ready { color: #15803d; }.mapping-readiness li b.is-blocked { color: var(--danger); }.mapping-readiness .btn { min-height: 46px; }.mapping-readiness__privacy { margin: 0; }
+
+/* ---- שער-כניסה (AuthGate.jsx) ---- */
+.auth-gate-main {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  max-width: 420px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.auth-gate-intro {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  justify-content: center;
+  text-align: center;
+  color: var(--text-dim);
+  font-size: 13.5px;
+  margin: 0;
+}

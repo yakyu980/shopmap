@@ -7,8 +7,10 @@ import Navigation from './components/Navigation';
 import Icon from './components/Icon';
 import IconSprite from './components/IconSprite';
 import UserButton from './components/UserButton';
+import AuthGate from './components/AuthGate';
 import { useShoppingList } from './lib/useShoppingList';
 import { useHouseholdSync } from './lib/useHouseholdSync';
+import { useAuth } from './lib/useAuth';
 
 // "רשימת קניות" אוחדה לתוך "דף בית" (הוסרה כטאב נפרד) — ר' Home.jsx.
 const TABS = [
@@ -21,7 +23,10 @@ const TABS = [
 export default function App() {
   const [tab, setTab] = useState('home');
   const list = useShoppingList();
+  const { user } = useAuth();
   useHouseholdSync();
+
+  if (!user) return <AuthGate />;
 
   return (
     <div className="app">
