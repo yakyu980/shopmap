@@ -68,5 +68,15 @@ export function useCameraStream() {
     };
   }, [attempt]);
 
+  // ה-<video> ברוב המסכים מצויר רק כש-status==='ready' (כדי לא להציג
+  // אלמנט-וידאו ריק בזמן הטעינה) — כלומר ברגע שה-stream מגיע, ה-ref
+  // עוד לא מחובר לשום אלמנט. האפקט הזה רץ אחרי שה-DOM כבר עודכן
+  // ומחבר את ה-stream לאלמנט האמיתי; בלעדיו הווידאו נשאר שחור.
+  useEffect(() => {
+    if (status === CAMERA_STATUS.READY && videoRef.current && streamRef.current) {
+      videoRef.current.srcObject = streamRef.current;
+    }
+  }, [status]);
+
   return { videoRef, status, retry };
 }
