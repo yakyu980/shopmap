@@ -1207,6 +1207,26 @@
   flex-wrap: wrap;
 }
 
+.add-product-form h3 {
+  margin: 0;
+  font-size: 15px;
+}
+
+.add-product-photo {
+  width: 100%;
+  max-height: 160px;
+  object-fit: cover;
+  border-radius: 10px;
+}
+
+.map-edit-label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 13px;
+  color: var(--text-dim);
+}
+
 .mock-disclaimer {
   font-size: 12px;
   color: var(--text-dim);

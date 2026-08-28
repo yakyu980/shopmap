@@ -1,7 +1,9 @@
 import { useMemo, useState } from 'react';
-import { PRODUCTS, searchProducts, locationLabel } from '../data/storeData';
+import { locationLabel } from '../data/storeData';
 import { getDepartment } from '../lib/storeConfig';
 import { useAuth } from '../lib/useAuth';
+import { useCatalog } from '../lib/useCatalog';
+import { searchCatalog, getAllProducts } from '../lib/catalog';
 import { useTripSync } from '../lib/useTripSync';
 import { useFamilyMembers } from '../lib/useFamilyMembers';
 import PurchasePredictions from './PurchasePredictions';
@@ -16,6 +18,7 @@ import Icon from './Icon';
 export default function Home({ list, onNavigate }) {
   const { items, addItem, removeItem, incrementItem, decrementItem, reorderItems, assignItem } = list;
   const { token } = useAuth();
+  const dynamicProducts = useCatalog();
   const { trip, startTrip, addTripItem, toggleTripItem, removeTripItem, finishTrip } = useTripSync();
   const family = useFamilyMembers();
 
@@ -36,7 +39,10 @@ export default function Home({ list, onNavigate }) {
 
   // תוצאות-חיפוש בקטלוג — נפרד לגמרי מרשימת-הקניות שלמטה: מסמנים
   // (checkbox) מה רוצים, ורק בלחיצה על "אישור" זה נכנס בפועל לרשימה.
-  const searchResults = useMemo(() => (query.trim() ? searchProducts(query) : []), [query]);
+  const searchResults = useMemo(
+    () => (query.trim() ? searchCatalog(query) : []),
+    [query, dynamicProducts]
+  );
 
   function handleAdd(product) {
     if (product.custom) addItem(product);
@@ -320,7 +326,7 @@ export default function Home({ list, onNavigate }) {
         <Icon name="compass" /> נווט לרשימה שלי
       </button>
 
-      <p className="home-catalog-note">קטלוג הסניף: {PRODUCTS.length} מוצרים בעשר מחלקות.</p>
+      <p className="home-catalog-note">קטלוג הסניף: {getAllProducts().length} מוצרים בעשר מחלקות.</p>
     </div>
   );
 }

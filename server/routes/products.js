@@ -15,6 +15,7 @@ function toProduct(row, verification) {
     price: row.price,
     category: row.category,
     salePercent: row.sale_percent || null,
+    imageUrl: row.image_url || null,
     updatedAt: row.updated_at,
     verification,
   };
@@ -38,6 +39,39 @@ router.get(
     if (verErr) throw verErr;
     const verByProduct = new Map((verifications || []).map((v) => [v.product_id, v]));
     res.json({ products: (products || []).map((p) => toProduct(p, toVerification(verByProduct.get(p.id)))) });
+  })
+);
+
+// יצירת מוצר חדש בקטלוג — למשל אחרי סריקת ברקוד/זיהוי-תמונה שלא
+// נמצא אצלנו. priceSource מתועד רק לתצוגה בצד-לקוח (לא נשמר כאן):
+// 'official' אם המחיר הגיע מ-official_prices (חוק שקיפות-מחירים),
+// 'manual' אם המשתמש הקליד אותו בעצמו.
+router.post(
+  '/',
+  requireAuth,
+  h(async (req, res) => {
+    const { name, barcode, department, shelf, zone, price, category, imageDataUrl } = req.body || {};
+    if (!name || typeof price !== 'number' || price <= 0) {
+      return res.status(400).json({ error: 'name/price נדרשים' });
+    }
+    if (imageDataUrl && imageDataUrl.length > 1_500_000) {
+      return res.status(400).json({ error: 'תמונה גדולה מדי' });
+    }
+    const row = {
+      id: 'p' + Date.now() + Math.round(Math.random() * 1000),
+      name: String(name).slice(0, 120),
+      barcode: barcode ? String(barcode).slice(0, 40) : null,
+      department: department || 'other',
+      shelf: shelf || 1,
+      zone: zone || 1,
+      price,
+      category: category || null,
+      image_url: imageDataUrl || null,
+      updated_at: Date.now(),
+    };
+    const { data: created, error } = await supabase.from('products').insert(row).select().single();
+    if (error) throw error;
+    res.json({ product: toProduct(created) });
   })
 );
 
