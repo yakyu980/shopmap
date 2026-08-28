@@ -39,15 +39,20 @@ router.post(
             },
           ],
         }),
-        signal: AbortSignal.timeout(12000),
+        signal: AbortSignal.timeout(25000),
       });
       if (!geminiRes.ok) {
+        const errBody = await geminiRes.text().catch(() => '');
+        console.error('SuperNav AI: Gemini HTTP', geminiRes.status, errBody.slice(0, 500));
         return res.json({ recognized: false, reason: 'gemini-http-' + geminiRes.status });
       }
       const data = await geminiRes.json();
       const text = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
       const jsonMatch = text.match(/\{[\s\S]*\}/);
-      if (!jsonMatch) return res.json({ recognized: false, reason: 'no-json-in-response' });
+      if (!jsonMatch) {
+        console.error('SuperNav AI: Gemini response had no JSON —', JSON.stringify(data).slice(0, 500));
+        return res.json({ recognized: false, reason: 'no-json-in-response' });
+      }
       const parsed = JSON.parse(jsonMatch[0]);
       if (!parsed?.name) return res.json({ recognized: false, reason: 'no-product-in-image' });
       res.json({
@@ -57,6 +62,7 @@ router.post(
         category: parsed.category ? String(parsed.category).slice(0, 40) : null,
       });
     } catch (err) {
+      console.error('SuperNav AI: Gemini call failed —', err?.name, err?.message);
       res.json({ recognized: false, reason: err?.name === 'TimeoutError' ? 'timeout' : 'error' });
     }
   }
