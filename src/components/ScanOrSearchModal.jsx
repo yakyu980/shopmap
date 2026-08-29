@@ -37,6 +37,7 @@ export default function ScanOrSearchModal({ onAdd, onClose, onFallbackToSearch, 
   const [manualCode, setManualCode] = useState('');
   const [detectorSupported] = useState(typeof window.BarcodeDetector !== 'undefined');
   const [recognizing, setRecognizing] = useState(false);
+  const [videoReady, setVideoReady] = useState(false);
   const [imageStatus, setImageStatus] = useState('idle'); // 'idle' | 'sent' | 'no-match'
   const [imageFailureReason, setImageFailureReason] = useState(null);
   const [capturedPhoto, setCapturedPhoto] = useState(null);
@@ -82,7 +83,11 @@ export default function ScanOrSearchModal({ onAdd, onClose, onFallbackToSearch, 
 
   async function tryGeminiRecognition() {
     const video = videoRef.current;
-    if (!video) return;
+    if (!video || !videoReady || video.readyState < 2 || !video.videoWidth || !video.videoHeight) {
+      setImageStatus('no-match');
+      setImageFailureReason('camera-frame-not-ready');
+      return;
+    }
     setRecognizing(true);
     setImageStatus('sent');
     setImageFailureReason(null);
@@ -143,6 +148,7 @@ export default function ScanOrSearchModal({ onAdd, onClose, onFallbackToSearch, 
     setAddError('');
     setManualCode('');
     setRecognizing(false);
+    setVideoReady(false);
     setImageStatus('idle');
     setImageFailureReason(null);
     setCapturedPhoto(null);
@@ -284,9 +290,17 @@ export default function ScanOrSearchModal({ onAdd, onClose, onFallbackToSearch, 
           <>
             {status === CAMERA_STATUS.READY && (
               <div className="barcode-video-wrap">
-                <video ref={videoRef} className="barcode-video" autoPlay playsInline muted />
+                <video
+                  ref={videoRef}
+                  className="barcode-video"
+                  autoPlay
+                  playsInline
+                  muted
+                  onLoadedData={() => setVideoReady(true)}
+                  onCanPlay={() => setVideoReady(true)}
+                />
                 <p className="barcode-hint">
-                  {recognizing ? 'שולח תמונה ל-Gemini לזיהוי…' : 'כוונו את המצלמה למוצר או לברקוד'}
+                  {!videoReady ? 'מכין את המצלמה לצילום…' : 'כוונו את המצלמה למוצר או לברקוד'}
                 </p>
               </div>
             )}
@@ -294,6 +308,12 @@ export default function ScanOrSearchModal({ onAdd, onClose, onFallbackToSearch, 
               <div className="captured-photo-preview" role="status">
                 <strong><Icon name="check" /> התמונה צולמה ונשלחה לזיהוי</strong>
                 <img src={capturedPhoto} alt="התמונה שצולמה לזיהוי המוצר" />
+                {recognizing && (
+                  <div className="gemini-analysis" role="status" aria-live="polite">
+                    <span className="gemini-analysis__spinner" aria-hidden="true" />
+                    <span><strong>Gemini מנתח את התמונה…</strong><small>מזהה שם מוצר, מותג וקטגוריה</small></span>
+                  </div>
+                )}
                 {imageStatus === 'no-match' && !recognizing && (
                   <p className="barcode-hint">
                     <Icon name="warning" /> {imageFailureReason === 'no-api-key'
@@ -306,6 +326,8 @@ export default function ScanOrSearchModal({ onAdd, onClose, onFallbackToSearch, 
                             ? 'לא ניתן היה להתחבר לשירות הזיהוי. בדקו שהשרת פעיל ונסו שוב.'
                             : imageFailureReason === 'no-json-in-response'
                               ? 'Gemini החזיר תשובה לא תקינה. נסו לצלם שוב.'
+                              : imageFailureReason === 'camera-frame-not-ready'
+                                ? 'המצלמה עדיין לא הכינה פריים לצילום. המתינו רגע ונסו שוב.'
                               : 'Gemini לא זיהה מוצר בתמונה. ודאו שהמוצר מואר, ממלא את מרכז התמונה וששם המותג פונה למצלמה, ואז צלמו שוב.'}
                   </p>
                 )}
@@ -317,6 +339,7 @@ export default function ScanOrSearchModal({ onAdd, onClose, onFallbackToSearch, 
                       setCapturedPhoto(null);
                       setImageStatus('idle');
                       setImageFailureReason(null);
+                      setVideoReady(false);
                       retry();
                     }}
                   >
@@ -331,9 +354,9 @@ export default function ScanOrSearchModal({ onAdd, onClose, onFallbackToSearch, 
                   type="button"
                   className="btn btn--primary"
                   onClick={tryGeminiRecognition}
-                  disabled={recognizing}
+                  disabled={recognizing || !videoReady}
                 >
-                  <Icon name="camera" /> {recognizing ? 'שולח…' : 'צלם עכשיו לזיהוי'}
+                  <Icon name="camera" /> {!videoReady ? 'המצלמה נטענת…' : 'צלם עכשיו לזיהוי'}
                 </button>
               </>
             )}

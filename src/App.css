@@ -2560,6 +2560,31 @@
   border-radius: 10px;
   background: #111;
 }
+
+.gemini-analysis {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  border-radius: 10px;
+  background: #eef5ff;
+  color: #174ea6;
+}
+
+.gemini-analysis span:last-child { display: grid; gap: 2px; }
+.gemini-analysis small { color: #52677f; }
+
+.gemini-analysis__spinner {
+  width: 24px;
+  height: 24px;
+  flex: 0 0 24px;
+  border: 3px solid #bfd3f2;
+  border-top-color: #2f7de1;
+  border-radius: 50%;
+  animation: gemini-spin .8s linear infinite;
+}
+
+@keyframes gemini-spin { to { transform: rotate(360deg); } }
 .compare-venues-button { align-self: flex-start; font-size: 11px; }
 .venue-filter-modal { display: grid; gap: 10px; max-height: 80vh; overflow-y: auto; }
 .venue-filter-toggle { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; }
