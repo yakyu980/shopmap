@@ -80,6 +80,7 @@ export default function Home({ list, onNavigate }) {
           onAdd={handleAddByScan}
           onClose={() => setScannerOpen(false)}
           onFallbackToSearch={() => setScannerOpen(false)}
+          activeVenueId={trip?.venueId || null}
         />
       )}
 

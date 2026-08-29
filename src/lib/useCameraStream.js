@@ -3,6 +3,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 export const CAMERA_STATUS = {
   LOADING: 'loading',
   READY: 'ready',
+  PAUSED: 'paused',
   DENIED: 'denied',
   UNSUPPORTED: 'unsupported',
 };
@@ -23,6 +24,12 @@ export function useCameraStream() {
   const retry = useCallback(() => {
     setStatus(CAMERA_STATUS.LOADING);
     setAttempt((n) => n + 1);
+  }, []);
+
+  const pause = useCallback(() => {
+    streamRef.current?.getTracks().forEach((track) => track.stop());
+    streamRef.current = null;
+    setStatus(CAMERA_STATUS.PAUSED);
   }, []);
 
   useEffect(() => {
@@ -78,5 +85,5 @@ export function useCameraStream() {
     }
   }, [status]);
 
-  return { videoRef, status, retry };
+  return { videoRef, status, retry, pause };
 }

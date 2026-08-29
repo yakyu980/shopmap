@@ -61,6 +61,10 @@ router.post(
               ],
             },
           ],
+          generationConfig: {
+            responseMimeType: 'application/json',
+            temperature: 0.1,
+          },
         }),
         signal: AbortSignal.timeout(25000),
       });

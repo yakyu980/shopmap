@@ -28,8 +28,8 @@ function captureFrameAsJpeg(video) {
  * עכשיו לזיהוי") — לא אוטומטי, כדי לא לחייב אותו להחזיק את המוצר
  * מוכן מהרגע שהמצלמה נפתחת. מי שמזהה קודם מנצח ומבטל את השני.
  */
-export default function ScanOrSearchModal({ onAdd, onClose, onFallbackToSearch }) {
-  const { videoRef, status, retry } = useCameraStream();
+export default function ScanOrSearchModal({ onAdd, onClose, onFallbackToSearch, activeVenueId = null }) {
+  const { videoRef, status, retry, pause } = useCameraStream();
   const detectorRef = useRef(null);
   const geminiAbortRef = useRef(null);
   const settledRef = useRef(false); // true ברגע שאחד מהמסלולים "ניצח" — עוצר את השני
@@ -38,6 +38,10 @@ export default function ScanOrSearchModal({ onAdd, onClose, onFallbackToSearch }
   const [detectorSupported] = useState(typeof window.BarcodeDetector !== 'undefined');
   const [recognizing, setRecognizing] = useState(false);
   const [imageStatus, setImageStatus] = useState('idle'); // 'idle' | 'sent' | 'no-match'
+  const [imageFailureReason, setImageFailureReason] = useState(null);
+  const [capturedPhoto, setCapturedPhoto] = useState(null);
+  const [priceLookupBusy, setPriceLookupBusy] = useState(false);
+  const [priceLookupMessage, setPriceLookupMessage] = useState('');
 
   // outcome: null | {kind:'barcode-found', product} | {kind:'barcode-not-found', code, externalProduct}
   //        | {kind:'image-found', product, photoDataUrl} | {kind:'image-not-found', name, brand, category, photoDataUrl, reason}
@@ -81,7 +85,12 @@ export default function ScanOrSearchModal({ onAdd, onClose, onFallbackToSearch }
     if (!video) return;
     setRecognizing(true);
     setImageStatus('sent');
+    setImageFailureReason(null);
     const photoDataUrl = captureFrameAsJpeg(video);
+    setCapturedPhoto(photoDataUrl);
+    // הצילום הוא פריים קפוא: מכבים בפועל את זרם המצלמה (כולל נורית
+    // המצלמה במכשיר) ומציגים את התמונה שנשלחה. "צלם שוב" יפתח זרם חדש.
+    pause();
     const imageBase64 = photoDataUrl.split(',')[1];
     const controller = new AbortController();
     geminiAbortRef.current = controller;
@@ -98,6 +107,7 @@ export default function ScanOrSearchModal({ onAdd, onClose, onFallbackToSearch }
         // בעצמו, פשוט לא תורם תוצאה; מציגים הודעה ברורה כדי שהמשתמש
         // יידע שהתמונה כן נשלחה ולא שהתקלקל משהו, והברקוד ממשיך לרוץ.
         setImageStatus('no-match');
+        setImageFailureReason(data.reason || 'no-product-in-image');
         return;
       }
       // ניסיון-התאמה בקטלוג לפי שם (התחלת-מחרוזת, כמו חיפוש רגיל)
@@ -120,6 +130,7 @@ export default function ScanOrSearchModal({ onAdd, onClose, onFallbackToSearch }
       if (!settledRef.current) {
         setRecognizing(false);
         setImageStatus('no-match');
+        setImageFailureReason('network-error');
       }
     }
   }
@@ -133,6 +144,9 @@ export default function ScanOrSearchModal({ onAdd, onClose, onFallbackToSearch }
     setManualCode('');
     setRecognizing(false);
     setImageStatus('idle');
+    setImageFailureReason(null);
+    setCapturedPhoto(null);
+    setPriceLookupMessage('');
   }
 
   // מריצים את שני המסלולים במקביל ברגע שהמצלמה מוכנה.
@@ -173,6 +187,45 @@ export default function ScanOrSearchModal({ onAdd, onClose, onFallbackToSearch }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [status, outcome]);
 
+  async function lookupPriceForForm(name, barcode) {
+    setPriceLookupBusy(true);
+    setPriceLookupMessage('');
+    try {
+      let rows = [];
+      if (barcode) {
+        const data = await api.get(`/price-import/${encodeURIComponent(barcode)}`);
+        rows = data?.rows || [];
+      } else if (name?.trim().length >= 2) {
+        const data = await api.get(`/price-import/catalog/search?q=${encodeURIComponent(name.trim())}`);
+        const first = data?.products?.[0];
+        if (first) {
+          const exact = await api.get(`/price-import/${encodeURIComponent(first.barcode)}`);
+          rows = exact?.rows || [];
+          setAddForm((prev) => prev ? { ...prev, barcode: prev.barcode || first.barcode, name: prev.name || first.name } : prev);
+        }
+      }
+      if (!rows.length) {
+        setPriceLookupMessage('לא נמצא מחיר במאגר — נא להזין מחיר ידנית.');
+        return;
+      }
+      const venueRow = activeVenueId ? rows.find((row) => row.venueId === activeVenueId) : null;
+      const selected = venueRow || rows.reduce((min, row) => row.price < min.price ? row : min, rows[0]);
+      setAddForm((prev) => prev ? {
+        ...prev,
+        name: prev.name || selected.name || '',
+        price: String(selected.price),
+        priceSource: 'official',
+      } : prev);
+      setPriceLookupMessage(venueRow
+        ? `נמצא מחיר בסניף הפעיל: ₪${selected.price}`
+        : `נמצא מחיר ממאגר המחירים: ₪${selected.price}${activeVenueId ? ' (לא נמצא מחיר מדויק לסניף הפעיל)' : ''}`);
+    } catch {
+      setPriceLookupMessage('לא ניתן לחפש מחיר כרגע — נא להזין מחיר ידנית.');
+    } finally {
+      setPriceLookupBusy(false);
+    }
+  }
+
   function openAddForm({ name, barcode, category, photoDataUrl }) {
     setAddForm({
       name: name || '',
@@ -185,19 +238,7 @@ export default function ScanOrSearchModal({ onAdd, onClose, onFallbackToSearch }
     });
     setAddError('');
     // אם יש ברקוד — בודקים אם יש לו מחיר-רשמי-אמיתי (חוק שקיפות-מחירים)
-    if (barcode) {
-      api
-        .get(`/price-import/${encodeURIComponent(barcode)}`)
-        .then((data) => {
-          const rows = data?.rows || [];
-          if (rows.length === 0) return;
-          const cheapest = rows.reduce((min, r) => (r.price < min.price ? r : min), rows[0]);
-          setAddForm((prev) => (prev ? { ...prev, price: String(cheapest.price), priceSource: 'official' } : prev));
-        })
-        .catch(() => {
-          /* בלי רשת/הרשאה — משאירים למשתמש להזין ידנית */
-        });
-    }
+    if (barcode) lookupPriceForForm(name, barcode);
   }
 
   async function submitAddForm() {
@@ -249,6 +290,41 @@ export default function ScanOrSearchModal({ onAdd, onClose, onFallbackToSearch }
                 </p>
               </div>
             )}
+            {capturedPhoto && (
+              <div className="captured-photo-preview" role="status">
+                <strong><Icon name="check" /> התמונה צולמה ונשלחה לזיהוי</strong>
+                <img src={capturedPhoto} alt="התמונה שצולמה לזיהוי המוצר" />
+                {imageStatus === 'no-match' && !recognizing && (
+                  <p className="barcode-hint">
+                    <Icon name="warning" /> {imageFailureReason === 'no-api-key'
+                      ? 'מפתח Gemini אינו מוגדר בשרת. יש להוסיף GEMINI_API_KEY ב-Render ולהפעיל את השרת מחדש.'
+                      : imageFailureReason?.startsWith('gemini-http-')
+                        ? `Gemini דחה את הבקשה (${imageFailureReason.replace('gemini-http-', 'HTTP ')}). בדקו את המפתח וההרשאות בשרת.`
+                        : imageFailureReason === 'timeout'
+                          ? 'Gemini לא הגיב בזמן. נסו שוב בעוד רגע.'
+                          : imageFailureReason === 'network-error' || imageFailureReason === 'error'
+                            ? 'לא ניתן היה להתחבר לשירות הזיהוי. בדקו שהשרת פעיל ונסו שוב.'
+                            : imageFailureReason === 'no-json-in-response'
+                              ? 'Gemini החזיר תשובה לא תקינה. נסו לצלם שוב.'
+                              : 'Gemini לא זיהה מוצר בתמונה. ודאו שהמוצר מואר, ממלא את מרכז התמונה וששם המותג פונה למצלמה, ואז צלמו שוב.'}
+                  </p>
+                )}
+                {!recognizing && imageStatus === 'no-match' && (
+                  <button
+                    type="button"
+                    className="btn btn--ghost btn--small"
+                    onClick={() => {
+                      setCapturedPhoto(null);
+                      setImageStatus('idle');
+                      setImageFailureReason(null);
+                      retry();
+                    }}
+                  >
+                    <Icon name="camera" /> צלם שוב
+                  </button>
+                )}
+              </div>
+            )}
             {status === CAMERA_STATUS.READY && (
               <>
                 <button
@@ -259,12 +335,6 @@ export default function ScanOrSearchModal({ onAdd, onClose, onFallbackToSearch }
                 >
                   <Icon name="camera" /> {recognizing ? 'שולח…' : 'צלם עכשיו לזיהוי'}
                 </button>
-                {imageStatus === 'no-match' && !recognizing && (
-                  <p className="barcode-hint">
-                    <Icon name="warning" /> התמונה נשלחה ל-Gemini אבל לא זוהה בה מוצר — נסו לכוון טוב יותר ולצלם
-                    שוב, או המשיכו לסרוק ברקוד.
-                  </p>
-                )}
               </>
             )}
             {status === CAMERA_STATUS.LOADING && (
@@ -435,6 +505,7 @@ export default function ScanOrSearchModal({ onAdd, onClose, onFallbackToSearch }
         {addForm && (
           <div className="barcode-result add-product-form">
             <h3>הוסף מוצר חדש למאגר</h3>
+            {addForm.barcode && <p className="barcode-hint"><strong>ברקוד שנסרק:</strong> {addForm.barcode}</p>}
             {addForm.photoDataUrl && (
               <img src={addForm.photoDataUrl} alt="" className="add-product-photo" />
             )}
@@ -447,6 +518,15 @@ export default function ScanOrSearchModal({ onAdd, onClose, onFallbackToSearch }
                 onChange={(e) => setAddForm({ ...addForm, name: e.target.value })}
               />
             </label>
+            <button
+              type="button"
+              className="btn btn--ghost btn--small"
+              disabled={priceLookupBusy || (!addForm.name.trim() && !addForm.barcode.trim())}
+              onClick={() => lookupPriceForForm(addForm.name, addForm.barcode)}
+            >
+              <Icon name="search" /> {priceLookupBusy ? 'מחפש מחיר…' : 'חפש שם ומחיר במאגר'}
+            </button>
+            {priceLookupMessage && <p className="barcode-hint">{priceLookupMessage}</p>}
             <label className="map-edit-label">
               ברקוד (אופציונלי)
               <input

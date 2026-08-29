@@ -2542,6 +2542,24 @@
 .compare-search-row { display: flex; align-items: flex-start; gap: 8px; }
 .compare-search-row .official-product-search { flex: 1; min-width: 0; }
 .compare-camera-button { min-width: 48px; font-size: 20px; }
+
+.captured-photo-preview {
+  display: grid;
+  gap: 8px;
+  margin-top: 10px;
+  padding: 10px;
+  border: 1px solid var(--border, #d9e2ec);
+  border-radius: 12px;
+  background: #f4fbf7;
+}
+
+.captured-photo-preview img {
+  width: 100%;
+  max-height: 240px;
+  object-fit: contain;
+  border-radius: 10px;
+  background: #111;
+}
 .compare-venues-button { align-self: flex-start; font-size: 11px; }
 .venue-filter-modal { display: grid; gap: 10px; max-height: 80vh; overflow-y: auto; }
 .venue-filter-toggle { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; }
