@@ -1,4 +1,4 @@
-// זיהוי-מוצר אמיתי מתמונה בודדת מול Gemini Vision (gemini-flash-latest).
+// זיהוי-מוצר אמיתי מתמונה בודדת מול Gemini Vision.
 // שונה מ-imageSearch.js (שנשאר mock מוצהר) — כאן באמת שולחים את
 // התמונה ל-Gemini ומבקשים JSON מובנה. אם אין מפתח/הבקשה נכשלת,
 // מחזירים recognized:false כדי שהלקוח ייפול לזיהוי-הדמה המקומי
@@ -8,7 +8,9 @@ import { Router } from 'express';
 import { requireAuth } from '../auth.js';
 
 const router = Router();
-const MODEL = 'gemini-flash-latest';
+// `gemini-flash-latest` מאשר מפתח תקין אבל עלול להיתקע בעיבוד תמונות.
+// המודל הזה נבדק בפועל עם אותו מפתח ותמונת מוצר, והחזיר זיהוי מהיר.
+const MODEL = 'gemini-3.1-flash-lite';
 
 // אבחון-זמני: בדיקה מהירה (בלי תמונה, בלי generateContent) שהמפתח
 // בכלל תקף ושה-API של גוגל נגיש-ומגיב מהר מ-Render — כדי להבדיל בין
@@ -26,10 +28,10 @@ router.get('/health', async (req, res) => {
     const ms = Date.now() - start;
     const body = await r.text();
     console.log('SuperNav AI: Gemini health check —', masked, r.status, ms + 'ms');
-    res.json({ hasKey: true, masked, status: r.status, ms, bodyPreview: body.slice(0, 300) });
+    res.json({ hasKey: true, model: MODEL, masked, status: r.status, ms, bodyPreview: body.slice(0, 300) });
   } catch (err) {
     console.log('SuperNav AI: Gemini health check failed —', masked, err?.name, err?.message);
-    res.json({ hasKey: true, masked, error: err?.name, message: err?.message });
+    res.json({ hasKey: true, model: MODEL, masked, error: err?.name, message: err?.message });
   }
 });
 const PROMPT =
