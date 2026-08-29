@@ -37,6 +37,7 @@ export default function ScanOrSearchModal({ onAdd, onClose, onFallbackToSearch, 
   const [manualCode, setManualCode] = useState('');
   const [detectorSupported] = useState(typeof window.BarcodeDetector !== 'undefined');
   const [recognizing, setRecognizing] = useState(false);
+  const [analysisSeconds, setAnalysisSeconds] = useState(0);
   const [videoReady, setVideoReady] = useState(false);
   const [imageStatus, setImageStatus] = useState('idle'); // 'idle' | 'sent' | 'no-match'
   const [imageFailureReason, setImageFailureReason] = useState(null);
@@ -53,6 +54,16 @@ export default function ScanOrSearchModal({ onAdd, onClose, onFallbackToSearch, 
   const [addForm, setAddForm] = useState(null); // {name, barcode, department, price, priceSource, category, photoDataUrl}
   const [addBusy, setAddBusy] = useState(false);
   const [addError, setAddError] = useState('');
+
+  useEffect(() => {
+    if (!recognizing) {
+      setAnalysisSeconds(0);
+      return undefined;
+    }
+    const startedAt = Date.now();
+    const timer = setInterval(() => setAnalysisSeconds(Math.floor((Date.now() - startedAt) / 1000)), 1000);
+    return () => clearInterval(timer);
+  }, [recognizing]);
 
   function stopOtherTracks() {
     settledRef.current = true;
@@ -99,6 +110,11 @@ export default function ScanOrSearchModal({ onAdd, onClose, onFallbackToSearch, 
     const imageBase64 = photoDataUrl.split(',')[1];
     const controller = new AbortController();
     geminiAbortRef.current = controller;
+    let timedOut = false;
+    const timeoutId = setTimeout(() => {
+      timedOut = true;
+      controller.abort();
+    }, 35000);
     try {
       const data = await api.post(
         '/recognize-product',
@@ -149,12 +165,14 @@ export default function ScanOrSearchModal({ onAdd, onClose, onFallbackToSearch, 
         });
       }
     } catch (err) {
-      if (err?.name === 'AbortError') return;
+      if (err?.name === 'AbortError' && !timedOut) return;
       if (!settledRef.current) {
         setRecognizing(false);
         setImageStatus('no-match');
-        setImageFailureReason('network-error');
+        setImageFailureReason(timedOut ? 'timeout' : 'network-error');
       }
+    } finally {
+      clearTimeout(timeoutId);
     }
   }
 
@@ -330,7 +348,10 @@ export default function ScanOrSearchModal({ onAdd, onClose, onFallbackToSearch, 
                 {recognizing && (
                   <div className="gemini-analysis" role="status" aria-live="polite">
                     <span className="gemini-analysis__spinner" aria-hidden="true" />
-                    <span><strong>Gemini מנתח את התמונה…</strong><small>מזהה שם מוצר, מותג וקטגוריה</small></span>
+                    <span>
+                      <strong>Gemini מנתח את התמונה… {analysisSeconds > 0 ? `${analysisSeconds} שנ׳` : ''}</strong>
+                      <small>{analysisSeconds >= 10 ? 'הבקשה עדיין בעיבוד בשרת…' : 'מזהה שם מוצר, מותג, קטגוריה או ברקוד'}</small>
+                    </span>
                   </div>
                 )}
                 {imageStatus === 'no-match' && !recognizing && (
