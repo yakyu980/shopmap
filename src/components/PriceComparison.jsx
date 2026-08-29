@@ -10,6 +10,16 @@ import ReceiptScanner from './ReceiptScanner';
 import MultiProductCompare from './MultiProductCompare';
 import Icon from './Icon';
 import DeptIcon from './DeptIcon';
+import DealsTab from './DealsTab';
+import DeepCompare from './DeepCompare';
+import PurchaseHistoryCompare from './PurchaseHistoryCompare';
+
+const COMPARE_TABS = [
+  { id: 'compare', icon: 'tag', label: 'השוואת מחירים' },
+  { id: 'deals', icon: 'star', label: 'דילים' },
+  { id: 'deep', icon: 'chart', label: 'השוואה מעמיקה' },
+  { id: 'history', icon: 'receipt', label: 'קניות קודמות' },
+];
 
 // לחיצה על מוצר בטאב הזה מוסיפה אותו ישירות לטבלת ההשוואה-המרובה
 // שלמעלה (MultiProductCompare) — לא פותחת חלון-פרטים נפרד (ProductDetail
@@ -44,6 +54,7 @@ function ProductRow({ product, onAdd, justAdded }) {
 }
 
 export default function PriceComparison() {
+  const [activeTab, setActiveTab] = useState('compare');
   const [scannerOpen, setScannerOpen] = useState(false);
   const [justAddedId, setJustAddedId] = useState(null);
   const justAddedTimer = useRef(null);
@@ -58,7 +69,15 @@ export default function PriceComparison() {
   }
 
   return (
-    <div className="compare-page">
+    <div className="compare-hub">
+      <h1 className="compare-hub__title">השוואת מחירים</h1>
+      <div className="compare-hub__tabs" role="tablist" aria-label="סוג השוואה">
+        {COMPARE_TABS.map((tab) => <button type="button" role="tab" aria-selected={activeTab === tab.id} className={activeTab === tab.id ? 'is-active' : ''} key={tab.id} onClick={() => setActiveTab(tab.id)}><Icon name={tab.icon} /><span>{tab.label}</span></button>)}
+      </div>
+      {activeTab === 'deals' && <DealsTab />}
+      {activeTab === 'deep' && <DeepCompare />}
+      {activeTab === 'history' && <PurchaseHistoryCompare />}
+      {activeTab === 'compare' && <div className="compare-page">
       <p className="section-title">
         <Icon name="tag" /> השוואת מוצרים מרובים בין רשתות
       </p>
@@ -126,6 +145,7 @@ export default function PriceComparison() {
           <ProductRow key={p.id} product={p} onAdd={handleAddToCompare} justAdded={justAddedId === p.id} />
         ))}
       </ul>
+      </div>}
     </div>
   );
 }
