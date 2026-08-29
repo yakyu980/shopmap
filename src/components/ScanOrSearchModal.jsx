@@ -36,6 +36,7 @@ export default function ScanOrSearchModal({ onAdd, onClose, onFallbackToSearch }
   const [manualCode, setManualCode] = useState('');
   const [detectorSupported] = useState(typeof window.BarcodeDetector !== 'undefined');
   const [recognizing, setRecognizing] = useState(false);
+  const [imageStatus, setImageStatus] = useState('idle'); // 'idle' | 'sent' | 'no-match'
 
   // outcome: null | {kind:'barcode-found', product} | {kind:'barcode-not-found', code, externalProduct}
   //        | {kind:'image-found', product, photoDataUrl} | {kind:'image-not-found', name, brand, category, photoDataUrl, reason}
@@ -78,6 +79,7 @@ export default function ScanOrSearchModal({ onAdd, onClose, onFallbackToSearch }
     const video = videoRef.current;
     if (!video) return;
     setRecognizing(true);
+    setImageStatus('sent');
     const photoDataUrl = captureFrameAsJpeg(video);
     const imageBase64 = photoDataUrl.split(',')[1];
     const controller = new AbortController();
@@ -91,8 +93,10 @@ export default function ScanOrSearchModal({ onAdd, onClose, onFallbackToSearch }
       if (settledRef.current) return;
       setRecognizing(false);
       if (!data.recognized) {
-        // Gemini לא זיהה כלום — לא "מנצח" בעצמו, פשוט לא תורם תוצאה;
-        // הברקוד ממשיך לרוץ עד שהמשתמש יסגור/יקליד ידנית.
+        // Gemini קיבל את התמונה ובדק אותה, אבל לא זיהה מוצר — לא "מנצח"
+        // בעצמו, פשוט לא תורם תוצאה; מציגים הודעה ברורה כדי שהמשתמש
+        // יידע שהתמונה כן נשלחה ולא שהתקלקל משהו, והברקוד ממשיך לרוץ.
+        setImageStatus('no-match');
         return;
       }
       // ניסיון-התאמה בקטלוג לפי שם (התחלת-מחרוזת, כמו חיפוש רגיל)
@@ -112,7 +116,10 @@ export default function ScanOrSearchModal({ onAdd, onClose, onFallbackToSearch }
       }
     } catch (err) {
       if (err?.name === 'AbortError') return;
-      if (!settledRef.current) setRecognizing(false);
+      if (!settledRef.current) {
+        setRecognizing(false);
+        setImageStatus('no-match');
+      }
     }
   }
 
@@ -124,6 +131,7 @@ export default function ScanOrSearchModal({ onAdd, onClose, onFallbackToSearch }
     setAddError('');
     setManualCode('');
     setRecognizing(false);
+    setImageStatus('idle');
   }
 
   // מריצים את שני המסלולים במקביל ברגע שהמצלמה מוכנה.
@@ -236,11 +244,27 @@ export default function ScanOrSearchModal({ onAdd, onClose, onFallbackToSearch }
               <div className="barcode-video-wrap">
                 <video ref={videoRef} className="barcode-video" autoPlay playsInline muted />
                 <p className="barcode-hint">
-                  {recognizing
-                    ? 'סורק ברקוד ומזהה-תמונה במקביל — מה שיימצא קודם ינצח…'
-                    : 'כוונו את המצלמה למוצר או לברקוד'}
+                  {recognizing ? 'שולח תמונה ל-Gemini לזיהוי…' : 'כוונו את המצלמה למוצר או לברקוד'}
                 </p>
               </div>
+            )}
+            {status === CAMERA_STATUS.READY && (
+              <>
+                <button
+                  type="button"
+                  className="btn btn--primary"
+                  onClick={tryGeminiRecognition}
+                  disabled={recognizing}
+                >
+                  <Icon name="camera" /> {recognizing ? 'שולח…' : 'צלם עכשיו לזיהוי'}
+                </button>
+                {imageStatus === 'no-match' && !recognizing && (
+                  <p className="barcode-hint">
+                    <Icon name="warning" /> התמונה נשלחה ל-Gemini אבל לא זוהה בה מוצר — נסו לכוון טוב יותר ולצלם
+                    שוב, או המשיכו לסרוק ברקוד.
+                  </p>
+                )}
+              </>
             )}
             {status === CAMERA_STATUS.LOADING && (
               <p className="barcode-hint">
