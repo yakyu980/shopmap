@@ -60,6 +60,9 @@ export default function ScanOrSearchModal({ onAdd, onClose, onFallbackToSearch }
       setOutcome({ kind: 'barcode-found', product, code });
       return;
     }
+    // צילום-מסך של רגע-הסריקה — משמש כתמונה-חלופית אם ל-Open Food Facts
+    // אין תמונה למוצר הזה (עדיין עדיף על שום תמונה בטופס "הוסף מוצר חדש").
+    const fallbackPhoto = videoRef.current ? captureFrameAsJpeg(videoRef.current) : null;
     let externalProduct = null;
     try {
       externalProduct = await lookupBarcodeExternal(code);
@@ -68,7 +71,7 @@ export default function ScanOrSearchModal({ onAdd, onClose, onFallbackToSearch }
     }
     if (settledRef.current) return;
     stopOtherTracks();
-    setOutcome({ kind: 'barcode-not-found', code, externalProduct });
+    setOutcome({ kind: 'barcode-not-found', code, externalProduct, fallbackPhoto });
   }
 
   async function tryGeminiRecognition() {
@@ -355,6 +358,10 @@ export default function ScanOrSearchModal({ onAdd, onClose, onFallbackToSearch }
                     name: outcome.externalProduct?.name || '',
                     barcode: outcome.code,
                     category: null,
+                    // תמונה אמיתית מ-Open Food Facts — התאמת-ברקוד מדויקת (לא
+                    // חיפוש-שם מעורפל), אז אפשר לסמוך עליה בניגוד לניסיון הקודם;
+                    // אם אין לה תמונה, נופלים לצילום-מסך מרגע הסריקה.
+                    photoDataUrl: outcome.externalProduct?.imageUrl || outcome.fallbackPhoto || null,
                   })
                 }
               >

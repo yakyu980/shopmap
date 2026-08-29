@@ -5,7 +5,6 @@ import { useAuth } from '../lib/useAuth';
 import { useCatalog } from '../lib/useCatalog';
 import { searchCatalog, getAllProducts } from '../lib/catalog';
 import { useTripSync } from '../lib/useTripSync';
-import { useFamilyMembers } from '../lib/useFamilyMembers';
 import PurchasePredictions from './PurchasePredictions';
 import ProductImage from './ProductImage';
 import ScanOrSearchModal from './ScanOrSearchModal';
@@ -16,11 +15,10 @@ import PriceTag from './PriceTag';
 import Icon from './Icon';
 
 export default function Home({ list, onNavigate }) {
-  const { items, addItem, removeItem, incrementItem, decrementItem, reorderItems, assignItem } = list;
+  const { items, addItem, removeItem, incrementItem, decrementItem, reorderItems } = list;
   const { token } = useAuth();
   const dynamicProducts = useCatalog();
   const { trip, startTrip, addTripItem, toggleTripItem, removeTripItem, finishTrip } = useTripSync();
-  const family = useFamilyMembers();
 
   const [query, setQuery] = useState('');
   const [checkedIds, setCheckedIds] = useState(new Set());
@@ -247,22 +245,6 @@ export default function Home({ list, onNavigate }) {
                         <Icon name="plus" />
                       </button>
                     </div>
-                  )}
-
-                  {!trip && family.members.length > 0 && (
-                    <select
-                      className="assignee-select"
-                      value={p.assignee || ''}
-                      onChange={(e) => assignItem(p.id, e.target.value || null)}
-                      aria-label="שייך לבן-משפחה"
-                    >
-                      <option value="">ללא</option>
-                      {family.members.map((m) => (
-                        <option key={m.id} value={m.id}>
-                          {m.emoji} {m.name}
-                        </option>
-                      ))}
-                    </select>
                   )}
 
                   {trip && (
