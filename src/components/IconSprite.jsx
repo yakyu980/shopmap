@@ -196,6 +196,18 @@ export default function IconSprite() {
           <path d="M4.5 8h15l-1.7 10a2 2 0 0 1-2 1.7H8.2a2 2 0 0 1-2-1.7z" />
           <path d="M7.5 8l2-4.5h5l2 4.5" fill="none" stroke="var(--surface)" strokeWidth="1.4" />
         </symbol>
+        <symbol id="ic-chart" viewBox="0 0 24 24">
+          <path d="M4 20V10M11 20V4M18 20v-7" />
+          <path d="M3 20h18" />
+        </symbol>
+        <symbol id="ic-grip" viewBox="0 0 24 24">
+          <circle cx="9" cy="6" r="1.3" fill="currentColor" stroke="none" />
+          <circle cx="9" cy="12" r="1.3" fill="currentColor" stroke="none" />
+          <circle cx="9" cy="18" r="1.3" fill="currentColor" stroke="none" />
+          <circle cx="15" cy="6" r="1.3" fill="currentColor" stroke="none" />
+          <circle cx="15" cy="12" r="1.3" fill="currentColor" stroke="none" />
+          <circle cx="15" cy="18" r="1.3" fill="currentColor" stroke="none" />
+        </symbol>
       </defs>
     </svg>
   );

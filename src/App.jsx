@@ -2,45 +2,44 @@ import { useState } from 'react';
 import './App.css';
 import Home from './components/Home';
 import StoreMap from './components/StoreMap';
-import ShoppingList from './components/ShoppingList';
 import PriceComparison from './components/PriceComparison';
+import DealsTab from './components/DealsTab';
+import DeepCompare from './components/DeepCompare';
 import Navigation from './components/Navigation';
-import Settings from './components/Settings';
 import Icon from './components/Icon';
 import IconSprite from './components/IconSprite';
+import UserButton from './components/UserButton';
+import AuthGate from './components/AuthGate';
 import { useShoppingList } from './lib/useShoppingList';
 import { useHouseholdSync } from './lib/useHouseholdSync';
+import { useAuth } from './lib/useAuth';
 
+// "רשימת קניות" אוחדה לתוך "דף בית" (הוסרה כטאב נפרד) — ר' Home.jsx.
 const TABS = [
   { id: 'home', icon: 'home', label: 'דף בית' },
   { id: 'map', icon: 'map', label: 'מפת חנות' },
-  { id: 'list', icon: 'list', label: 'רשימת קניות' },
   { id: 'compare', icon: 'tag', label: 'השוואת מחירים' },
+  { id: 'deals', icon: 'star', label: 'דילים' },
+  { id: 'deep', icon: 'chart', label: 'השוואה מעמיקה' },
   { id: 'nav', icon: 'compass', label: 'ניווט' },
 ];
 
 export default function App() {
   const [tab, setTab] = useState('home');
-  const [settingsOpen, setSettingsOpen] = useState(false);
   const list = useShoppingList();
+  const { user } = useAuth();
   useHouseholdSync();
+
+  if (!user) return <AuthGate />;
 
   return (
     <div className="app">
       <IconSprite />
       <header className="app-header">
-        <button
-          className="settings-gear-btn"
-          onClick={() => setSettingsOpen(true)}
-          aria-label="הגדרות"
-        >
-          <Icon name="gear" />
-        </button>
+        <UserButton />
         <h1>SuperNav AI</h1>
         <p className="app-tagline">ה-Waze של הסופר — MVP הדגמה</p>
       </header>
-
-      {settingsOpen && <Settings onClose={() => setSettingsOpen(false)} />}
 
       <nav className="tabs">
         {TABS.map((t) => (
@@ -51,7 +50,7 @@ export default function App() {
           >
             <Icon name={t.icon} />
             {t.label}
-            {t.id === 'list' && list.items.length > 0 && (
+            {t.id === 'home' && list.items.length > 0 && (
               <span className="tab-badge">{list.items.length}</span>
             )}
           </button>
@@ -61,9 +60,10 @@ export default function App() {
       <main className="app-main">
         {tab === 'home' && <Home list={list} onNavigate={setTab} />}
         {tab === 'map' && <StoreMap />}
-        {tab === 'list' && <ShoppingList list={list} onGoNavigate={() => setTab('nav')} />}
-        {tab === 'compare' && <PriceComparison list={list} />}
-        {tab === 'nav' && <Navigation list={list} onBack={() => setTab('list')} />}
+        {tab === 'compare' && <PriceComparison />}
+        {tab === 'deals' && <DealsTab />}
+        {tab === 'deep' && <DeepCompare />}
+        {tab === 'nav' && <Navigation list={list} onBack={() => setTab('home')} />}
       </main>
     </div>
   );

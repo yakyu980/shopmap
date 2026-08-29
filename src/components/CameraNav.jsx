@@ -21,7 +21,7 @@ export default function CameraNav({
   stepCounter,
   onScanCheckpoint,
 }) {
-  const { videoRef, status } = useCameraStream();
+  const { videoRef, status, retry } = useCameraStream();
   const [showPicker, setShowPicker] = useState(false);
   const family = useFamilyMembers();
 
@@ -43,10 +43,15 @@ export default function CameraNav({
             </p>
           )}
           {status === STATUS.DENIED && (
-            <p>
-              <Icon name="warning" /> לא ניתנה הרשאת מצלמה. אפשר לאשר גישה למצלמה בהגדרות הדפדפן
-              ולנסות שוב — או להמשיך עם הניווט הרגיל.
-            </p>
+            <>
+              <p>
+                <Icon name="warning" /> לא ניתנה הרשאת מצלמה. אפשר לאשר גישה למצלמה בהגדרות הדפדפן
+                ולנסות שוב — או להמשיך עם הניווט הרגיל.
+              </p>
+              <button type="button" className="camera-retry-btn" onClick={retry}>
+                נסה שוב
+              </button>
+            </>
           )}
           {status === STATUS.UNSUPPORTED && (
             <p>

@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: supernav-ai-server
+    runtime: node
+    plan: free
+    rootDir: server
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: NODE_VERSION
+        value: 22
+      # ערכים אמיתיים מוזנים ידנית ב-Render Dashboard (Environment)
+      # — לא בקוד/ב-git, ר' README.
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SECRET_KEY
+        sync: false

@@ -38,6 +38,14 @@ of the affected feature.
 icon usage, and status-color conventions. Read it before adding or restyling any page or
 component, and follow its patterns instead of introducing new ad-hoc styles.
 
+Every feature that opens a window/modal/overlay must open centered on screen
+(vertically and horizontally) — never as a bottom sheet, never off-center. This
+applies to any popup triggered by a button: barcode scanning, photo/camera
+capture, favorites, product detail, settings, and any future modal.
+Implementation: use the shared `.modal-backdrop`/`.modal` classes in
+`src/App.css` (`align-items: center` on the backdrop) — don't introduce a
+one-off overlay style for a new feature.
+
 ## Architecture
 
 ### Client/server split and the offline guarantee

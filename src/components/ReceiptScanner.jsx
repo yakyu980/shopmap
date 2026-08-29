@@ -13,7 +13,7 @@ import CloseButton from './CloseButton';
 const STAGE = { CAPTURE: 'capture', OCR: 'ocr', REVIEW: 'review', SAVED: 'saved' };
 
 export default function ReceiptScanner({ onClose }) {
-  const { videoRef, status } = useCameraStream();
+  const { videoRef, status, retry } = useCameraStream();
   const canvasRef = useRef(null);
   const fileInputRef = useRef(null);
   const [stage, setStage] = useState(STAGE.CAPTURE);
@@ -120,6 +120,9 @@ export default function ReceiptScanner({ onClose }) {
             {status === CAMERA_STATUS.DENIED && (
               <p className="barcode-hint">
                 <Icon name="warning" /> לא ניתנה הרשאת מצלמה — אפשר להעלות תמונה במקום.
+                <button type="button" className="camera-retry-btn" onClick={retry}>
+                  נסה שוב
+                </button>
               </p>
             )}
             {status === CAMERA_STATUS.UNSUPPORTED && (

@@ -25,12 +25,40 @@ export function useShoppingList() {
     setItems((prev) =>
       prev.some((i) => i.id === product.id)
         ? prev
-        : [...prev, { ...product, picked: false, assignee: null }]
+        : [...prev, { ...product, qty: 1, picked: false, assignee: null }]
     );
   }, []);
 
   const removeItem = useCallback((productId) => {
     setItems((prev) => prev.filter((i) => i.id !== productId));
+  }, []);
+
+  const incrementItem = useCallback((product) => {
+    setItems((prev) =>
+      prev.some((i) => i.id === product.id)
+        ? prev.map((i) => (i.id === product.id ? { ...i, qty: (i.qty || 1) + 1 } : i))
+        : [...prev, { ...product, qty: 1, picked: false, assignee: null }]
+    );
+  }, []);
+
+  const decrementItem = useCallback((productId) => {
+    setItems((prev) =>
+      prev
+        .map((i) => (i.id === productId ? { ...i, qty: (i.qty || 1) - 1 } : i))
+        .filter((i) => (i.qty || 1) > 0)
+    );
+  }, []);
+
+  const reorderItems = useCallback((fromId, toId) => {
+    setItems((prev) => {
+      const fromIdx = prev.findIndex((i) => i.id === fromId);
+      const toIdx = prev.findIndex((i) => i.id === toId);
+      if (fromIdx === -1 || toIdx === -1 || fromIdx === toIdx) return prev;
+      const next = [...prev];
+      const [moved] = next.splice(fromIdx, 1);
+      next.splice(toIdx, 0, moved);
+      return next;
+    });
   }, []);
 
   const togglePicked = useCallback((productId) => {
@@ -47,5 +75,15 @@ export function useShoppingList() {
 
   const clear = useCallback(() => setItems([]), []);
 
-  return { items, addItem, removeItem, togglePicked, assignItem, clear };
+  return {
+    items,
+    addItem,
+    removeItem,
+    incrementItem,
+    decrementItem,
+    reorderItems,
+    togglePicked,
+    assignItem,
+    clear,
+  };
 }
