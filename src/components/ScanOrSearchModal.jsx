@@ -99,6 +99,8 @@ export default function ScanOrSearchModal({ onAdd, onClose, onFallbackToSearch, 
   const [capturedPhoto, setCapturedPhoto] = useState(null);
   const [priceLookupBusy, setPriceLookupBusy] = useState(false);
   const [priceLookupMessage, setPriceLookupMessage] = useState('');
+  const [barcodeCaptureMode, setBarcodeCaptureMode] = useState(false);
+  const [barcodeCaptureBusy, setBarcodeCaptureBusy] = useState(false);
 
   // outcome: null | {kind:'barcode-found', product} | {kind:'barcode-not-found', code, externalProduct}
   //        | {kind:'image-found', product, photoDataUrl} | {kind:'image-not-found', name, brand, category, photoDataUrl, reason}
@@ -175,7 +177,7 @@ export default function ScanOrSearchModal({ onAdd, onClose, onFallbackToSearch, 
     try {
       const data = await api.post(
         '/recognize-product',
-        { imageBase64, mimeType: 'image/jpeg' },
+        { imageBase64, mimeType: 'image/jpeg', mode: 'product' },
         { signal: controller.signal }
       );
       if (settledRef.current) return;
@@ -263,6 +265,34 @@ export default function ScanOrSearchModal({ onAdd, onClose, onFallbackToSearch, 
     }
   }
 
+  async function captureAdditionalBarcode() {
+    const video = videoRef.current;
+    if (!video || !videoReady || video.readyState < 2 || !video.videoWidth) return;
+    setBarcodeCaptureBusy(true);
+    setPriceLookupMessage('Gemini קורא את ספרות הברקוד…');
+    const barcodePhoto = captureFrameAsJpeg(video);
+    pause();
+    try {
+      const data = await api.post('/recognize-product', {
+        imageBase64: barcodePhoto.split(',')[1],
+        mimeType: 'image/jpeg',
+        mode: 'barcode',
+      });
+      if (!data.barcode) {
+        setPriceLookupMessage('הברקוד לא היה קריא. אפשר לצלם שוב או להשאיר את השדה ריק.');
+        return;
+      }
+      setAddForm((prev) => prev ? { ...prev, barcode: data.barcode, source: 'barcode' } : prev);
+      setPriceLookupMessage(`הברקוד נקלט: ${data.barcode}`);
+      lookupPriceForForm('', data.barcode);
+    } catch {
+      setPriceLookupMessage('לא הצלחנו לקרוא את הברקוד. אפשר להשאיר אותו ריק ולהמשיך.');
+    } finally {
+      setBarcodeCaptureBusy(false);
+      setBarcodeCaptureMode(false);
+    }
+  }
+
   function restartScan() {
     settledRef.current = false;
     geminiAbortRef.current = null;
@@ -280,7 +310,7 @@ export default function ScanOrSearchModal({ onAdd, onClose, onFallbackToSearch, 
 
   // מריצים את שני המסלולים במקביל ברגע שהמצלמה מוכנה.
   useEffect(() => {
-    if (status !== CAMERA_STATUS.READY || outcome) return;
+    if (status !== CAMERA_STATUS.READY || outcome || addForm || barcodeCaptureMode) return;
     settledRef.current = false;
 
     // מסלול 1: זיהוי-ברקוד לולאתי
@@ -314,11 +344,45 @@ export default function ScanOrSearchModal({ onAdd, onClose, onFallbackToSearch, 
       if (intervalId) clearInterval(intervalId);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [status, outcome]);
+  }, [status, outcome, addForm, barcodeCaptureMode]);
+
+  useEffect(() => {
+    if (!barcodeCaptureMode || status !== CAMERA_STATUS.READY || !videoReady || !detectorSupported) return undefined;
+    let cancelled = false;
+    let detector;
+    try {
+      detector = new window.BarcodeDetector({ formats: SCAN_FORMATS });
+    } catch {
+      return undefined;
+    }
+    const intervalId = setInterval(async () => {
+      if (cancelled || !videoRef.current) return;
+      try {
+        const codes = await detector.detect(videoRef.current);
+        const code = codes?.[0]?.rawValue?.trim();
+        if (!code) return;
+        cancelled = true;
+        clearInterval(intervalId);
+        setAddForm((prev) => prev ? { ...prev, barcode: code, source: 'barcode' } : prev);
+        setBarcodeCaptureMode(false);
+        setPriceLookupMessage(`הברקוד נקלט: ${code}`);
+        pause();
+        lookupPriceForForm('', code);
+      } catch {
+        /* ממשיכים לפריים הבא */
+      }
+    }, SCAN_INTERVAL_MS);
+    return () => {
+      cancelled = true;
+      clearInterval(intervalId);
+    };
+  }, [barcodeCaptureMode, status, videoReady, detectorSupported, pause]);
 
   async function lookupPriceForForm(name, barcode) {
     setPriceLookupBusy(true);
     setPriceLookupMessage('');
+    setBarcodeCaptureMode(false);
+    setBarcodeCaptureBusy(false);
     try {
       let rows = [];
       if (barcode) {
@@ -334,7 +398,7 @@ export default function ScanOrSearchModal({ onAdd, onClose, onFallbackToSearch, 
         }
       }
       if (!rows.length) {
-        setPriceLookupMessage('לא נמצא מחיר במאגר — נא להזין מחיר ידנית.');
+        setPriceLookupMessage('לא נמצא מחיר במאגר — אפשר להזין ידנית או לשמור בלי מחיר.');
         return;
       }
       const venueRow = activeVenueId ? rows.find((row) => row.venueId === activeVenueId) : null;
@@ -349,7 +413,7 @@ export default function ScanOrSearchModal({ onAdd, onClose, onFallbackToSearch, 
         ? `נמצא מחיר בסניף הפעיל: ₪${selected.price}`
         : `נמצא מחיר ממאגר המחירים: ₪${selected.price}${activeVenueId ? ' (לא נמצא מחיר מדויק לסניף הפעיל)' : ''}`);
     } catch {
-      setPriceLookupMessage('לא ניתן לחפש מחיר כרגע — נא להזין מחיר ידנית.');
+      setPriceLookupMessage('לא ניתן לחפש מחיר כרגע — אפשר לשמור בלי מחיר ולעדכן מאוחר יותר.');
     } finally {
       setPriceLookupBusy(false);
     }
@@ -373,8 +437,8 @@ export default function ScanOrSearchModal({ onAdd, onClose, onFallbackToSearch, 
 
   async function submitAddForm() {
     if (!addForm.name.trim()) return setAddError('שם המוצר נדרש');
-    const priceNum = Number(addForm.price);
-    if (!priceNum || priceNum <= 0) return setAddError('נא להזין מחיר תקין');
+    const priceNum = addForm.price === '' ? 0 : Number(addForm.price);
+    if (!Number.isFinite(priceNum) || priceNum < 0) return setAddError('נא להזין מחיר תקין או להשאיר ריק');
 
     setAddBusy(true);
     setAddError('');
@@ -398,8 +462,6 @@ export default function ScanOrSearchModal({ onAdd, onClose, onFallbackToSearch, 
       setAddBusy(false);
     }
   }
-
-  const scanning = status === CAMERA_STATUS.READY && !outcome;
 
   return (
     <div className="modal-backdrop" onClick={onClose}>
@@ -683,6 +745,33 @@ export default function ScanOrSearchModal({ onAdd, onClose, onFallbackToSearch, 
             {addForm.photoDataUrl && (
               <img src={addForm.photoDataUrl} alt="" className="add-product-photo" />
             )}
+            {barcodeCaptureMode && (
+              <div className="barcode-video-wrap">
+                <video
+                  ref={videoRef}
+                  className="barcode-video"
+                  autoPlay
+                  playsInline
+                  muted
+                  onLoadedData={() => setVideoReady(true)}
+                  onCanPlay={() => setVideoReady(true)}
+                />
+                <p className="barcode-hint">
+                  {detectorSupported ? 'כוונו את הברקוד למרכז המצלמה — המספר יכול להיקלט אוטומטית' : 'כוונו את הברקוד למרכז ולחצו על צילום הברקוד.'}
+                </p>
+                <button
+                  type="button"
+                  className="btn btn--primary btn--small"
+                  disabled={!videoReady || barcodeCaptureBusy}
+                  onClick={captureAdditionalBarcode}
+                >
+                  <Icon name="camera" /> {barcodeCaptureBusy ? 'קורא ברקוד…' : 'צלם וקרא ברקוד'}
+                </button>
+                <button type="button" className="btn btn--text btn--small" onClick={() => { setBarcodeCaptureMode(false); pause(); }}>
+                  ביטול צילום הברקוד
+                </button>
+              </div>
+            )}
             <label className="map-edit-label">
               שם המוצר
               <input
@@ -712,13 +801,27 @@ export default function ScanOrSearchModal({ onAdd, onClose, onFallbackToSearch, 
                 onChange={(e) => setAddForm({ ...addForm, barcode: e.target.value })}
               />
             </label>
+            {!barcodeCaptureMode && (
+              <button
+                type="button"
+                className="btn btn--ghost btn--small"
+                onClick={() => {
+                  setBarcodeCaptureMode(true);
+                  setVideoReady(false);
+                  retry();
+                }}
+              >
+                <Icon name="camera" /> צלם ברקוד נוסף
+              </button>
+            )}
             <label className="map-edit-label">
-              מחיר (₪)
+              מחיר (₪, אופציונלי)
               <input
                 className="map-edit-input"
                 type="number"
-                min="0.1"
+                min="0"
                 step="0.1"
+                placeholder="אפשר להשאיר ריק"
                 value={addForm.price}
                 onChange={(e) => setAddForm({ ...addForm, price: e.target.value, priceSource: 'manual' })}
               />
@@ -730,6 +833,7 @@ export default function ScanOrSearchModal({ onAdd, onClose, onFallbackToSearch, 
               {addForm.priceSource === 'manual' && (
                 <span className="barcode-hint">מחיר שהוזן ידנית — אין לזה מקור-רשמי</span>
               )}
+              {!addForm.price && <span className="barcode-hint">אפשר לשמור עכשיו ולעדכן מחיר מאוחר יותר.</span>}
             </label>
             {addError && (
               <p className="barcode-not-found">

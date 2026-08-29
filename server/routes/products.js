@@ -51,8 +51,8 @@ router.post(
   requireAuth,
   h(async (req, res) => {
     const { name, barcode, department, shelf, zone, price, category, imageDataUrl } = req.body || {};
-    if (!name || typeof price !== 'number' || price <= 0) {
-      return res.status(400).json({ error: 'name/price נדרשים' });
+    if (!name || typeof price !== 'number' || price < 0) {
+      return res.status(400).json({ error: 'שם מוצר נדרש; מחיר חייב להיות מספר שאינו שלילי' });
     }
     if (imageDataUrl && imageDataUrl.length > 1_500_000) {
       return res.status(400).json({ error: 'תמונה גדולה מדי' });

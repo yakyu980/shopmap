@@ -41,13 +41,17 @@ const PROMPT =
   '"brand": "שם המותג אם ניכר, אחרת null", "category": "קטגוריה כללית אחת מילה", ' +
   '"barcode": "ספרות ברקוד רק אם הן נראות בבירור, אחרת null"} בלי הסבר נוסף. ' +
   'אם אין מוצר או ברקוד קריא בתמונה, החזר {"name":null,"barcode":null}.';
+const BARCODE_PROMPT =
+  'קרא אך ורק את ספרות הברקוד שמופיע במרכז התמונה. ' +
+  'החזר JSON בלבד בפורמט {"name":null,"brand":null,"category":null,"barcode":"כל הספרות ללא רווחים"}. ' +
+  'אם הספרות אינן קריאות בוודאות, החזר {"name":null,"barcode":null}.';
 
 router.post(
   '/',
   requireAuth,
   async (req, res) => {
     const apiKey = process.env.GEMINI_API_KEY;
-    const { imageBase64, mimeType } = req.body || {};
+    const { imageBase64, mimeType, mode } = req.body || {};
     if (!imageBase64) return res.status(400).json({ error: 'imageBase64 נדרש' });
     if (!apiKey) return res.json({ recognized: false, reason: 'no-api-key' });
 
@@ -60,7 +64,7 @@ router.post(
           contents: [
             {
               parts: [
-                { text: PROMPT },
+                { text: mode === 'barcode' ? BARCODE_PROMPT : PROMPT },
                 { inline_data: { mime_type: mimeType || 'image/jpeg', data: imageBase64 } },
               ],
             },

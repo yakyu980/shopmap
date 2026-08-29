@@ -6,6 +6,10 @@ export default function PriceTag({ product, size = 'normal' }) {
   const sale = getSalePrice(product);
   const sizeClass = size === 'small' ? ' price-tag--small' : '';
 
+  if (!Number.isFinite(Number(product.price)) || Number(product.price) <= 0) {
+    return <span className={'price-tag' + sizeClass}>מחיר לא ידוע</span>;
+  }
+
   if (!sale) {
     return <span className={'price-tag' + sizeClass}>₪{product.price.toFixed(2)}</span>;
   }
