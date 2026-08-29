@@ -8,7 +8,7 @@ import { api } from '../lib/apiClient';
 import ProductDetail from './ProductDetail';
 import PriceTag from './PriceTag';
 import Icon from './Icon';
-import DeptIcon from './DeptIcon';
+import ProductImage from './ProductImage';
 import CloseButton from './CloseButton';
 
 const SCAN_FORMATS = ['ean_13', 'ean_8', 'upc_a', 'upc_e', 'code_128'];
@@ -285,7 +285,7 @@ export default function ScanOrSearchModal({ onAdd, onClose, onFallbackToSearch }
         {outcome?.kind === 'barcode-found' && (
           <div className="barcode-result">
             <p className="barcode-found">
-              <Icon name="check" /> <DeptIcon dept={getDepartment(outcome.product.department)} />{' '}
+              <Icon name="check" /> <ProductImage product={outcome.product} />{' '}
               {outcome.product.name} · <PriceTag product={outcome.product} size="small" /> ·{' '}
               {getDepartment(outcome.product.department)?.name}, {locationLabel(outcome.product)}
             </p>
@@ -313,7 +313,7 @@ export default function ScanOrSearchModal({ onAdd, onClose, onFallbackToSearch }
           <div className="barcode-result">
             <p className="barcode-found">
               <Icon name="check" /> זוהה-לפי-תמונה (Gemini) כ-"{outcome.product.name}" —{' '}
-              <DeptIcon dept={getDepartment(outcome.product.department)} /> {outcome.product.name} ·{' '}
+              <ProductImage product={outcome.product} /> {outcome.product.name} ·{' '}
               <PriceTag product={outcome.product} size="small" /> · {getDepartment(outcome.product.department)?.name},{' '}
               {locationLabel(outcome.product)}
             </p>

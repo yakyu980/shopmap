@@ -1,16 +1,32 @@
+import { useEffect, useState } from 'react';
 import { getDepartment } from '../lib/storeConfig';
 import DeptIcon from './DeptIcon';
+import { lookupProductPhotoByName } from '../lib/productPhotoLookup';
 
-// הערה: ניסינו בעבר לשלוף תמונת-מוצר אמיתית מ-Open Food Facts לפי
-// *שם* (הקטלוג-הקבוע משתמש בברקודי-דמה, אז חיפוש-לפי-ברקוד לא רלוונטי
-// שם) — אבל חיפוש-שם בעברית למונחים כלליים ("עגבניות") מחזיר לעיתים
-// מוצר-ממותג לא-קשור, כלומר תמונה שגויה. לכן הקטלוג-הקבוע ממשיך
-// להציג אייקון-מחלקה. מוצרים שנוצרו דרך "הוסף מוצר חדש" (סריקת-
-// ברקוד-אמיתי) כן יכולים לשאת product.imageUrl אמיתי — התאמת-ברקוד
-// מדויקת, לא חיפוש-שם — ואז מציגים אותה.
+// product.imageUrl (כשקיים) מגיע מהתאמת-ברקוד מדויקת מול Open Food
+// Facts — אמין. כשאין כזה (הקטלוג-הקבוע, שמשתמש בברקודי-דמה), נופלים
+// לחיפוש-שם — ⚠️ פחות אמין, יכול להחזיר מוצר-ממותג לא-קשור מהמאגר
+// הגלובלי (למשל "עגבניות" → רוטב-עגבניות ממותג). המשתמש ביקש את זה
+// במפורש בכל זאת; onError חוזר לאייקון-מחלקה אם ה-URL שבור.
 export default function ProductImage({ product, className = 'product-image' }) {
-  if (product.imageUrl) {
-    return <img src={product.imageUrl} alt="" className={className} />;
+  const [fetchedUrl, setFetchedUrl] = useState(null);
+  const [broken, setBroken] = useState(false);
+
+  useEffect(() => {
+    setBroken(false);
+    if (product.imageUrl) return;
+    let cancelled = false;
+    lookupProductPhotoByName(product.name).then((url) => {
+      if (!cancelled) setFetchedUrl(url);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [product.imageUrl, product.name]);
+
+  const src = product.imageUrl || fetchedUrl;
+  if (src && !broken) {
+    return <img src={src} alt="" className={className} onError={() => setBroken(true)} />;
   }
   return (
     <span className={className + ' ' + className + '--fallback'}>
