@@ -14,6 +14,52 @@ import CloseButton from './CloseButton';
 const SCAN_FORMATS = ['ean_13', 'ean_8', 'upc_a', 'upc_e', 'code_128'];
 const SCAN_INTERVAL_MS = 400;
 
+function normalizeProductName(value) {
+  return String(value || '')
+    .toLowerCase()
+    .replace(/[׳״'"`]/g, '')
+    .replace(/[^\p{L}\p{N}%]+/gu, ' ')
+    .trim();
+}
+
+function findProductByRecognizedName(name, brand) {
+  const recognized = normalizeProductName(`${name || ''} ${brand || ''}`);
+  if (!recognized) return null;
+  const ignored = new Set(['מוצר', 'מארז', 'של', 'בטעם', 'חדש', 'the']);
+  const recognizedTokens = new Set(recognized.split(' ').filter((token) => token.length > 1 && !ignored.has(token)));
+
+  let best = null;
+  let bestScore = 0;
+  for (const product of getAllProducts()) {
+    const saved = normalizeProductName(product.name);
+    if (saved === recognized || recognized.includes(saved) || saved.includes(recognized)) return product;
+    const savedTokens = saved.split(' ').filter((token) => token.length > 1 && !ignored.has(token));
+    const score = savedTokens.filter((token) => recognizedTokens.has(token)).length;
+    if (score > bestScore) {
+      best = product;
+      bestScore = score;
+    }
+  }
+  return bestScore >= 1 ? best : null;
+}
+
+function inferDepartment(name, category) {
+  const text = normalizeProductName(`${name || ''} ${category || ''}`);
+  const rules = [
+    ['produce', ['ירק', 'ירקות', 'פרי', 'פירות', 'עגבניה', 'מלפפון']],
+    ['bakery', ['לחם', 'מאפה', 'עוגה', 'עוגיות', 'חלה']],
+    ['dairy', ['חלב', 'גבינה', 'יוגורט', 'חמאה', 'קוטג']],
+    ['meat', ['בשר', 'עוף', 'דג', 'נקניק']],
+    ['drinks', ['שתיה', 'משקה', 'מים', 'מיץ', 'קפה', 'תה']],
+    ['cleaning', ['ניקיון', 'סבון', 'שמפו', 'טואלט']],
+    ['frozen', ['קפוא', 'גלידה', 'פיצה']],
+    ['snacks', ['חטיף', 'ממתק', 'שוקולד', 'ביסלי', 'קטשופ', 'אורז']],
+  ];
+  const available = new Set(getDepartments().map((department) => department.id));
+  const matched = rules.find(([id, words]) => available.has(id) && words.some((word) => text.includes(word)));
+  return matched?.[0] || getDepartments().find((department) => !department.fixed)?.id || getDepartments()[0]?.id || '';
+}
+
 function captureFrameAsJpeg(video) {
   const sourceWidth = video.videoWidth || 320;
   const sourceHeight = video.videoHeight || 240;
@@ -155,11 +201,13 @@ export default function ScanOrSearchModal({ onAdd, onClose, onFallbackToSearch, 
         }
       }
       // ניסיון-התאמה בקטלוג לפי שם (התחלת-מחרוזת, כמו חיפוש רגיל)
-      const q = data.name.trim().toLowerCase();
-      const match = getAllProducts().find((p) => p.name.toLowerCase().startsWith(q));
+      const match = findProductByRecognizedName(data.name, data.brand);
       stopOtherTracks();
       if (match) {
-        setOutcome({ kind: 'image-found', product: match, photoDataUrl });
+        // התאמה ברורה לפי השם: מוסיפים מיד לרשימת הקניות כפי שהמשתמש
+        // ביקש, במקום לדרוש אישור נוסף אחרי הצילום.
+        onAdd(match);
+        onClose();
       } else {
         setOutcome({
           kind: 'image-not-found',
@@ -278,7 +326,7 @@ export default function ScanOrSearchModal({ onAdd, onClose, onFallbackToSearch, 
     setAddForm({
       name: name || '',
       barcode: barcode || '',
-      department: getDepartments()[0]?.id || '',
+      department: inferDepartment(name, category),
       price: '',
       priceSource: null,
       category: category || '',
@@ -294,7 +342,6 @@ export default function ScanOrSearchModal({ onAdd, onClose, onFallbackToSearch, 
     if (!addForm.name.trim()) return setAddError('שם המוצר נדרש');
     const priceNum = Number(addForm.price);
     if (!priceNum || priceNum <= 0) return setAddError('נא להזין מחיר תקין');
-    if (!addForm.department) return setAddError('נא לבחור מחלקה');
 
     setAddBusy(true);
     setAddError('');
@@ -625,20 +672,6 @@ export default function ScanOrSearchModal({ onAdd, onClose, onFallbackToSearch, 
                 value={addForm.barcode}
                 onChange={(e) => setAddForm({ ...addForm, barcode: e.target.value })}
               />
-            </label>
-            <label className="map-edit-label">
-              מחלקה
-              <select
-                className="map-edit-input"
-                value={addForm.department}
-                onChange={(e) => setAddForm({ ...addForm, department: e.target.value })}
-              >
-                {getDepartments().map((d) => (
-                  <option key={d.id} value={d.id}>
-                    {d.icon} {d.name}
-                  </option>
-                ))}
-              </select>
             </label>
             <label className="map-edit-label">
               מחיר (₪)
