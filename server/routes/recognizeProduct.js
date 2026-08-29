@@ -9,6 +9,29 @@ import { requireAuth } from '../auth.js';
 
 const router = Router();
 const MODEL = 'gemini-flash-latest';
+
+// אבחון-זמני: בדיקה מהירה (בלי תמונה, בלי generateContent) שהמפתח
+// בכלל תקף ושה-API של גוגל נגיש-ומגיב מהר מ-Render — כדי להבדיל בין
+// "מפתח לא-תקין/לא-מורשה" (אמור לחזור מהר עם 400/403) לבין "generateContent
+// עם תמונה נתקע" (בעיה אחרת לגמרי). לא חושף את המפתח המלא בתשובה.
+router.get('/health', async (req, res) => {
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey) return res.json({ hasKey: false });
+  const masked = apiKey.slice(0, 6) + '…' + apiKey.slice(-4);
+  try {
+    const start = Date.now();
+    const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`, {
+      signal: AbortSignal.timeout(10000),
+    });
+    const ms = Date.now() - start;
+    const body = await r.text();
+    console.log('SuperNav AI: Gemini health check —', masked, r.status, ms + 'ms');
+    res.json({ hasKey: true, masked, status: r.status, ms, bodyPreview: body.slice(0, 300) });
+  } catch (err) {
+    console.log('SuperNav AI: Gemini health check failed —', masked, err?.name, err?.message);
+    res.json({ hasKey: true, masked, error: err?.name, message: err?.message });
+  }
+});
 const PROMPT =
   'זהה את מוצר-המזון/הצריכה במרכז התמונה הזו (מוצר-מדף בסופרמרקט). ' +
   'החזר אך ורק JSON תקני בפורמט {"name": "שם המוצר בעברית, קצר וברור", ' +

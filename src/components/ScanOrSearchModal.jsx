@@ -23,9 +23,10 @@ function captureFrameAsJpeg(video) {
 }
 
 /**
- * כפתור-סריקה אחד: מריץ זיהוי-ברקוד (לולאה חוזרת) וזיהוי-תמונה אמיתי
- * (Gemini Vision, קריאה בודדת) *במקביל* — מי שמזהה משהו קודם מנצח,
- * בלי טיימאאוט קבוע-מראש. אם אחד מהם מוצא תוצאה, מבטלים את השני.
+ * כפתור-סריקה אחד: זיהוי-ברקוד רץ אוטומטית ברקע (לולאה חוזרת), וזיהוי-
+ * תמונה-אמיתית (Gemini Vision) מופעל ביודעין ע"י המשתמש (כפתור "צלם
+ * עכשיו לזיהוי") — לא אוטומטי, כדי לא לחייב אותו להחזיק את המוצר
+ * מוכן מהרגע שהמצלמה נפתחת. מי שמזהה קודם מנצח ומבטל את השני.
  */
 export default function ScanOrSearchModal({ onAdd, onClose, onFallbackToSearch }) {
   const { videoRef, status, retry } = useCameraStream();
@@ -162,12 +163,12 @@ export default function ScanOrSearchModal({ onAdd, onClose, onFallbackToSearch }
       }
     }
 
-    // מסלול 2: זיהוי-תמונה (Gemini) — קריאה בודדת, לא לולאה (עלות-לפי-שימוש)
-    const geminiTimer = setTimeout(() => tryGeminiRecognition(), 600); // רגע קטן שהתמונה תתייצב
+    // מסלול 2: זיהוי-תמונה (Gemini) — לא אוטומטי (לא רוצים לחייב את
+    // המשתמש להחזיק את המוצר מוכן מהרגע הראשון); המשתמש מפעיל את זה
+    // ביודעין דרך כפתור "צלם עכשיו לזיהוי", בזמן שהוא בוחר.
 
     return () => {
       if (intervalId) clearInterval(intervalId);
-      clearTimeout(geminiTimer);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [status, outcome]);
