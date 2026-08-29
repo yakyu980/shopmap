@@ -15,11 +15,17 @@ const SCAN_FORMATS = ['ean_13', 'ean_8', 'upc_a', 'upc_e', 'code_128'];
 const SCAN_INTERVAL_MS = 400;
 
 function captureFrameAsJpeg(video) {
+  const sourceWidth = video.videoWidth || 320;
+  const sourceHeight = video.videoHeight || 240;
+  // מצלמות טלפון מחזירות לעיתים פריים 4K. לזיהוי מוצר אין צורך בכך,
+  // וה־base64 הגדול מאט מאוד את ההעלאה ואת Gemini. מגבילים את הצלע
+  // הארוכה ל־1280px תוך שמירת יחס התמונה.
+  const scale = Math.min(1, 1280 / Math.max(sourceWidth, sourceHeight));
   const canvas = document.createElement('canvas');
-  canvas.width = video.videoWidth || 320;
-  canvas.height = video.videoHeight || 240;
+  canvas.width = Math.round(sourceWidth * scale);
+  canvas.height = Math.round(sourceHeight * scale);
   canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
-  return canvas.toDataURL('image/jpeg', 0.8); // "data:image/jpeg;base64,...."
+  return canvas.toDataURL('image/jpeg', 0.72); // "data:image/jpeg;base64,...."
 }
 
 /**
@@ -92,9 +98,9 @@ export default function ScanOrSearchModal({ onAdd, onClose, onFallbackToSearch, 
     setOutcome({ kind: 'barcode-not-found', code, externalProduct, fallbackPhoto });
   }
 
-  async function tryGeminiRecognition() {
+  async function tryGeminiRecognition(photoOverride = null) {
     const video = videoRef.current;
-    if (!video || !videoReady || video.readyState < 2 || !video.videoWidth || !video.videoHeight) {
+    if (!photoOverride && (!video || !videoReady || video.readyState < 2 || !video.videoWidth || !video.videoHeight)) {
       setImageStatus('no-match');
       setImageFailureReason('camera-frame-not-ready');
       return;
@@ -102,11 +108,11 @@ export default function ScanOrSearchModal({ onAdd, onClose, onFallbackToSearch, 
     setRecognizing(true);
     setImageStatus('sent');
     setImageFailureReason(null);
-    const photoDataUrl = captureFrameAsJpeg(video);
+    const photoDataUrl = photoOverride || captureFrameAsJpeg(video);
     setCapturedPhoto(photoDataUrl);
     // הצילום הוא פריים קפוא: מכבים בפועל את זרם המצלמה (כולל נורית
     // המצלמה במכשיר) ומציגים את התמונה שנשלחה. "צלם שוב" יפתח זרם חדש.
-    pause();
+    if (!photoOverride) pause();
     const imageBase64 = photoDataUrl.split(',')[1];
     const controller = new AbortController();
     geminiAbortRef.current = controller;
@@ -372,19 +378,30 @@ export default function ScanOrSearchModal({ onAdd, onClose, onFallbackToSearch, 
                   </p>
                 )}
                 {!recognizing && imageStatus === 'no-match' && (
-                  <button
-                    type="button"
-                    className="btn btn--ghost btn--small"
-                    onClick={() => {
-                      setCapturedPhoto(null);
-                      setImageStatus('idle');
-                      setImageFailureReason(null);
-                      setVideoReady(false);
-                      retry();
-                    }}
-                  >
-                    <Icon name="camera" /> צלם שוב
-                  </button>
+                  <div className="barcode-result-actions">
+                    {(imageFailureReason === 'timeout' || imageFailureReason === 'network-error' || imageFailureReason === 'error') && (
+                      <button
+                        type="button"
+                        className="btn btn--primary btn--small"
+                        onClick={() => tryGeminiRecognition(capturedPhoto)}
+                      >
+                        <Icon name="reset" /> שלח שוב את אותה תמונה
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      className="btn btn--ghost btn--small"
+                      onClick={() => {
+                        setCapturedPhoto(null);
+                        setImageStatus('idle');
+                        setImageFailureReason(null);
+                        setVideoReady(false);
+                        retry();
+                      }}
+                    >
+                      <Icon name="camera" /> צלם תמונה חדשה
+                    </button>
+                  </div>
                 )}
               </div>
             )}
@@ -393,7 +410,7 @@ export default function ScanOrSearchModal({ onAdd, onClose, onFallbackToSearch, 
                 <button
                   type="button"
                   className="btn btn--primary"
-                  onClick={tryGeminiRecognition}
+                  onClick={() => tryGeminiRecognition()}
                   disabled={recognizing || !videoReady}
                 >
                   <Icon name="camera" /> {!videoReady ? 'המצלמה נטענת…' : 'צלם עכשיו לזיהוי'}
