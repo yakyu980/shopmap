@@ -651,8 +651,11 @@
 }
 
 /* --- מודל (משותף לכל חלון/פיצ'ר-נפתח באפליקציה — סריקת ברקוד,
-   חיפוש-לפי-תמונה, מועדפים, פרטי-מוצר, ועוד, ר' CLAUDE.md: כל חלון
-   נפתח תמיד במרכז המסך, לא כ-bottom sheet) --- */
+   חיפוש-לפי-תמונה, מועדפים, פרטי-מוצר, ועוד): כל modal חדש (כל
+   פיצ'ר/יכולת שלא פותח דף-טאב משלו) ממורכז באמצע המסך — לא
+   bottom-sheet. עקבי בכל המודלים באפליקציה, כולל
+   .settings-overlay/.settings-panel למטה. ר' גם DESIGN_GUIDELINES.md
+   סעיף 6. */
 .modal-backdrop {
   position: fixed;
   inset: 0;
@@ -660,6 +663,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  padding: 20px;
   z-index: 50;
 }
 
@@ -1882,8 +1886,9 @@
   inset: 0;
   background: rgba(0, 0, 0, 0.45);
   display: flex;
-  align-items: flex-end;
+  align-items: center;
   justify-content: center;
+  padding: 20px;
   z-index: 60;
 }
 
@@ -1891,7 +1896,7 @@
   background: var(--surface);
   width: 100%;
   max-width: 480px;
-  border-radius: 20px 20px 0 0;
+  border-radius: 20px;
   padding: 20px;
   position: relative;
   max-height: 88vh;
