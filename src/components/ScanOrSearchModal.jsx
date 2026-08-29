@@ -5,6 +5,7 @@ import { getProductByBarcode, addProductToCatalog, getAllProducts } from '../lib
 import { useCameraStream, CAMERA_STATUS } from '../lib/useCameraStream';
 import { lookupBarcodeExternal } from '../lib/openFoodFacts';
 import { api } from '../lib/apiClient';
+import { recognizeReceiptText } from '../lib/receiptOcr';
 import ProductDetail from './ProductDetail';
 import PriceTag from './PriceTag';
 import Icon from './Icon';
@@ -90,6 +91,8 @@ export default function ScanOrSearchModal({ onAdd, onClose, onFallbackToSearch, 
   const [detectorSupported] = useState(typeof window.BarcodeDetector !== 'undefined');
   const [recognizing, setRecognizing] = useState(false);
   const [analysisSeconds, setAnalysisSeconds] = useState(0);
+  const [analysisStage, setAnalysisStage] = useState('gemini');
+  const [ocrProgress, setOcrProgress] = useState(0);
   const [videoReady, setVideoReady] = useState(false);
   const [imageStatus, setImageStatus] = useState('idle'); // 'idle' | 'sent' | 'no-match'
   const [imageFailureReason, setImageFailureReason] = useState(null);
@@ -152,6 +155,8 @@ export default function ScanOrSearchModal({ onAdd, onClose, onFallbackToSearch, 
       return;
     }
     setRecognizing(true);
+    setAnalysisStage('gemini');
+    setOcrProgress(0);
     setImageStatus('sent');
     setImageFailureReason(null);
     const photoDataUrl = photoOverride || captureFrameAsJpeg(video);
@@ -174,11 +179,18 @@ export default function ScanOrSearchModal({ onAdd, onClose, onFallbackToSearch, 
         { signal: controller.signal }
       );
       if (settledRef.current) return;
-      setRecognizing(false);
       if (!data.recognized) {
         // Gemini קיבל את התמונה ובדק אותה, אבל לא זיהה מוצר — לא "מנצח"
         // בעצמו, פשוט לא תורם תוצאה; מציגים הודעה ברורה כדי שהמשתמש
         // יידע שהתמונה כן נשלחה ולא שהתקלקל משהו, והברקוד ממשיך לרוץ.
+        setAnalysisStage('ocr');
+        const localMatch = await tryOcrRecognition(photoDataUrl);
+        if (localMatch) {
+          onAdd(localMatch);
+          onClose();
+          return;
+        }
+        setRecognizing(false);
         setImageStatus('no-match');
         setImageFailureReason(data.reason || 'no-product-in-image');
         // זו תמונת-מוצר, לא סריקת-ברקוד: אם Gemini לא הצליח לזהות,
@@ -186,6 +198,7 @@ export default function ScanOrSearchModal({ onAdd, onClose, onFallbackToSearch, 
         openAddForm({ name: '', barcode: '', category: '', photoDataUrl, source: 'image' });
         return;
       }
+      setRecognizing(false);
       // Gemini הצליח לקרוא ספרות ברקוד מהתמונה. מעבירים אותן לאותו
       // מסלול של סורק-הברקוד: המספר נשמר, ואם הוא אינו מוכר נבקש שם.
       if (data.barcode) {
@@ -221,12 +234,32 @@ export default function ScanOrSearchModal({ onAdd, onClose, onFallbackToSearch, 
     } catch (err) {
       if (err?.name === 'AbortError' && !timedOut) return;
       if (!settledRef.current) {
+        setAnalysisStage('ocr');
+        const localMatch = await tryOcrRecognition(photoDataUrl);
+        if (localMatch) {
+          onAdd(localMatch);
+          onClose();
+          return;
+        }
         setRecognizing(false);
         setImageStatus('no-match');
         setImageFailureReason(timedOut ? 'timeout' : 'network-error');
       }
     } finally {
       clearTimeout(timeoutId);
+    }
+  }
+
+  async function tryOcrRecognition(photoDataUrl) {
+    try {
+      const text = await recognizeReceiptText(photoDataUrl, (progress) => {
+        if (progress?.status === 'recognizing text') {
+          setOcrProgress(Math.round((progress.progress || 0) * 100));
+        }
+      });
+      return findProductByRecognizedName(text, null);
+    } catch {
+      return null;
     }
   }
 
@@ -402,8 +435,14 @@ export default function ScanOrSearchModal({ onAdd, onClose, onFallbackToSearch, 
                   <div className="gemini-analysis" role="status" aria-live="polite">
                     <span className="gemini-analysis__spinner" aria-hidden="true" />
                     <span>
-                      <strong>Gemini מנתח את התמונה… {analysisSeconds > 0 ? `${analysisSeconds} שנ׳` : ''}</strong>
-                      <small>{analysisSeconds >= 10 ? 'הבקשה עדיין בעיבוד בשרת…' : 'מזהה שם מוצר, מותג, קטגוריה או ברקוד'}</small>
+                      <strong>
+                        {analysisStage === 'ocr'
+                          ? `קורא את שם המוצר מהאריזה… ${ocrProgress ? `${ocrProgress}%` : ''}`
+                          : `Gemini מנתח את התמונה… ${analysisSeconds > 0 ? `${analysisSeconds} שנ׳` : ''}`}
+                      </strong>
+                      <small>{analysisStage === 'ocr'
+                        ? 'זיהוי טקסט מקומי והשוואה למוצרים במאגר'
+                        : analysisSeconds >= 10 ? 'הבקשה עדיין בעיבוד בשרת…' : 'מזהה שם מוצר, מותג, קטגוריה או ברקוד'}</small>
                     </span>
                   </div>
                 )}
