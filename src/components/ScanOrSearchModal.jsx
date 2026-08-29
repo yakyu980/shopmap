@@ -113,7 +113,24 @@ export default function ScanOrSearchModal({ onAdd, onClose, onFallbackToSearch, 
         // יידע שהתמונה כן נשלחה ולא שהתקלקל משהו, והברקוד ממשיך לרוץ.
         setImageStatus('no-match');
         setImageFailureReason(data.reason || 'no-product-in-image');
+        // זו תמונת-מוצר, לא סריקת-ברקוד: אם Gemini לא הצליח לזהות,
+        // מבקשים מהמשתמש רק שם מוצר ושומרים את התמונה שכבר צולמה.
+        openAddForm({ name: '', barcode: '', category: '', photoDataUrl, source: 'image' });
         return;
+      }
+      // Gemini הצליח לקרוא ספרות ברקוד מהתמונה. מעבירים אותן לאותו
+      // מסלול של סורק-הברקוד: המספר נשמר, ואם הוא אינו מוכר נבקש שם.
+      if (data.barcode) {
+        const product = getProductByBarcode(data.barcode);
+        if (product) {
+          stopOtherTracks();
+          setOutcome({ kind: 'barcode-found', product, code: data.barcode });
+          return;
+        }
+        if (!data.name) {
+          openAddForm({ name: '', barcode: data.barcode, category: '', photoDataUrl, source: 'barcode' });
+          return;
+        }
       }
       // ניסיון-התאמה בקטלוג לפי שם (התחלת-מחרוזת, כמו חיפוש רגיל)
       const q = data.name.trim().toLowerCase();
@@ -125,6 +142,7 @@ export default function ScanOrSearchModal({ onAdd, onClose, onFallbackToSearch, 
         setOutcome({
           kind: 'image-not-found',
           name: data.name,
+          barcode: data.barcode || '',
           brand: data.brand,
           category: data.category,
           photoDataUrl,
@@ -232,7 +250,7 @@ export default function ScanOrSearchModal({ onAdd, onClose, onFallbackToSearch, 
     }
   }
 
-  function openAddForm({ name, barcode, category, photoDataUrl }) {
+  function openAddForm({ name, barcode, category, photoDataUrl, source = 'unknown' }) {
     setAddForm({
       name: name || '',
       barcode: barcode || '',
@@ -241,6 +259,7 @@ export default function ScanOrSearchModal({ onAdd, onClose, onFallbackToSearch, 
       priceSource: null,
       category: category || '',
       photoDataUrl: photoDataUrl || null,
+      source,
     });
     setAddError('');
     // אם יש ברקוד — בודקים אם יש לו מחיר-רשמי-אמיתי (חוק שקיפות-מחירים)
@@ -480,6 +499,7 @@ export default function ScanOrSearchModal({ onAdd, onClose, onFallbackToSearch, 
                     // חיפוש-שם מעורפל), אז אפשר לסמוך עליה בניגוד לניסיון הקודם;
                     // אם אין לה תמונה, נופלים לצילום-מסך מרגע הסריקה.
                     photoDataUrl: outcome.externalProduct?.imageUrl || outcome.fallbackPhoto || null,
+                    source: 'barcode',
                   })
                 }
               >
@@ -504,9 +524,10 @@ export default function ScanOrSearchModal({ onAdd, onClose, onFallbackToSearch, 
                 onClick={() =>
                   openAddForm({
                     name: outcome.name,
-                    barcode: '',
+                    barcode: outcome.barcode || '',
                     category: outcome.category,
                     photoDataUrl: outcome.photoDataUrl,
+                    source: outcome.barcode ? 'barcode' : 'image',
                   })
                 }
               >
@@ -527,7 +548,13 @@ export default function ScanOrSearchModal({ onAdd, onClose, onFallbackToSearch, 
 
         {addForm && (
           <div className="barcode-result add-product-form">
-            <h3>הוסף מוצר חדש למאגר</h3>
+            <h3>{addForm.source === 'image' ? 'Gemini לא זיהה את השם — מה שם המוצר?' : 'הוסף מוצר חדש למאגר'}</h3>
+            {addForm.source === 'image' && (
+              <p className="barcode-hint">התמונה נשמרה. הזינו את שם המוצר; אין צורך להקליד ברקוד.</p>
+            )}
+            {addForm.source === 'barcode' && (
+              <p className="barcode-hint">הברקוד נקלט. כעת הזינו את שם המוצר כדי לקשר ביניהם.</p>
+            )}
             {addForm.barcode && <p className="barcode-hint"><strong>ברקוד שנסרק:</strong> {addForm.barcode}</p>}
             {addForm.photoDataUrl && (
               <img src={addForm.photoDataUrl} alt="" className="add-product-photo" />
@@ -537,6 +564,7 @@ export default function ScanOrSearchModal({ onAdd, onClose, onFallbackToSearch, 
               <input
                 className="map-edit-input"
                 type="text"
+                placeholder={addForm.source === 'image' || addForm.source === 'barcode' ? 'הקלידו את שם המוצר' : undefined}
                 value={addForm.name}
                 onChange={(e) => setAddForm({ ...addForm, name: e.target.value })}
               />

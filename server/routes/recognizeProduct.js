@@ -33,10 +33,12 @@ router.get('/health', async (req, res) => {
   }
 });
 const PROMPT =
-  'זהה את מוצר-המזון/הצריכה במרכז התמונה הזו (מוצר-מדף בסופרמרקט). ' +
+  'זהה את מוצר-המזון/הצריכה או את הברקוד במרכז התמונה הזו (מוצר-מדף בסופרמרקט). ' +
   'החזר אך ורק JSON תקני בפורמט {"name": "שם המוצר בעברית, קצר וברור", ' +
-  '"brand": "שם המותג אם ניכר, אחרת null", "category": "קטגוריה כללית אחת מילה"} ' +
-  'בלי טקסט נוסף לפניו/אחריו. אם אין מוצר-מזהה בתמונה, החזר {"name": null}.';
+  '"brand": "שם המותג אם ניכר, אחרת null", "category": "קטגוריה כללית אחת מילה", ' +
+  '"barcode": "ספרות הברקוד אם הן נראות בוודאות, אחרת null"} בלי טקסט נוסף. ' +
+  'אם רואים ברקוד אך לא מזהים את שם המוצר, החזר name:null ואת ספרות הברקוד. ' +
+  'אם אין מוצר או ברקוד קריא בתמונה, החזר {"name":null,"barcode":null}.';
 
 router.post(
   '/',
@@ -81,12 +83,14 @@ router.post(
         return res.json({ recognized: false, reason: 'no-json-in-response' });
       }
       const parsed = JSON.parse(jsonMatch[0]);
-      if (!parsed?.name) return res.json({ recognized: false, reason: 'no-product-in-image' });
+      const barcode = parsed?.barcode ? String(parsed.barcode).replace(/\D/g, '').slice(0, 40) : null;
+      if (!parsed?.name && !barcode) return res.json({ recognized: false, reason: 'no-product-in-image' });
       res.json({
         recognized: true,
-        name: String(parsed.name).slice(0, 120),
+        name: parsed.name ? String(parsed.name).slice(0, 120) : null,
         brand: parsed.brand ? String(parsed.brand).slice(0, 80) : null,
         category: parsed.category ? String(parsed.category).slice(0, 40) : null,
+        barcode,
       });
     } catch (err) {
       console.error('SuperNav AI: Gemini call failed —', err?.name, err?.message);
