@@ -14,6 +14,7 @@ import priceObservationRoutes from './routes/priceObservations.js';
 import priceImportRoutes from './routes/priceImport.js';
 import dealsRoutes from './routes/deals.js';
 import recognizeProductRoutes from './routes/recognizeProduct.js';
+import priceDataRoutes from './routes/priceData.js';
 import { seedProducts } from './seedProducts.js';
 
 const app = express();
@@ -31,6 +32,7 @@ app.use('/api/price-observations', priceObservationRoutes);
 app.use('/api/price-import', priceImportRoutes);
 app.use('/api/deals', dealsRoutes);
 app.use('/api/recognize-product', recognizeProductRoutes);
+app.use('/api/price-data', priceDataRoutes);
 
 app.get('/api/health', (req, res) => res.json({ ok: true }));
 

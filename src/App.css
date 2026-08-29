@@ -2621,6 +2621,9 @@
 .compare-matrix td small { display: block; margin-top: 3px; font-size: 8px; }
 .compare-matrix td.is-cheapest { color: #176b34; background: #effaf2; }
 .compare-no-price { color: var(--text-dim); }
+.compare-matrix .compare-promo { color: #176b34; font-weight: 700; }
+.compare-matrix .compare-source { margin-top: 5px; color: var(--text-dim); font-size: 8px; font-weight: 500; }
+.compare-matrix .compare-source.is-stale { color: #9a6700; }
 .compare-best-cell { color: var(--primary-dark); font-weight: 900; }
 .compare-summary { display: grid; grid-template-columns: .7fr 1.3fr 1fr; gap: 8px; }
 .compare-summary > div { display: grid; align-content: center; gap: 3px; min-width: 0; min-height: 82px; padding: 10px; border: 1px solid var(--border); border-radius: 14px; background: var(--surface); }

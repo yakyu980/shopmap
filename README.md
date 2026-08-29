@@ -201,3 +201,21 @@ npm run build    # build לפרודקשן
 npm run lint     # oxlint
 npm run preview  # להריץ את ה-build לפרודקשן (נדרש כדי לבדוק מצב-אופליין בפועל — ה-service-worker לא פעיל תחת npm run dev)
 ```
+
+## מחירי אמת — קובצי שקיפות המחירים
+
+השרת כולל API ב-`/api/price-data` והאפליקציה מאפשרת לבחור עיר בהגדרות.
+ה-workflow `Import official supermarket prices` מוריד פעם ביום את קובצי
+`Stores`/`PriceFull`/`PromoFull` הרשמיים, מנרמל אותם ושומר ב-Supabase רק
+סניפים בערים שנבחרו. מחיר ישן מ-36 שעות נשמר אך מסומן בבירור כ"המחיר
+האחרון שפורסם".
+
+לפני ההפעלה הראשונה:
+
+1. להריץ ב-Supabase SQL Editor את `server/supabase-schema.sql`.
+2. להגדיר ב-GitHub Actions secrets את `SUPABASE_URL` ואת
+   `SUPABASE_SERVICE_ROLE_KEY`.
+3. להפעיל ידנית פעם אחת את ה-workflow כדי לטעון רשימת ערים, לבחור עיר
+   באפליקציה, ואז להפעיל אותו שוב כדי לטעון את מחירי ומבצעי הסניפים שלה.
+
+הייבוא הידני הישן נשאר כגיבוי בלבד ואינו מוצג כמקור הרשמי האוטומטי.

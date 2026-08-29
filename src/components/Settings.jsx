@@ -6,6 +6,7 @@ import Login from './Login';
 import PriceImport from './PriceImport';
 import Icon from './Icon';
 import CloseButton from './CloseButton';
+import { api } from '../lib/apiClient';
 
 const LOCAL_KEYS_TO_CLEAR = [
   'supernav_shopping_list_v1',
@@ -21,6 +22,9 @@ export default function Settings({ onClose }) {
   const [cleared, setCleared] = useState(false);
   const [mapReset, setMapReset] = useState(false);
   const [priceImportOpen, setPriceImportOpen] = useState(false);
+  const [priceCities, setPriceCities] = useState([]);
+  const [selectedPriceCity, setSelectedPriceCity] = useState('');
+  const [priceCityStatus, setPriceCityStatus] = useState('idle');
 
   useEffect(() => {
     if (!navigator.permissions?.query) return;
@@ -29,6 +33,28 @@ export default function Settings({ onClose }) {
       .then((status) => setGpsPermission(status.state))
       .catch(() => setGpsPermission('unsupported'));
   }, []);
+
+  useEffect(() => {
+    if (!user) return;
+    api.get('/price-data/cities')
+      .then((data) => {
+        setPriceCities(data.cities || []);
+        setSelectedPriceCity(data.selectedCityCode || '');
+      })
+      .catch(() => setPriceCityStatus('error'));
+  }, [user]);
+
+  async function savePriceCity(cityCode) {
+    setSelectedPriceCity(cityCode);
+    if (!cityCode) return;
+    setPriceCityStatus('saving');
+    try {
+      await api.put('/price-data/preferences', { cityCode });
+      setPriceCityStatus('saved');
+    } catch {
+      setPriceCityStatus('error');
+    }
+  }
 
   function handleClearLocalData() {
     LOCAL_KEYS_TO_CLEAR.forEach((k) => {
@@ -134,11 +160,21 @@ export default function Settings({ onClose }) {
           <section className="settings-section">
             <h3>מחירים-רשמיים</h3>
             <p className="settings-hint">
-              ייבוא קובץ-CSV שהכנתם בעצמכם (למשל בעזרת כלי-קוד-פתוח כמו israeli-supermarket-scraper)
-              — לא מושך שום דבר מהאינטרנט מכאן.
+              בחרו עיר כדי לקבל מחירים ומבצעים מקובצי שקיפות-המחירים הרשמיים של הרשתות.
             </p>
+            <label className="receipt-venue-label">
+              עיר להשוואת מחירים
+              <select className="map-edit-input" value={selectedPriceCity} onChange={(event) => savePriceCity(event.target.value)}>
+                <option value="">— בחרו עיר —</option>
+                {priceCities.map((city) => <option key={city.code} value={city.code}>{city.name}</option>)}
+              </select>
+            </label>
+            {priceCityStatus === 'saving' && <p className="settings-hint">שומר…</p>}
+            {priceCityStatus === 'saved' && <p className="settings-confirm-msg"><Icon name="check" /> העיר נשמרה למשפחה</p>}
+            {priceCityStatus === 'error' && <p className="settings-error"><Icon name="warning" /> מאגר המחירים אינו זמין כרגע</p>}
+            <p className="settings-hint">ייבוא CSV ידני נשאר זמין כגיבוי ואינו מחליף את המקור הרשמי.</p>
             <button className="btn btn--ghost" onClick={() => setPriceImportOpen(true)}>
-              <Icon name="receipt" /> ייבוא מחירים-רשמיים
+              <Icon name="receipt" /> ייבוא CSV ידני
             </button>
           </section>
         )}
@@ -151,7 +187,7 @@ export default function Settings({ onClose }) {
             <li>✅ אמיתי: זיהוי-מוצר-מתמונה (Gemini Vision, קריאת-שרת אמיתית) — רץ במקביל לזיהוי-הברקוד, מי שמזהה קודם מנצח</li>
             <li>✅ אמיתי: הוספת מוצר חדש שלא נמצא (ברקוד/תמונה) למאגר — נבדק מול מחירים-רשמיים-שיובאו לפי ברקוד, אחרת מחיר-ידני מסומן ככזה</li>
             <li>✅ אמיתי (כשמחוברים): סנכרון-משפחה, טיול-קניות משותף, עדכון-מיקום-מוצר, השוואת-מחירים חוצת-סניפים מקבלות שסרקתם, ייבוא מחירים-רשמיים</li>
-            <li>⚠️ אין חיבור-חי-אוטומטי למחירים-רשמיים של הרשתות — רק ייבוא-ידני של CSV שהכנתם בעצמכם (חוק שקיפות-מחירים)</li>
+            <li>✅ אמיתי: מחירים ומבצעים לפי סניף מקובצי שקיפות-המחירים הרשמיים, מתעדכנים פעם ביום ומציגים זמן מקור</li>
             <li>⚠️ מוצר בלי ברקוד-שיובא ובלי CSV-רשמי תואם — אין לו מקור-אמיתי למחיר, רק מה שהוזן ידנית</li>
           </ul>
         </section>

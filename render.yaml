@@ -13,5 +13,5 @@ services:
       # — לא בקוד/ב-git, ר' README.
       - key: SUPABASE_URL
         sync: false
-      - key: SUPABASE_SECRET_KEY
+      - key: SUPABASE_SERVICE_ROLE_KEY
         sync: false

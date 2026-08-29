@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { supabase, h } from '../supabaseClient.js';
 import { requireAuth } from '../auth.js';
+import { pricesForBarcode, searchProducts } from '../priceData.js';
 
 const router = Router();
 
@@ -63,6 +64,9 @@ router.get(
     const q = (req.query.q || '').trim().toLowerCase();
     if (q.length < 2) return res.json({ products: [] });
 
+    const official = await searchProducts(req.household.id, q);
+    if (official.products.length > 0 || official.cityCode) return res.json(official);
+
     const { data: matches, error } = await supabase.from('official_prices').select('*').ilike('name', `%${q}%`);
     if (error) throw error;
 
@@ -88,6 +92,9 @@ router.get(
   '/:barcode',
   requireAuth,
   h(async (req, res) => {
+    const official = await pricesForBarcode(req.household.id, req.params.barcode);
+    if (official.rows.length > 0 || official.cityCode) return res.json(official);
+
     const [{ data: rows, error: rowsErr }, { data: venues, error: venuesErr }] = await Promise.all([
       supabase.from('official_prices').select('*').eq('barcode', req.params.barcode),
       supabase.from('venues').select('*'),

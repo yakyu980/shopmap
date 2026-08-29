@@ -111,6 +111,93 @@ create table if not exists official_prices (
   unique (barcode, venue_id)
 );
 
+-- מאגר המחירים הארצי. הנתונים מגיעים רק מקובצי שקיפות-המחירים
+-- הרשמיים; בחירת העיר של המשפחה קובעת אילו סניפים נשמרים בייבוא.
+create table if not exists price_cities (
+  code text primary key,
+  name text not null unique,
+  updated_at bigint not null
+);
+
+create table if not exists household_price_preferences (
+  household_id text primary key references households(id) on delete cascade,
+  city_code text references price_cities(code) on delete set null,
+  updated_at bigint not null
+);
+
+create table if not exists retail_chains (
+  id text primary key,
+  name text not null,
+  source_name text not null,
+  updated_at bigint not null
+);
+
+create table if not exists retail_stores (
+  id text primary key,
+  chain_id text not null references retail_chains(id) on delete cascade,
+  external_id text not null,
+  name text not null,
+  city_code text references price_cities(code) on delete set null,
+  city_name text not null,
+  address text,
+  source_updated_at bigint,
+  imported_at bigint not null,
+  unique (chain_id, external_id)
+);
+
+create table if not exists retail_products (
+  barcode text primary key,
+  name text not null,
+  manufacturer text,
+  unit_quantity text,
+  updated_at bigint not null
+);
+
+create table if not exists retail_prices (
+  barcode text not null references retail_products(barcode) on delete cascade,
+  store_id text not null references retail_stores(id) on delete cascade,
+  price numeric not null,
+  unit_price numeric,
+  unit_measure text,
+  source_file text not null,
+  source_url text,
+  source_updated_at bigint not null,
+  imported_at bigint not null,
+  primary key (barcode, store_id)
+);
+
+create table if not exists retail_promotions (
+  id text primary key,
+  store_id text not null references retail_stores(id) on delete cascade,
+  description text,
+  discounted_price numeric,
+  min_quantity numeric,
+  club_only boolean not null default false,
+  starts_at bigint,
+  ends_at bigint,
+  source_file text not null,
+  source_updated_at bigint not null,
+  imported_at bigint not null
+);
+
+create table if not exists retail_promotion_items (
+  promotion_id text not null references retail_promotions(id) on delete cascade,
+  barcode text not null references retail_products(barcode) on delete cascade,
+  primary key (promotion_id, barcode)
+);
+
+create table if not exists price_import_runs (
+  id text primary key,
+  chain_id text,
+  status text not null,
+  stores_imported integer not null default 0,
+  prices_imported integer not null default 0,
+  promotions_imported integer not null default 0,
+  error text,
+  started_at bigint not null,
+  finished_at bigint
+);
+
 create table if not exists groups (
   id text primary key,
   name text not null,
@@ -142,6 +229,12 @@ create index if not exists idx_venues_household on venues(household_id);
 create index if not exists idx_trips_household on trips(household_id);
 create index if not exists idx_price_observations_household on price_observations(household_id);
 create index if not exists idx_official_prices_barcode on official_prices(barcode);
+create index if not exists idx_retail_stores_city on retail_stores(city_code);
+create index if not exists idx_retail_products_name on retail_products(name);
+create index if not exists idx_retail_prices_store on retail_prices(store_id);
+create index if not exists idx_retail_prices_updated on retail_prices(source_updated_at);
+create index if not exists idx_retail_promo_store on retail_promotions(store_id);
+create index if not exists idx_retail_promo_barcode on retail_promotion_items(barcode);
 create index if not exists idx_group_memberships_group on group_memberships(group_id);
 create index if not exists idx_group_memberships_user on group_memberships(user_id);
 create index if not exists idx_price_history_product on price_history(product_id);

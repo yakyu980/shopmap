@@ -23,6 +23,17 @@ function priceForVenue(rows, venueName) {
   return matches.length ? Math.min(...matches.map((row) => row.price)) : null;
 }
 
+function rowForVenue(rows, venueName) {
+  const matches = rows.filter((row) => row.venueName === venueName && Number.isFinite(row.price));
+  return matches.sort((a, b) => a.price - b.price)[0] || null;
+}
+
+function bestPublicOffer(row) {
+  if (!row) return null;
+  const eligible = (row.promotions || []).filter((promo) => !promo.clubOnly && (!promo.minQuantity || promo.minQuantity <= 1) && Number.isFinite(promo.discountedPrice));
+  return eligible.sort((a, b) => a.discountedPrice - b.discountedPrice)[0] || null;
+}
+
 export default function MultiProductCompare() {
   const products = useSyncExternalStore(subscribeCompareProducts, getCompareProducts);
   const [priceRows, setPriceRows] = useState({});
@@ -117,7 +128,19 @@ export default function MultiProductCompare() {
                 const status = priceRows[product.barcode]?.status;
                 return <tr key={product.barcode}>
                   <th scope="row"><span>{product.name}</span><small dir="ltr">{product.barcode}</small><button type="button" onClick={() => removeProduct(product.barcode)} aria-label={`הסרת ${product.name} מההשוואה`}>הסרה</button></th>
-                  {venues.map((venue) => { const price = priceForVenue(rows, venue); return <td key={venue} className={price != null && price === cheapest ? 'is-cheapest' : ''}>{price == null ? <span className="compare-no-price">—</span> : <><strong>₪{price.toFixed(2)}</strong>{price === cheapest && <small>הכי זול</small>}</>}</td>; })}
+                  {venues.map((venue) => {
+                    const row = rowForVenue(rows, venue);
+                    const price = row?.price ?? null;
+                    const offer = bestPublicOffer(row);
+                    const clubOffer = (row?.promotions || []).find((promo) => promo.clubOnly);
+                    return <td key={venue} className={price != null && price === cheapest ? 'is-cheapest' : ''}>{price == null ? <span className="compare-no-price">—</span> : <>
+                      <strong>₪{price.toFixed(2)}</strong>
+                      {offer && <small className="compare-promo">מבצע: ₪{offer.discountedPrice.toFixed(2)}{offer.description ? ` · ${offer.description}` : ''}</small>}
+                      {clubOffer && <small>מבצע מועדון — לא חושב כמחיר רגיל</small>}
+                      {price === cheapest && <small>הכי זול במחיר רגיל</small>}
+                      <small className={row.stale ? 'compare-source is-stale' : 'compare-source'}>{row.stale ? 'המחיר האחרון שפורסם' : 'מחיר רשמי מעודכן'} · {new Date(row.sourceUpdatedAt).toLocaleDateString('he-IL')}</small>
+                    </>}</td>;
+                  })}
                   <td className="compare-best-cell">
                     {status === 'loading' ? 'טוען…' : status === 'error' ? 'שגיאה' : cheapest == null ? 'אין מחיר' : (
                       <>

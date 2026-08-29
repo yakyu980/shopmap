@@ -22,7 +22,7 @@ export default function OfficialProductSearch({ onSelect, placeholder = 'חפש�
         .then((data) => {
           if (cancelled) return;
           setResults(data.products || []);
-          setStatus('ready');
+          setStatus(data.cityCode === null ? 'needs-city' : 'ready');
         })
         .catch(() => { if (!cancelled) setStatus('error'); });
     }, 250);
@@ -58,6 +58,7 @@ export default function OfficialProductSearch({ onSelect, placeholder = 'חפש�
         <div className="official-product-search__results">
           {results.length > 1 && <div className="official-product-search__sort"><span>סידור מוצרים</span><select value={sortBy} onChange={(event) => setSortBy(event.target.value)} aria-label="סידור תוצאות מוצרים"><option value="coverage">הכי הרבה סופרים</option><option value="price">המחיר הנמוך ביותר</option><option value="name">שם המוצר</option></select></div>}
           {status === 'error' && <p className="login-error"><Icon name="warning" /> לא הצלחנו לטעון את מאגר המחירים.</p>}
+          {status === 'needs-city' && <p className="cmp-empty"><Icon name="location" /> בחרו עיר בהגדרות כדי לראות מחירים אמיתיים.</p>}
           {status === 'ready' && results.length === 0 && <p className="cmp-empty">לא נמצא מוצר במאגר הרשמי.</p>}
           {sortedResults.map((product) => (
             <button type="button" key={product.barcode} onClick={() => choose(product)}>
