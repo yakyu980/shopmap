@@ -90,6 +90,16 @@ export async function resetPassword({ username, securityAnswer, newPassword }) {
   return data;
 }
 
+export async function updateProfilePhoto(photo) {
+  const { token, user } = state;
+  const data = await api.patch('/auth/me/photo', { photo });
+  // Ignore a response from a session that ended while the upload was pending.
+  if (state.token === token && state.user?.id === user?.id) {
+    update({ ...state, user: data.user });
+  }
+  return data.user;
+}
+
 export function logout() {
   setToken(null);
   update({ token: null, user: null, household: null });

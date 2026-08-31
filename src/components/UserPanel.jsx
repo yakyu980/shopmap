@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useAuth } from '../lib/useAuth';
-import { logout } from '../lib/auth';
-import { api } from '../lib/apiClient';
+import { logout, updateProfilePhoto } from '../lib/auth';
 import { useGroups } from '../lib/useGroups';
 import {
   fetchGroups,
@@ -243,6 +242,8 @@ export default function UserPanel({ onClose }) {
   const { user } = useAuth();
   const groups = useGroups();
   const fileInputRef = useRef(null);
+  const [photoBusy, setPhotoBusy] = useState(false);
+  const [photoError, setPhotoError] = useState('');
   const [newGroupName, setNewGroupName] = useState('');
   const [creating, setCreating] = useState(false);
   const [joinToken, setJoinToken] = useState('');
@@ -253,12 +254,26 @@ export default function UserPanel({ onClose }) {
     if (user) fetchGroups().catch(() => {});
   }, [user]);
 
-  function handlePhotoChange(e) {
+  async function handlePhotoChange(e) {
     const file = e.target.files?.[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = () => api.patch('/auth/me/photo', { photo: reader.result }).catch(() => {});
-    reader.readAsDataURL(file);
+    e.target.value = '';
+    if (!file || photoBusy) return;
+    setPhotoBusy(true);
+    setPhotoError('');
+    try {
+      const photo = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = () => reject(new Error('לא ניתן לקרוא את התמונה. נסו שוב.'));
+        reader.onabort = () => reject(new Error('קריאת התמונה בוטלה. נסו שוב.'));
+        reader.readAsDataURL(file);
+      });
+      await updateProfilePhoto(photo);
+    } catch (err) {
+      setPhotoError(err.message || 'העלאת התמונה נכשלה. נסו שוב.');
+    } finally {
+      setPhotoBusy(false);
+    }
   }
 
   async function handleCreateGroup() {
@@ -303,8 +318,8 @@ export default function UserPanel({ onClose }) {
               <span className="user-profile-info">
                 <strong>{user.username}</strong>
               </span>
-              <button className="btn btn--ghost btn--small" onClick={() => fileInputRef.current?.click()}>
-                <Icon name="camera" /> תמונת פרופיל
+              <button className="btn btn--ghost btn--small" onClick={() => fileInputRef.current?.click()} disabled={photoBusy}>
+                <Icon name="camera" /> {photoBusy ? 'מעלה תמונה…' : 'תמונת פרופיל'}
               </button>
               <input
                 ref={fileInputRef}
@@ -313,11 +328,14 @@ export default function UserPanel({ onClose }) {
                 capture="environment"
                 style={{ display: 'none' }}
                 onChange={handlePhotoChange}
+                disabled={photoBusy}
               />
               <button className="btn btn--text btn--small" onClick={logout}>
                 <Icon name="door" /> התנתק
               </button>
             </div>
+
+            {photoError && <p className="login-error" role="alert">{photoError}</p>}
 
             <section className="settings-section">
               <h3>הצטרפות לקבוצה עם קישור/קוד</h3>
