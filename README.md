@@ -51,6 +51,7 @@ node --test src/lib/chainPriceBlocks.test.js
 
 - [הגדרת המוצר והיקף ה־MVP](docs/PRODUCT.md)
 - [דף הבית — מקור האמת של הזרימה המרכזית](docs/HOME.md)
+- [דוח QA של דף הבית](docs/QA-HOME.md)
 - [ארכיטקטורה ומפת קוד](docs/ARCHITECTURE.md)
 - [פיתוח, בדיקות ופריסה](docs/DEVELOPMENT.md)
 - [כללי העבודה של סוכני קוד](AGENTS.md)
