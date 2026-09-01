@@ -40,6 +40,7 @@ React/Vite PWA  ->  Express API  ->  Supabase ושירותים חיצוניים
 - רשימת קניות: `useShoppingList.js`
 - חשבון: `auth.js` + `useAuth.js`
 - סניפים: `venues.js` + `useVenues.js`
+- דף בית קבוצתי: `groupHome.js` + `useGroupHome.js` ועמודות `groups.shopping_items`/`groups.favorites`
 - מסלול: `route.js`
 - תקשורת שרת: `apiClient.js`
 

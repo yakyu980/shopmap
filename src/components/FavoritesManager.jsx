@@ -18,8 +18,9 @@ const TABS = [
 // רוצים, וכפתור אחד מעביר את כל המסומן לרשימת-הקניות בבת-אחת —
 // "הוסף לרשימה" מנסה להתאים לקטלוג שלנו קודם (שימוש-חוזר ב-
 // matchReceiptItemsToCatalog הקיים); אם אין התאמה, נוסף "פריט אישי".
-export default function FavoritesManager({ onAddToList, onClose }) {
-  const favorites = useFavorites();
+export default function FavoritesManager({ onAddToList, onClose, favoritesOverride = null, onAddFavorite = null, onRemoveFavorite = null }) {
+  const localFavorites = useFavorites();
+  const favorites = favoritesOverride || localFavorites;
   const fileInputRef = useRef(null);
   const [activeTab, setActiveTab] = useState(SEASONS.ALL);
   const [checkedIds, setCheckedIds] = useState(new Set());
@@ -49,7 +50,8 @@ export default function FavoritesManager({ onAddToList, onClose }) {
 
   function handleSave() {
     if (!name.trim()) return;
-    addFavorite({ name, brand, photo, season: activeTab });
+    if (onAddFavorite) onAddFavorite({ name, brand, photo, season: activeTab });
+    else addFavorite({ name, brand, photo, season: activeTab });
     setName('');
     setBrand('');
     setPhoto(null);
@@ -135,7 +137,7 @@ export default function FavoritesManager({ onAddToList, onClose }) {
                   </label>
                   <button
                     className="btn btn--icon btn--danger"
-                    onClick={() => removeFavorite(fav.id)}
+                    onClick={() => (onRemoveFavorite ? onRemoveFavorite(fav.id) : removeFavorite(fav.id))}
                     aria-label="מחק ממועדפים"
                   >
                     <Icon name="trash" />

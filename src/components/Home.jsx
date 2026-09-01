@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { locationLabel } from '../data/storeData';
 import { getDepartment } from '../lib/storeConfig';
 import { useAuth } from '../lib/useAuth';
@@ -13,12 +13,18 @@ import FavoritesManager from './FavoritesManager';
 import TripVenuePicker from './TripVenuePicker';
 import PriceTag from './PriceTag';
 import Icon from './Icon';
+import { useGroupHome } from '../lib/useGroupHome';
+import { useGroups } from '../lib/useGroups';
+import { fetchGroups } from '../lib/groups';
+import { importGroupHomeItems } from '../lib/groupHome';
 
-export default function Home({ list, onNavigate }) {
+export default function Home({ list, onNavigate, groupId = null }) {
   const { items, addItem, removeItem, incrementItem, decrementItem, reorderItems } = list;
   const { token } = useAuth();
   const dynamicProducts = useCatalog();
   const { trip, startTrip, addTripItem, toggleTripItem, removeTripItem, finishTrip } = useTripSync();
+  const groupHome = useGroupHome(groupId);
+  const groups = useGroups();
 
   const [query, setQuery] = useState('');
   const [checkedIds, setCheckedIds] = useState(new Set());
@@ -26,11 +32,26 @@ export default function Home({ list, onNavigate }) {
   const [favoritesOpen, setFavoritesOpen] = useState(false);
   const [venuePickerOpen, setVenuePickerOpen] = useState(false);
   const [draggedId, setDraggedId] = useState(null);
+  const [transferGroupId, setTransferGroupId] = useState('');
+  const [transferBusy, setTransferBusy] = useState(false);
 
   // "פריטים אישיים" (מ-⭐ מועדפים, לא בקטלוג) — ר' FavoritesManager.jsx.
   // אין להם department/price אמיתיים, ולא ניתנים-לניווט/לטיול-משותף.
-  const displayItems = trip ? trip.items : items.filter((i) => !i.custom);
-  const customItems = trip ? [] : items.filter((i) => i.custom);
+  const displayItems = groupId ? groupHome.items : (trip ? trip.items : items.filter((i) => !i.custom));
+  const customItems = groupId || trip ? [] : items.filter((i) => i.custom);
+
+  useEffect(() => { if (token) fetchGroups().catch(() => {}); }, [token]);
+
+  async function transferToGroup() {
+    if (!transferGroupId || !items.length) return;
+    setTransferBusy(true);
+    try {
+      const data = await importGroupHomeItems(transferGroupId, items.filter((item) => !item.custom).map((item) => ({ ...item, productId: item.productId || item.id })));
+      if (!data.rejected?.length) list.clear();
+    } finally {
+      setTransferBusy(false);
+    }
+  }
 
   const total = displayItems.reduce((sum, i) => sum + i.price * (i.qty || 1), 0);
   const itemCount = displayItems.reduce((sum, i) => sum + (i.qty || 1), 0);
@@ -44,6 +65,7 @@ export default function Home({ list, onNavigate }) {
 
   function handleAdd(product) {
     if (product.custom) addItem(product);
+    else if (groupId) groupHome.addItem(product);
     else if (trip) addTripItem(product);
     else incrementItem(product);
   }
@@ -73,7 +95,13 @@ export default function Home({ list, onNavigate }) {
   return (
     <div className="home-page">
       {favoritesOpen && (
-        <FavoritesManager onAddToList={handleAdd} onClose={() => setFavoritesOpen(false)} />
+        <FavoritesManager
+          onAddToList={handleAdd}
+          onClose={() => setFavoritesOpen(false)}
+          favoritesOverride={groupId ? groupHome.favorites : null}
+          onAddFavorite={groupId ? groupHome.addFavorite : null}
+          onRemoveFavorite={groupId ? groupHome.removeFavorite : null}
+        />
       )}
       {scannerOpen && (
         <ScanOrSearchModal
@@ -84,7 +112,9 @@ export default function Home({ list, onNavigate }) {
         />
       )}
 
-      {token && (
+      {groupHome.error && <p className="login-error"><Icon name="warning" /> {groupHome.error}</p>}
+      {groupId && <div className="trip-banner"><span className="trip-banner-label"><Icon name="family" /> דף הבית של קבוצה</span><button className="btn btn--text" onClick={() => onNavigate('home')}>מצב אישי</button></div>}
+      {!groupId && token && (
         <div className="trip-banner">
           {trip ? (
             <>
@@ -144,6 +174,18 @@ export default function Home({ list, onNavigate }) {
         </div>
       </div>
 
+      {!groupId && !trip && groups.length > 0 && items.some((item) => !item.custom) && (
+        <div className="group-transfer-row">
+          <select className="map-edit-input" value={transferGroupId} onChange={(e) => setTransferGroupId(e.target.value)}>
+            <option value="">בחרו קבוצה להעברת הרשימה…</option>
+            {groups.map((group) => <option key={group.id} value={group.id}>{group.name}</option>)}
+          </select>
+          <button className="btn btn--ghost" onClick={transferToGroup} disabled={!transferGroupId || transferBusy}>
+            {transferBusy ? 'מעביר…' : 'העבר לקבוצה'}
+          </button>
+        </div>
+      )}
+
       {query.trim() && (
         <div className="home-search-results">
           <p className="home-section-title">תוצאות חיפוש — סמנו מה להוסיף</p>
@@ -185,10 +227,10 @@ export default function Home({ list, onNavigate }) {
       <div className="home-shopping-list">
         <div className="home-section-title-row">
           <p className="home-section-title">
-            {trip ? 'רשימת הטיול המשותף' : 'רשימת הקניות שלי'} ({displayItems.length})
+            {groupId ? 'רשימת הקבוצה' : (trip ? 'רשימת הטיול המשותף' : 'רשימת הקניות שלי')} ({displayItems.length})
           </p>
-          {!trip && items.length > 0 && (
-            <button className="btn btn--text" onClick={list.clear}>
+          {((groupId && groupHome.group?.myRole === 'admin' && displayItems.length > 0) || (!groupId && !trip && items.length > 0)) && (
+            <button className="btn btn--text" onClick={() => groupId ? groupHome.clearItems() : list.clear()}>
               נקה הכל
             </button>
           )}
@@ -209,7 +251,10 @@ export default function Home({ list, onNavigate }) {
                   onDragEnd={() => setDraggedId(null)}
                   onDragOver={(e) => !trip && e.preventDefault()}
                   onDrop={() => {
-                    if (!trip && draggedId && draggedId !== p.id) reorderItems(draggedId, p.id);
+                    if (!trip && draggedId && draggedId !== p.id) {
+                      if (groupId) groupHome.reorderItems(draggedId, p.id);
+                      else reorderItems(draggedId, p.id);
+                    }
                     setDraggedId(null);
                   }}
                 >
@@ -223,7 +268,7 @@ export default function Home({ list, onNavigate }) {
                     <span className="home-product-name">{p.name}</span>
                     <span className="home-product-loc">
                       {dept.name} · {locationLabel(p)}
-                      {trip && ` · הוסיף/ה ${p.addedBy}`}
+                      {(trip || groupId) && ` · הוסיף/ה ${p.addedBy}`}
                     </span>
                     <PriceTag product={p} size="small" />
                   </span>
@@ -232,7 +277,7 @@ export default function Home({ list, onNavigate }) {
                     <div className="home-product-qty">
                       <button
                         className="btn btn--icon btn--small"
-                        onClick={() => decrementItem(p.id)}
+                        onClick={() => groupId ? groupHome.updateItem(p.id, { qty: Math.max(1, (p.qty || 1) - 1) }) : decrementItem(p.id)}
                         aria-label="הפחת כמות"
                       >
                         <Icon name="minus" />
@@ -240,7 +285,7 @@ export default function Home({ list, onNavigate }) {
                       <span className="home-product-qty-value">{p.qty || 1}</span>
                       <button
                         className="btn btn--icon btn--small"
-                        onClick={() => incrementItem(p)}
+                        onClick={() => groupId ? groupHome.updateItem(p.id, { qty: (p.qty || 1) + 1 }) : incrementItem(p)}
                         aria-label="הוסף כמות"
                       >
                         <Icon name="plus" />
@@ -248,19 +293,19 @@ export default function Home({ list, onNavigate }) {
                     </div>
                   )}
 
-                  {trip && (
+                  {(trip || groupId) && (
                     <input
                       type="checkbox"
                       className="trip-item-picked"
                       checked={p.picked}
-                      onChange={() => toggleTripItem(p.id)}
+                      onChange={() => groupId ? groupHome.updateItem(p.id, { picked: !p.picked }) : toggleTripItem(p.id)}
                       aria-label="נקנה"
                     />
                   )}
 
                   <button
                     className="btn btn--icon btn--danger"
-                    onClick={() => (trip ? removeTripItem(p.id) : removeItem(p.id))}
+                    onClick={() => (groupId ? groupHome.removeItem(p.id) : (trip ? removeTripItem(p.id) : removeItem(p.id)))}
                     aria-label="הסר מרשימת קניות"
                     title="הסר מרשימת קניות"
                   >

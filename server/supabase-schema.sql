@@ -203,8 +203,15 @@ create table if not exists groups (
   name text not null,
   photo text,
   owner_id text references users(id) on delete set null,
-  created_at bigint not null
+  created_at bigint not null,
+  shopping_items jsonb not null default '[]'::jsonb,
+  favorites jsonb not null default '[]'::jsonb,
+  venue_id text references venues(id) on delete set null
 );
+
+alter table groups add column if not exists shopping_items jsonb not null default '[]'::jsonb;
+alter table groups add column if not exists favorites jsonb not null default '[]'::jsonb;
+alter table groups add column if not exists venue_id text references venues(id) on delete set null;
 
 create table if not exists group_memberships (
   id text primary key,

@@ -5,7 +5,7 @@ import UserPanel from './UserPanel';
 
 // תמיד רץ בתוך App.jsx *אחרי* AuthGate.jsx — כלומר user תמיד מוגדר
 // כאן, ההתחברות כבר קרתה לפני שהגענו לממשק.
-export default function UserButton() {
+export default function UserButton({ onSelectGroup, activeGroupId }) {
   const { user } = useAuth();
   const [open, setOpen] = useState(false);
 
@@ -35,7 +35,7 @@ export default function UserButton() {
           <span className="user-btn-emoji">{user.emoji}</span>
         )}
       </button>
-      {open && <UserPanel onClose={() => setOpen(false)} />}
+      {open && <UserPanel onClose={() => setOpen(false)} onSelectGroup={(groupId) => { onSelectGroup?.(groupId); setOpen(false); }} activeGroupId={activeGroupId} />}
     </>
   );
 }

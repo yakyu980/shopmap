@@ -22,6 +22,7 @@ const TABS = [
 
 export default function App() {
   const [tab, setTab] = useState('home');
+  const [activeGroupId, setActiveGroupId] = useState(null);
   const list = useShoppingList();
   const { user } = useAuth();
   useHouseholdSync();
@@ -32,7 +33,7 @@ export default function App() {
     <div className="app">
       <IconSprite />
       <header className="app-header">
-        <UserButton />
+        <UserButton onSelectGroup={setActiveGroupId} activeGroupId={activeGroupId} />
         <h1>SuperNav AI</h1>
         <p className="app-tagline">ה-Waze של הסופר — MVP הדגמה</p>
       </header>
@@ -54,7 +55,7 @@ export default function App() {
       </nav>
 
       <main className="app-main">
-        {tab === 'home' && <Home list={list} onNavigate={setTab} />}
+        {tab === 'home' && <Home list={list} onNavigate={setTab} groupId={activeGroupId} />}
         {tab === 'map' && <StoreMap />}
         {tab === 'compare' && <PriceComparison />}
         {tab === 'nav' && <Navigation list={list} onBack={() => setTab('home')} />}

@@ -41,6 +41,9 @@ async function serializeGroup(group, forUserId) {
     name: group.name,
     photo: group.photo || null,
     ownerId: group.owner_id,
+    venueId: group.venue_id || null,
+    shoppingItems: Array.isArray(group.shopping_items) ? group.shopping_items : [],
+    favorites: Array.isArray(group.favorites) ? group.favorites : [],
     myRole: mine?.role || null,
     myRestriction: mine?.restriction || null,
     members: (memberships || []).map((m) => {
@@ -78,6 +81,137 @@ router.get(
     res.json({ groups });
   })
 );
+
+function canUseGroup(membership) {
+  return membership && membership.status === 'active';
+}
+
+function canAddProduct(membership, product) {
+  if (!canUseGroup(membership)) return false;
+  const restriction = membership.restriction;
+  if (!restriction) return true;
+  if (restriction.type === 'product') return restriction.productId === product.productId;
+  if (restriction.type === 'category') return !restriction.categories?.length || restriction.categories.includes(product.category);
+  return false;
+}
+
+router.get('/:id/home', requireAuth, h(async (req, res) => {
+  const { data: group } = await supabase.from('groups').select('*').eq('id', req.params.id).maybeSingle();
+  if (!group) return res.status(404).json({ error: 'קבוצה לא נמצאה' });
+  const membership = await myMembership(group.id, req.user.id);
+  if (!canUseGroup(membership)) return res.status(403).json({ error: 'אינך חבר פעיל בקבוצה' });
+  res.json({ group: await serializeGroup(group, req.user.id) });
+}));
+
+router.post('/:id/home/items', requireAuth, h(async (req, res) => {
+  const { data: group } = await supabase.from('groups').select('*').eq('id', req.params.id).maybeSingle();
+  if (!group) return res.status(404).json({ error: 'קבוצה לא נמצאה' });
+  const membership = await myMembership(group.id, req.user.id);
+  const product = req.body || {};
+  if (!canAddProduct(membership, product)) return res.status(403).json({ error: 'אין לך הרשאה להוסיף את המוצר הזה' });
+  if (!product.name || typeof product.price !== 'number') return res.status(400).json({ error: 'name/price נדרשים' });
+  const currentItems = Array.isArray(group.shopping_items) ? group.shopping_items : [];
+  const existing = product.productId ? currentItems.find((item) => item.productId === product.productId) : null;
+  const items = existing
+    ? currentItems.map((item) => item.id === existing.id ? { ...item, qty: (item.qty || 1) + 1 } : item)
+    : [...currentItems, { id: 'gi' + Date.now() + Math.random().toString(36).slice(2, 6), productId: product.productId || null, name: product.name, price: product.price, category: product.category || null, department: product.department || null, shelf: product.shelf || null, zone: product.zone || null, barcode: product.barcode || null, qty: 1, picked: false, addedBy: req.user.username, addedAt: Date.now() }];
+  const { data, error } = await supabase.from('groups').update({ shopping_items: items }).eq('id', group.id).select().single();
+  if (error) throw error;
+  res.json({ group: await serializeGroup(data, req.user.id) });
+}));
+
+router.post('/:id/home/items/import', requireAuth, h(async (req, res) => {
+  const { data: group } = await supabase.from('groups').select('*').eq('id', req.params.id).maybeSingle();
+  if (!group) return res.status(404).json({ error: 'קבוצה לא נמצאה' });
+  const membership = await myMembership(group.id, req.user.id);
+  if (!canUseGroup(membership)) return res.status(403).json({ error: 'אינך חבר פעיל בקבוצה' });
+  const incoming = Array.isArray(req.body?.items) ? req.body.items : [];
+  const items = [...(group.shopping_items || [])];
+  const rejected = [];
+  for (const product of incoming) {
+    if (!canAddProduct(membership, product)) { rejected.push(product.name || product.productId || 'מוצר'); continue; }
+    const existing = product.productId && items.find((item) => item.productId === product.productId);
+    if (existing) existing.qty = (existing.qty || 1) + Math.max(1, Number(product.qty) || 1);
+    else items.push({ id: 'gi' + Date.now() + Math.random().toString(36).slice(2, 6), productId: product.productId || null, name: product.name, price: product.price, category: product.category || null, department: product.department || null, shelf: product.shelf || null, zone: product.zone || null, barcode: product.barcode || null, qty: Math.max(1, Number(product.qty) || 1), picked: false, addedBy: req.user.username, addedAt: Date.now() });
+  }
+  const { data, error } = await supabase.from('groups').update({ shopping_items: items }).eq('id', group.id).select().single();
+  if (error) throw error;
+  res.json({ group: await serializeGroup(data, req.user.id), rejected });
+}));
+
+router.delete('/:id/home/items', requireAuth, h(async (req, res) => {
+  const { data: group } = await supabase.from('groups').select('*').eq('id', req.params.id).maybeSingle();
+  if (!group) return res.status(404).json({ error: 'קבוצה לא נמצאה' });
+  const membership = await myMembership(group.id, req.user.id);
+  if (!canUseGroup(membership) || membership.role !== 'admin') return res.status(403).json({ error: 'רק מנהל יכול לנקות את רשימת הקבוצה' });
+  const { data, error } = await supabase.from('groups').update({ shopping_items: [] }).eq('id', group.id).select().single();
+  if (error) throw error;
+  res.json({ group: await serializeGroup(data, req.user.id) });
+}));
+
+router.patch('/:id/home/items/:itemId', requireAuth, h(async (req, res) => {
+  const { data: group } = await supabase.from('groups').select('*').eq('id', req.params.id).maybeSingle();
+  if (!group) return res.status(404).json({ error: 'קבוצה לא נמצאה' });
+  const membership = await myMembership(group.id, req.user.id);
+  if (!canUseGroup(membership)) return res.status(403).json({ error: 'אינך חבר פעיל בקבוצה' });
+  const items = (group.shopping_items || []).map((item) => item.id === req.params.itemId ? { ...item, qty: Math.max(1, Number(req.body?.qty) || item.qty || 1), picked: req.body?.picked === undefined ? item.picked : !!req.body.picked } : item);
+  const { data, error } = await supabase.from('groups').update({ shopping_items: items }).eq('id', group.id).select().single();
+  if (error) throw error;
+  res.json({ group: await serializeGroup(data, req.user.id) });
+}));
+
+router.post('/:id/home/items/reorder', requireAuth, h(async (req, res) => {
+  const { data: group } = await supabase.from('groups').select('*').eq('id', req.params.id).maybeSingle();
+  if (!group) return res.status(404).json({ error: 'קבוצה לא נמצאה' });
+  const membership = await myMembership(group.id, req.user.id);
+  if (!canUseGroup(membership)) return res.status(403).json({ error: 'אינך חבר פעיל בקבוצה' });
+  const { fromId, toId } = req.body || {};
+  const items = [...(group.shopping_items || [])];
+  const fromIndex = items.findIndex((item) => item.id === fromId);
+  const toIndex = items.findIndex((item) => item.id === toId);
+  if (fromIndex < 0 || toIndex < 0 || fromIndex === toIndex) return res.json({ group: await serializeGroup(group, req.user.id) });
+  const [moved] = items.splice(fromIndex, 1);
+  items.splice(toIndex, 0, moved);
+  const { data, error } = await supabase.from('groups').update({ shopping_items: items }).eq('id', group.id).select().single();
+  if (error) throw error;
+  res.json({ group: await serializeGroup(data, req.user.id) });
+}));
+
+router.delete('/:id/home/items/:itemId', requireAuth, h(async (req, res) => {
+  const { data: group } = await supabase.from('groups').select('*').eq('id', req.params.id).maybeSingle();
+  if (!group) return res.status(404).json({ error: 'קבוצה לא נמצאה' });
+  const membership = await myMembership(group.id, req.user.id);
+  if (!canUseGroup(membership)) return res.status(403).json({ error: 'אינך חבר פעיל בקבוצה' });
+  const items = (group.shopping_items || []).filter((item) => item.id !== req.params.itemId);
+  const { data, error } = await supabase.from('groups').update({ shopping_items: items }).eq('id', group.id).select().single();
+  if (error) throw error;
+  res.json({ group: await serializeGroup(data, req.user.id) });
+}));
+
+router.post('/:id/home/favorites', requireAuth, h(async (req, res) => {
+  const { data: group } = await supabase.from('groups').select('*').eq('id', req.params.id).maybeSingle();
+  if (!group) return res.status(404).json({ error: 'קבוצה לא נמצאה' });
+  const membership = await myMembership(group.id, req.user.id);
+  if (!canUseGroup(membership)) return res.status(403).json({ error: 'אינך חבר פעיל בקבוצה' });
+  const favorite = req.body || {};
+  if (!String(favorite.name || '').trim()) return res.status(400).json({ error: 'שם מועדף נדרש' });
+  const item = { id: 'gf' + Date.now() + Math.random().toString(36).slice(2, 6), name: String(favorite.name).trim(), brand: String(favorite.brand || '').trim(), photo: favorite.photo || null, season: ['all', 'summer', 'winter'].includes(favorite.season) ? favorite.season : 'all', createdBy: req.user.username, createdAt: Date.now() };
+  const favorites = [item, ...(Array.isArray(group.favorites) ? group.favorites : [])];
+  const { data, error } = await supabase.from('groups').update({ favorites }).eq('id', group.id).select().single();
+  if (error) throw error;
+  res.json({ group: await serializeGroup(data, req.user.id) });
+}));
+
+router.delete('/:id/home/favorites/:favoriteId', requireAuth, h(async (req, res) => {
+  const { data: group } = await supabase.from('groups').select('*').eq('id', req.params.id).maybeSingle();
+  if (!group) return res.status(404).json({ error: 'קבוצה לא נמצאה' });
+  const membership = await myMembership(group.id, req.user.id);
+  if (!canUseGroup(membership)) return res.status(403).json({ error: 'אינך חבר פעיל בקבוצה' });
+  const favorites = (group.favorites || []).filter((favorite) => favorite.id !== req.params.favoriteId);
+  const { data, error } = await supabase.from('groups').update({ favorites }).eq('id', group.id).select().single();
+  if (error) throw error;
+  res.json({ group: await serializeGroup(data, req.user.id) });
+}));
 
 router.post(
   '/',

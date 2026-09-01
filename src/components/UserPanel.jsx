@@ -169,7 +169,7 @@ function MemberRow({ group, member, isMe, canManage }) {
   );
 }
 
-function GroupCard({ group, myUserId }) {
+function GroupCard({ group, myUserId, onSelectGroup, activeGroupId }) {
   const [inviteLink, setInviteLink] = useState(null);
   const [copied, setCopied] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -203,6 +203,9 @@ function GroupCard({ group, myUserId }) {
         <strong>{group.name}</strong>
         <span className="group-card-count">{group.members.length} חברים</span>
       </div>
+      <button className="btn btn--primary btn--small" onClick={() => onSelectGroup?.(group.id)}>
+        {activeGroupId === group.id ? 'הקבוצה הפעילה' : 'פתח דף בית של הקבוצה'}
+      </button>
 
       <ul className="member-list">
         {group.members.map((m) => (
@@ -238,7 +241,7 @@ function GroupCard({ group, myUserId }) {
   );
 }
 
-export default function UserPanel({ onClose }) {
+export default function UserPanel({ onClose, onSelectGroup, activeGroupId }) {
   const { user } = useAuth();
   const groups = useGroups();
   const fileInputRef = useRef(null);
@@ -361,7 +364,7 @@ export default function UserPanel({ onClose }) {
               <h3>הקבוצות שלי ({groups.length})</h3>
               {groups.length === 0 && <p className="empty-hint">אין לך עדיין קבוצות-קניות.</p>}
               {groups.map((g) => (
-                <GroupCard key={g.id} group={g} myUserId={user.id} />
+                <GroupCard key={g.id} group={g} myUserId={user.id} onSelectGroup={onSelectGroup} activeGroupId={activeGroupId} />
               ))}
 
               <div className="group-invite-link-row">
