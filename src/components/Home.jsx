@@ -108,7 +108,7 @@ export default function Home({ list, onNavigate, groupId = null }) {
           onAdd={handleAddByScan}
           onClose={() => setScannerOpen(false)}
           onFallbackToSearch={() => setScannerOpen(false)}
-          activeVenueId={trip?.venueId || null}
+          activeVenueId={groupId ? groupHome.group?.venueId || null : trip?.venueId || null}
         />
       )}
 

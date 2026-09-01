@@ -11,6 +11,7 @@ import AuthGate from './components/AuthGate';
 import { useShoppingList } from './lib/useShoppingList';
 import { useHouseholdSync } from './lib/useHouseholdSync';
 import { useAuth } from './lib/useAuth';
+import { useGroupHome } from './lib/useGroupHome';
 
 // "רשימת קניות" אוחדה לתוך "דף בית" (הוסרה כטאב נפרד) — ר' Home.jsx.
 const TABS = [
@@ -24,8 +25,19 @@ export default function App() {
   const [tab, setTab] = useState('home');
   const [activeGroupId, setActiveGroupId] = useState(null);
   const list = useShoppingList();
+  const groupHome = useGroupHome(activeGroupId);
   const { user } = useAuth();
   useHouseholdSync();
+
+  const navigationList = activeGroupId
+    ? {
+        items: groupHome.items,
+        togglePicked: (id) => groupHome.updateItem(id, { picked: !groupHome.items.find((item) => item.id === id)?.picked }),
+        addItem: groupHome.addItem,
+        removeItem: groupHome.removeItem,
+        clear: groupHome.clearItems,
+      }
+    : list;
 
   if (!user) return <AuthGate />;
 
@@ -47,8 +59,8 @@ export default function App() {
           >
             <Icon name={t.icon} />
             {t.label}
-            {t.id === 'home' && list.items.length > 0 && (
-              <span className="tab-badge">{list.items.length}</span>
+            {t.id === 'home' && (activeGroupId ? groupHome.items.length : list.items.length) > 0 && (
+              <span className="tab-badge">{activeGroupId ? groupHome.items.length : list.items.length}</span>
             )}
           </button>
         ))}
@@ -58,7 +70,7 @@ export default function App() {
         {tab === 'home' && <Home list={list} onNavigate={setTab} groupId={activeGroupId} />}
         {tab === 'map' && <StoreMap />}
         {tab === 'compare' && <PriceComparison />}
-        {tab === 'nav' && <Navigation list={list} onBack={() => setTab('home')} />}
+        {tab === 'nav' && <Navigation list={navigationList} onBack={() => setTab('home')} />}
       </main>
     </div>
   );
