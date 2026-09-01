@@ -19,7 +19,7 @@ import { fetchGroups } from '../lib/groups';
 import { importGroupHomeItems } from '../lib/groupHome';
 
 export default function Home({ list, onNavigate, groupId = null, onExitGroup }) {
-  const { items, addItem, removeItem, incrementItem, decrementItem, reorderItems } = list;
+  const { items, addItem, removeItem, incrementItem, decrementItem, updateItem, reorderItems } = list;
   const { token } = useAuth();
   const dynamicProducts = useCatalog();
   const { trip, startTrip, addTripItem, toggleTripItem, removeTripItem, finishTrip } = useTripSync();
@@ -34,6 +34,8 @@ export default function Home({ list, onNavigate, groupId = null, onExitGroup }) 
   const [draggedId, setDraggedId] = useState(null);
   const [transferGroupId, setTransferGroupId] = useState('');
   const [transferBusy, setTransferBusy] = useState(false);
+  const [notice, setNotice] = useState('');
+  const [undoItem, setUndoItem] = useState(null);
 
   // "פריטים אישיים" (מ-⭐ מועדפים, לא בקטלוג) — ר' FavoritesManager.jsx.
   // אין להם department/price אמיתיים, ולא ניתנים-לניווט/לטיול-משותף.
@@ -68,6 +70,18 @@ export default function Home({ list, onNavigate, groupId = null, onExitGroup }) 
     else if (groupId) groupHome.addItem(product);
     else if (trip) addTripItem(product);
     else incrementItem(product);
+    setNotice(`${product.name} נוסף לרשימה`);
+    window.setTimeout(() => setNotice(''), 2500);
+  }
+
+  function removeWithUndo(product) {
+    if (groupId || trip) {
+      (groupId ? groupHome.removeItem(product.id) : removeTripItem(product.id)).catch?.(() => setNotice('לא הצלחנו להסיר את המוצר'));
+      return;
+    }
+    removeItem(product.id);
+    setUndoItem(product);
+    window.setTimeout(() => setUndoItem((current) => current?.id === product.id ? null : current), 5000);
   }
 
   function toggleChecked(productId) {
@@ -114,7 +128,9 @@ export default function Home({ list, onNavigate, groupId = null, onExitGroup }) 
       )}
 
       {groupHome.error && <p className="login-error"><Icon name="warning" /> {groupHome.error}</p>}
-      {groupId && <div className="trip-banner"><span className="trip-banner-label"><Icon name="family" /> דף הבית של קבוצה</span><button className="btn btn--text" onClick={() => setVenuePickerOpen(true)}>📍 {groupHome.group?.venueId ? 'שנה סניף' : 'בחר סניף'}</button><button className="btn btn--text" onClick={() => onExitGroup?.()}>מצב אישי</button></div>}
+      {notice && <p className="settings-hint" role="status"><Icon name="check" /> {notice}</p>}
+      {undoItem && <p className="settings-hint" role="status">המוצר “{undoItem.name}” הוסר. <button className="btn btn--text" onClick={() => { addItem(undoItem); setUndoItem(null); }}>בטל</button></p>}
+      {groupId && <div className="trip-banner"><span className="trip-banner-label"><Icon name="family" /> דף הבית של: {groupHome.group?.name || 'הקבוצה'} </span><button className="btn btn--text" onClick={() => setVenuePickerOpen(true)}>📍 {groupHome.group?.venueId ? 'שנה סניף' : 'בחר סניף'}</button><button className="btn btn--text" onClick={() => onExitGroup?.()}>מצב אישי</button></div>}
       {!groupId && token && (
         <div className="trip-banner">
           {trip ? (
@@ -284,7 +300,7 @@ export default function Home({ list, onNavigate, groupId = null, onExitGroup }) 
                       >
                         <Icon name="minus" />
                       </button>
-                      <span className="home-product-qty-value">{p.qty || 1}</span>
+                      <input className="home-product-qty-value" type="number" min="1" value={p.qty || 1} aria-label={`כמות ${p.name}`} onChange={(e) => { const qty = Math.max(1, Number(e.target.value) || 1); if (groupId) groupHome.updateItem(p.id, { qty }); else updateItem(p.id, { qty }); }} />
                       <button
                         className="btn btn--icon btn--small"
                         onClick={() => groupId ? groupHome.updateItem(p.id, { qty: (p.qty || 1) + 1 }) : incrementItem(p)}
@@ -307,7 +323,7 @@ export default function Home({ list, onNavigate, groupId = null, onExitGroup }) 
 
                   <button
                     className="btn btn--icon btn--danger"
-                    onClick={() => (groupId ? groupHome.removeItem(p.id) : (trip ? removeTripItem(p.id) : removeItem(p.id)))}
+                    onClick={() => removeWithUndo(p)}
                     aria-label="הסר מרשימת קניות"
                     title="הסר מרשימת קניות"
                   >

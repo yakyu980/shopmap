@@ -49,6 +49,10 @@ export function useShoppingList() {
     );
   }, []);
 
+  const updateItem = useCallback((productId, changes) => {
+    setItems((prev) => prev.map((item) => (item.id === productId ? { ...item, ...changes } : item)));
+  }, []);
+
   const reorderItems = useCallback((fromId, toId) => {
     setItems((prev) => {
       const fromIdx = prev.findIndex((i) => i.id === fromId);
@@ -81,6 +85,7 @@ export function useShoppingList() {
     removeItem,
     incrementItem,
     decrementItem,
+    updateItem,
     reorderItems,
     togglePicked,
     assignItem,
