@@ -1,5 +1,14 @@
 # SuperNav AI — project rules
 
+Project context is split by purpose:
+
+- `README.md` — setup and documentation map.
+- `docs/PRODUCT.md` — product scope and truthfulness rules.
+- `docs/ARCHITECTURE.md` — code and data architecture.
+- `docs/DEVELOPMENT.md` — tests, Git, deployment, and secrets.
+
+Read the relevant document before changing behavior. Keep this file limited to Claude-specific critical rules; do not duplicate the full project documentation here.
+
 ## UI rules
 
 - **Every feature that opens a window/modal/overlay must open centered on
