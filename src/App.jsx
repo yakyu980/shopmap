@@ -59,15 +59,15 @@ export default function App() {
           >
             <Icon name={t.icon} />
             {t.label}
-            {t.id === 'home' && (activeGroupId ? groupHome.items.length : list.items.length) > 0 && (
-              <span className="tab-badge">{activeGroupId ? groupHome.items.length : list.items.length}</span>
+            {t.id === 'home' && (activeGroupId ? groupHome.items : list.items).reduce((sum, item) => sum + (item.qty || 1), 0) > 0 && (
+              <span className="tab-badge">{(activeGroupId ? groupHome.items : list.items).reduce((sum, item) => sum + (item.qty || 1), 0)}</span>
             )}
           </button>
         ))}
       </nav>
 
       <main className="app-main">
-        {tab === 'home' && <Home list={list} onNavigate={setTab} groupId={activeGroupId} />}
+        {tab === 'home' && <Home list={list} onNavigate={setTab} groupId={activeGroupId} onExitGroup={() => setActiveGroupId(null)} />}
         {tab === 'map' && <StoreMap />}
         {tab === 'compare' && <PriceComparison />}
         {tab === 'nav' && <Navigation list={navigationList} onBack={() => setTab('home')} />}

@@ -18,7 +18,7 @@ const TABS = [
 // רוצים, וכפתור אחד מעביר את כל המסומן לרשימת-הקניות בבת-אחת —
 // "הוסף לרשימה" מנסה להתאים לקטלוג שלנו קודם (שימוש-חוזר ב-
 // matchReceiptItemsToCatalog הקיים); אם אין התאמה, נוסף "פריט אישי".
-export default function FavoritesManager({ onAddToList, onClose, favoritesOverride = null, onAddFavorite = null, onRemoveFavorite = null }) {
+export default function FavoritesManager({ onAddToList, onClose, favoritesOverride = null, onAddFavorite = null, onRemoveFavorite = null, groupMode = false }) {
   const localFavorites = useFavorites();
   const favorites = favoritesOverride || localFavorites;
   const fileInputRef = useRef(null);
@@ -64,6 +64,7 @@ export default function FavoritesManager({ onAddToList, onClose, favoritesOverri
       const product = PRODUCTS.find((p) => p.id === matched.matchedProductId);
       onAddToList(product);
     } else {
+      if (groupMode) return;
       onAddToList({
         id: 'custom-' + Date.now() + Math.round(Math.random() * 1000),
         name: fav.name,

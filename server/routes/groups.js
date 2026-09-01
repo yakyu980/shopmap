@@ -143,8 +143,19 @@ router.delete('/:id/home/items', requireAuth, h(async (req, res) => {
   const { data: group } = await supabase.from('groups').select('*').eq('id', req.params.id).maybeSingle();
   if (!group) return res.status(404).json({ error: 'קבוצה לא נמצאה' });
   const membership = await myMembership(group.id, req.user.id);
-  if (!canUseGroup(membership) || membership.role !== 'admin') return res.status(403).json({ error: 'רק מנהל יכול לנקות את רשימת הקבוצה' });
+  if (!canUseGroup(membership)) return res.status(403).json({ error: 'אינך חבר פעיל בקבוצה' });
   const { data, error } = await supabase.from('groups').update({ shopping_items: [] }).eq('id', group.id).select().single();
+  if (error) throw error;
+  res.json({ group: await serializeGroup(data, req.user.id) });
+}));
+
+router.patch('/:id/home', requireAuth, h(async (req, res) => {
+  const { data: group } = await supabase.from('groups').select('*').eq('id', req.params.id).maybeSingle();
+  if (!group) return res.status(404).json({ error: 'קבוצה לא נמצאה' });
+  const membership = await myMembership(group.id, req.user.id);
+  if (!canUseGroup(membership)) return res.status(403).json({ error: 'אינך חבר פעיל בקבוצה' });
+  const venueId = req.body?.venueId || null;
+  const { data, error } = await supabase.from('groups').update({ venue_id: venueId }).eq('id', group.id).select().single();
   if (error) throw error;
   res.json({ group: await serializeGroup(data, req.user.id) });
 }));

@@ -18,7 +18,7 @@ import { useGroups } from '../lib/useGroups';
 import { fetchGroups } from '../lib/groups';
 import { importGroupHomeItems } from '../lib/groupHome';
 
-export default function Home({ list, onNavigate, groupId = null }) {
+export default function Home({ list, onNavigate, groupId = null, onExitGroup }) {
   const { items, addItem, removeItem, incrementItem, decrementItem, reorderItems } = list;
   const { token } = useAuth();
   const dynamicProducts = useCatalog();
@@ -101,6 +101,7 @@ export default function Home({ list, onNavigate, groupId = null }) {
           favoritesOverride={groupId ? groupHome.favorites : null}
           onAddFavorite={groupId ? groupHome.addFavorite : null}
           onRemoveFavorite={groupId ? groupHome.removeFavorite : null}
+          groupMode={!!groupId}
         />
       )}
       {scannerOpen && (
@@ -113,7 +114,7 @@ export default function Home({ list, onNavigate, groupId = null }) {
       )}
 
       {groupHome.error && <p className="login-error"><Icon name="warning" /> {groupHome.error}</p>}
-      {groupId && <div className="trip-banner"><span className="trip-banner-label"><Icon name="family" /> דף הבית של קבוצה</span><button className="btn btn--text" onClick={() => onNavigate('home')}>מצב אישי</button></div>}
+      {groupId && <div className="trip-banner"><span className="trip-banner-label"><Icon name="family" /> דף הבית של קבוצה</span><button className="btn btn--text" onClick={() => setVenuePickerOpen(true)}>📍 {groupHome.group?.venueId ? 'שנה סניף' : 'בחר סניף'}</button><button className="btn btn--text" onClick={() => onExitGroup?.()}>מצב אישי</button></div>}
       {!groupId && token && (
         <div className="trip-banner">
           {trip ? (
@@ -136,7 +137,8 @@ export default function Home({ list, onNavigate, groupId = null }) {
         <TripVenuePicker
           onClose={() => setVenuePickerOpen(false)}
           onPick={async (venueId) => {
-            await startTrip(venueId);
+            if (groupId) await groupHome.updateVenue(venueId);
+            else await startTrip(venueId);
             setVenuePickerOpen(false);
           }}
         />

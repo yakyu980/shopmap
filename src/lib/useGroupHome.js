@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { fetchGroupHome, addGroupHomeItem, updateGroupHomeItem, removeGroupHomeItem, clearGroupHomeItems, reorderGroupHomeItems, importGroupHomeItems, addGroupFavorite, removeGroupFavorite } from './groupHome';
+import { fetchGroupHome, addGroupHomeItem, updateGroupHomeItem, removeGroupHomeItem, clearGroupHomeItems, reorderGroupHomeItems, importGroupHomeItems, addGroupFavorite, removeGroupFavorite, setGroupVenue } from './groupHome';
 
 const POLL_MS = 5000;
 
@@ -53,6 +53,10 @@ export function useGroupHome(groupId) {
     try { setGroup(await removeGroupFavorite(groupId, favoriteId)); setError(''); }
     catch (err) { setError(err.message || 'לא ניתן להסיר מועדף מהקבוצה'); }
   }, [groupId]);
+  const updateVenue = useCallback(async (venueId) => {
+    try { setGroup(await setGroupVenue(groupId, venueId)); setError(''); }
+    catch (err) { setError(err.message || 'לא ניתן לשמור את הסניף'); }
+  }, [groupId]);
 
-  return { group, items: group?.shoppingItems || [], favorites: group?.favorites || [], error, addItem, updateItem, removeItem, clearItems, reorderItems, importItems, addFavorite, removeFavorite, refresh };
+  return { group, items: group?.shoppingItems || [], favorites: group?.favorites || [], error, addItem, updateItem, removeItem, clearItems, reorderItems, importItems, addFavorite, removeFavorite, updateVenue, refresh };
 }

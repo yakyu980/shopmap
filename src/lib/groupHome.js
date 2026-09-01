@@ -53,3 +53,8 @@ export async function removeGroupFavorite(groupId, favoriteId) {
   const data = await api.del(`/groups/${groupId}/home/favorites/${favoriteId}`);
   return data.group;
 }
+
+export async function setGroupVenue(groupId, venueId) {
+  const data = await api.patch(`/groups/${groupId}/home`, { venueId });
+  return data.group;
+}
