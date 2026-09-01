@@ -104,12 +104,15 @@ router.get(
     const venueById = new Map((venues || []).map((v) => [v.id, v]));
     const result = (rows || []).map((p) => {
       const v = venueById.get(p.venue_id);
+      const importedAt = Number(p.imported_at);
       return {
         barcode: p.barcode,
         venueId: p.venue_id,
         name: p.name,
         price: p.price,
-        importedAt: p.imported_at,
+        importedAt,
+        sourceUpdatedAt: importedAt,
+        stale: Date.now() - importedAt > 36 * 60 * 60 * 1000,
         venueName: v ? `${v.chain_name} · ${v.branch_name}` : 'חנות לא ידועה',
       };
     });

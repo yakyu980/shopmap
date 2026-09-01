@@ -36,8 +36,8 @@
 | בחירת סניף | ✅ קיים בסיס | `TripVenuePicker.jsx`, `setGroupVenue`, `venues.js` | במצב קבוצה הבחירה נשמרת ב־`groups.venue_id`; שם הסניף עדיין לא מוצג לאחר שמירה. |
 | חיפוש מוצר | ✅ קיים | `searchCatalog` + תוצאות checkbox ב־`Home.jsx` | חיפוש לפי תחילת שם בלבד. |
 | הוספה קולית | ✅ קיים | `VoiceAddPanel.jsx`, `useSpeechRecognition.js` | התאמה נעשית מול הקטלוג הסטטי. |
-| סריקת ברקוד במצלמה | ✅ קיים בכפוף לסביבה | `ScanOrSearchModal.jsx`, `BarcodeDetector`, `useCameraStream` | יש לולאה אוטומטית כש־API נתמך, שדה ידני ו־fallback לצילום. |
-| זיהוי מוצר במצלמה | ✅ קיים בכפוף לשרת | `/recognize-product`, `GEMINI_API_KEY` | צילום מפורש על ידי המשתמש; ללא מפתח/שרת תוצג שגיאה או fallback. |
+| סריקת ברקוד במצלמה | ✅ קיים בכפוף לסביבה | `ScanOrSearchModal.jsx`, `BarcodeDetector`, `useCameraStream` | יש לולאה אוטומטית כש־API נתמך, שדה ידני ו־fallback לצילום. לאחר זיהוי מתבצע גם lookup למחיר לפי הסניף. |
+| זיהוי מוצר במצלמה | ✅ קיים בכפוף לשרת | `/recognize-product`, `GEMINI_API_KEY`, `/price-import/:barcode` | צילום מפורש; התאמה מוצגת לאישור, ומחיר רשמי/משוער נטען לפי ברקוד וסניף. |
 | תמיכה במוצרים חדשים | ✅ קיים | `addProductToCatalog` + POST `/products` | המוצר הדינמי זמין לאחר טעינה/רענון קטלוג. |
 | הזזה ברשימה | ✅ קיים | drag/drop + `reorderItems` | קיים גם במצב קבוצה ונשמר בשרת; דורש אימות ידני עם משתמש מחובר. |
 | שינוי כמות | ✅ קיים | `incrementItem`, `decrementItem` + group routes | קיים גם במצב קבוצה, בכפוף להרשאות. |

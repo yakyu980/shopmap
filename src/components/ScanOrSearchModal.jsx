@@ -127,12 +127,28 @@ export default function ScanOrSearchModal({ onAdd, onClose, onFallbackToSearch, 
     geminiAbortRef.current?.abort();
   }
 
+  async function resolveProductPrice(product) {
+    if (!product?.barcode) return { product, priceInfo: null };
+    try {
+      const data = await api.get(`/price-import/${encodeURIComponent(product.barcode)}`);
+      const rows = data?.rows || [];
+      if (!rows.length) return { product, priceInfo: null };
+      const exact = activeVenueId ? rows.find((row) => row.venueId === activeVenueId) : null;
+      const selected = exact || rows.reduce((min, row) => row.price < min.price ? row : min, rows[0]);
+      const priceInfo = { price: Number(selected.price), venueName: selected.venueName, updatedAt: selected.sourceUpdatedAt || selected.importedAt || null, estimated: !exact || Boolean(selected.stale) };
+      return { product: { ...product, price: priceInfo.price, priceSource: 'official', priceEstimated: priceInfo.estimated, priceUpdatedAt: priceInfo.updatedAt }, priceInfo };
+    } catch {
+      return { product, priceInfo: null };
+    }
+  }
+
   async function lookupBarcode(code) {
     if (settledRef.current) return;
     const product = getProductByBarcode(code);
     if (product) {
       stopOtherTracks();
-      setOutcome({ kind: 'barcode-found', product, code });
+      const resolved = await resolveProductPrice(product);
+      setOutcome({ kind: 'barcode-found', ...resolved, code });
       return;
     }
     // צילום-מסך של רגע-הסריקה — משמש כתמונה-חלופית אם ל-Open Food Facts
@@ -207,7 +223,8 @@ export default function ScanOrSearchModal({ onAdd, onClose, onFallbackToSearch, 
         const product = getProductByBarcode(data.barcode);
         if (product) {
           stopOtherTracks();
-          setOutcome({ kind: 'barcode-found', product, code: data.barcode });
+          const resolved = await resolveProductPrice(product);
+          setOutcome({ kind: 'barcode-found', ...resolved, code: data.barcode });
           return;
         }
         if (!data.name) {
@@ -219,10 +236,8 @@ export default function ScanOrSearchModal({ onAdd, onClose, onFallbackToSearch, 
       const match = findProductByRecognizedName(data.name, data.brand);
       stopOtherTracks();
       if (match) {
-        // התאמה ברורה לפי השם: מוסיפים מיד לרשימת הקניות כפי שהמשתמש
-        // ביקש, במקום לדרוש אישור נוסף אחרי הצילום.
-        onAdd(match);
-        onClose();
+        const resolved = await resolveProductPrice(match);
+        setOutcome({ kind: 'image-found', ...resolved, photoDataUrl });
       } else {
         setOutcome({
           kind: 'image-not-found',
@@ -409,9 +424,10 @@ export default function ScanOrSearchModal({ onAdd, onClose, onFallbackToSearch, 
         price: String(selected.price),
         priceSource: 'official',
       } : prev);
+      const estimated = !venueRow || Boolean(selected.stale);
       setPriceLookupMessage(venueRow
-        ? `נמצא מחיר בסניף הפעיל: ₪${selected.price}`
-        : `נמצא מחיר ממאגר המחירים: ₪${selected.price}${activeVenueId ? ' (לא נמצא מחיר מדויק לסניף הפעיל)' : ''}`);
+        ? `נמצא מחיר בסניף הפעיל: ₪${selected.price}${estimated ? ' · מחיר משוער/ישן' : ''}`
+        : `נמצא מחיר ממאגר המחירים: ₪${selected.price}${activeVenueId ? ' (לא נמצא מחיר מדויק לסניף הפעיל)' : ' · מחיר משוער'}`);
     } catch {
       setPriceLookupMessage('לא ניתן לחפש מחיר כרגע — אפשר לשמור בלי מחיר ולעדכן מאוחר יותר.');
     } finally {
@@ -611,6 +627,7 @@ export default function ScanOrSearchModal({ onAdd, onClose, onFallbackToSearch, 
               <Icon name="check" /> <ProductImage product={outcome.product} />{' '}
               {outcome.product.name} · <PriceTag product={outcome.product} size="small" /> ·{' '}
               {getDepartment(outcome.product.department)?.name}, {locationLabel(outcome.product)}
+              {outcome.priceInfo && <small> · {outcome.priceInfo.estimated ? 'מחיר משוער' : 'מחיר ממקור רשמי'}{outcome.priceInfo.venueName ? ` · ${outcome.priceInfo.venueName}` : ''}</small>}
             </p>
             <div className="barcode-result-actions">
               <button
@@ -634,11 +651,12 @@ export default function ScanOrSearchModal({ onAdd, onClose, onFallbackToSearch, 
 
         {outcome?.kind === 'image-found' && (
           <div className="barcode-result">
-            <p className="barcode-found">
-              <Icon name="check" /> זוהה-לפי-תמונה (Gemini) כ-"{outcome.product.name}" —{' '}
-              <ProductImage product={outcome.product} /> {outcome.product.name} ·{' '}
-              <PriceTag product={outcome.product} size="small" /> · {getDepartment(outcome.product.department)?.name},{' '}
-              {locationLabel(outcome.product)}
+              <p className="barcode-found">
+                <Icon name="check" /> זוהה-לפי-תמונה (Gemini) כ-"{outcome.product.name}" —{' '}
+                <ProductImage product={outcome.product} /> {outcome.product.name} ·{' '}
+                <PriceTag product={outcome.product} size="small" /> · {getDepartment(outcome.product.department)?.name},{' '}
+                {locationLabel(outcome.product)}
+                {outcome.priceInfo && <small> · {outcome.priceInfo.estimated ? 'מחיר משוער' : 'מחיר ממקור רשמי'}{outcome.priceInfo.venueName ? ` · ${outcome.priceInfo.venueName}` : ''}</small>}
             </p>
             <div className="barcode-result-actions">
               <button
