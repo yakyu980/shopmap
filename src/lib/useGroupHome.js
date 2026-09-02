@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useState } from 'react';
 import { fetchGroupHome, addGroupHomeItem, updateGroupHomeItem, removeGroupHomeItem, clearGroupHomeItems, reorderGroupHomeItems, importGroupHomeItems, addGroupFavorite, removeGroupFavorite, setGroupVenue } from './groupHome';
 
-const POLL_MS = 2000;
+// Fallback מהיר עד הפעלת Supabase Realtime. כשהחלון ברקע עוצרים את
+// הבקשות כדי לא להעמיס על השרת; בחזרה למסך מתבצע רענון מידי.
+const POLL_MS = 450;
 
 export function useGroupHome(groupId) {
   const [group, setGroup] = useState(null);
@@ -17,8 +19,12 @@ export function useGroupHome(groupId) {
     setError('');
     if (!groupId) return undefined;
     refresh();
-    const interval = setInterval(refresh, POLL_MS);
-    return () => clearInterval(interval);
+    const interval = setInterval(() => {
+      if (document.visibilityState === 'visible') refresh();
+    }, POLL_MS);
+    const onVisible = () => { if (document.visibilityState === 'visible') refresh(); };
+    document.addEventListener('visibilitychange', onVisible);
+    return () => { clearInterval(interval); document.removeEventListener('visibilitychange', onVisible); };
   }, [groupId, refresh]);
 
   const addItem = useCallback(async (product) => {

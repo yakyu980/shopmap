@@ -67,12 +67,12 @@ function captureFrameAsJpeg(video) {
   // מצלמות טלפון מחזירות לעיתים פריים 4K. לזיהוי מוצר אין צורך בכך,
   // וה־base64 הגדול מאט מאוד את ההעלאה ואת Gemini. מגבילים את הצלע
   // הארוכה ל־1280px תוך שמירת יחס התמונה.
-  const scale = Math.min(1, 1280 / Math.max(sourceWidth, sourceHeight));
+  const scale = Math.min(1, 1600 / Math.max(sourceWidth, sourceHeight));
   const canvas = document.createElement('canvas');
   canvas.width = Math.round(sourceWidth * scale);
   canvas.height = Math.round(sourceHeight * scale);
   canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
-  return canvas.toDataURL('image/jpeg', 0.72); // "data:image/jpeg;base64,...."
+  return canvas.toDataURL('image/jpeg', 0.86); // "data:image/jpeg;base64,...."
 }
 
 /**

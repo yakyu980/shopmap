@@ -2550,6 +2550,8 @@
 
 .captured-photo-preview {
   display: grid;
+  grid-template-columns: minmax(0, 1fr) 104px;
+  align-items: start;
   gap: 8px;
   margin-top: 10px;
   padding: 10px;
@@ -2559,9 +2561,11 @@
 }
 
 .captured-photo-preview img {
-  width: 100%;
-  max-height: 240px;
-  object-fit: contain;
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  width: 104px;
+  height: 104px;
+  object-fit: cover;
   border-radius: 10px;
   background: #111;
 }
@@ -2708,6 +2712,13 @@
   align-items: center;
   justify-content: space-between;
   margin-bottom: 6px;
+}
+
+.captured-photo-preview > strong,
+.captured-photo-preview > p,
+.captured-photo-preview > .barcode-result-actions,
+.captured-photo-preview > .gemini-analysis {
+  grid-column: 1;
 }
 .group-avatar { width: 42px; height: 42px; border-radius: 50%; object-fit: cover; flex: 0 0 auto; }
 .group-avatar--empty { display: inline-grid; place-items: center; background: var(--primary-soft, #e8f0ff); color: var(--primary, #2f7de1); }
