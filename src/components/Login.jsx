@@ -15,6 +15,7 @@ function ForgotPassword({ onDone, onCancel }) {
   const [question, setQuestion] = useState('');
   const [answer, setAnswer] = useState('');
   const [newPassword, setNewPassword] = useState('');
+  const [showNewPassword, setShowNewPassword] = useState(false);
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
 
@@ -71,14 +72,17 @@ function ForgotPassword({ onDone, onCancel }) {
             value={answer}
             onChange={(e) => setAnswer(e.target.value)}
           />
+          <div className="password-input-row">
           <input
             className="map-edit-input"
-            type="password"
+            type={showNewPassword ? 'text' : 'password'}
             placeholder="סיסמה חדשה"
             value={newPassword}
             onChange={(e) => setNewPassword(e.target.value)}
             autoComplete="new-password"
           />
+          <button type="button" className="btn btn--text password-toggle" onClick={() => setShowNewPassword((value) => !value)} aria-label={showNewPassword ? 'הסתר סיסמה חדשה' : 'הצג סיסמה חדשה'}>{showNewPassword ? 'הסתר' : 'הצג'}</button>
+          </div>
         </>
       )}
 
@@ -102,6 +106,7 @@ export default function Login({ onDone }) {
   const [mode, setMode] = useState('login'); // 'login' | 'register' | 'forgot'
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [securityQuestion, setSecurityQuestion] = useState(SECURITY_QUESTIONS[0]);
   const [securityAnswer, setSecurityAnswer] = useState('');
   const [error, setError] = useState('');
@@ -165,14 +170,17 @@ export default function Login({ onDone }) {
           onChange={(e) => setUsername(e.target.value)}
           autoComplete="username"
         />
+        <div className="password-input-row">
         <input
           className="map-edit-input"
-          type="password"
+          type={showPassword ? 'text' : 'password'}
           placeholder="סיסמה"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
         />
+        <button type="button" className="btn btn--text password-toggle" onClick={() => setShowPassword((value) => !value)} aria-label={showPassword ? 'הסתר סיסמה' : 'הצג סיסמה'}>{showPassword ? 'הסתר' : 'הצג'}</button>
+        </div>
 
         {mode === 'register' && (
           <>
