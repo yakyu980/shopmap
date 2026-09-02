@@ -8,6 +8,7 @@ import UserPanel from './UserPanel';
 export default function UserButton({ onSelectGroup, activeGroupId }) {
   const { user } = useAuth();
   const [open, setOpen] = useState(false);
+  const [joinError, setJoinError] = useState('');
 
   // הצטרפות-אוטומטית כשנכנסים לאפליקציה עם קישור-הזמנה (?join=TOKEN,
   // ר' UserPanel.jsx GroupCard.handleInvite).
@@ -16,9 +17,10 @@ export default function UserButton({ onSelectGroup, activeGroupId }) {
     const token = url.searchParams.get('join');
     if (!token) return;
     setOpen(true);
-    joinGroup(token).catch(() => {});
-    url.searchParams.delete('join');
-    window.history.replaceState({}, '', url.toString());
+    joinGroup(token).then(() => {
+      url.searchParams.delete('join');
+      window.history.replaceState({}, '', url.toString());
+    }).catch((err) => setJoinError(err?.message || 'קישור ההזמנה לא תקין'));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -36,6 +38,7 @@ export default function UserButton({ onSelectGroup, activeGroupId }) {
         )}
       </button>
       {open && <UserPanel onClose={() => setOpen(false)} onSelectGroup={(groupId) => { onSelectGroup?.(groupId); setOpen(false); }} activeGroupId={activeGroupId} />}
+      {joinError && <p className="settings-error join-error" role="alert">{joinError}</p>}
     </>
   );
 }

@@ -24,9 +24,9 @@ const TABS = [
 export default function App() {
   const [tab, setTab] = useState('home');
   const [activeGroupId, setActiveGroupId] = useState(null);
-  const list = useShoppingList();
-  const groupHome = useGroupHome(activeGroupId);
   const { user } = useAuth();
+  const list = useShoppingList(user?.id);
+  const groupHome = useGroupHome(activeGroupId);
   useHouseholdSync();
 
   const navigationList = activeGroupId

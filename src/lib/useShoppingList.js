@@ -1,25 +1,34 @@
 import { useCallback, useEffect, useState } from 'react';
 
-const KEY = 'supernav_shopping_list_v1';
+const KEY_PREFIX = 'supernav_shopping_list_v2_';
 
-function load() {
+function load(userId) {
+  if (!userId) return [];
   try {
-    return JSON.parse(localStorage.getItem(KEY)) || [];
+    return JSON.parse(localStorage.getItem(KEY_PREFIX + userId)) || [];
   } catch {
     return [];
   }
 }
 
-export function useShoppingList() {
-  const [items, setItems] = useState(load);
+export function useShoppingList(userId) {
+  const [items, setItems] = useState(() => load(userId));
+  const [loadedForUser, setLoadedForUser] = useState(userId);
+
+  useEffect(() => {
+    if (loadedForUser !== userId) {
+      setItems(load(userId));
+      setLoadedForUser(userId);
+    }
+  }, [userId, loadedForUser]);
 
   useEffect(() => {
     try {
-      localStorage.setItem(KEY, JSON.stringify(items));
+      if (userId && loadedForUser === userId) localStorage.setItem(KEY_PREFIX + userId, JSON.stringify(items));
     } catch {
       /* אחסון מלא/חסום — מתעלמים */
     }
-  }, [items]);
+  }, [items, userId, loadedForUser]);
 
   const addItem = useCallback((product) => {
     setItems((prev) =>
