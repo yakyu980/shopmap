@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import './App.css';
 import Home from './components/Home';
 import StoreMap from './components/StoreMap';
@@ -29,6 +29,10 @@ export default function App() {
   const groupHome = useGroupHome(activeGroupId);
   useHouseholdSync();
 
+  useEffect(() => {
+    setActiveGroupId(null);
+  }, [user?.id]);
+
   const navigationList = activeGroupId
     ? {
         items: groupHome.items,
@@ -45,7 +49,7 @@ export default function App() {
     <div className="app">
       <IconSprite />
       <header className="app-header">
-        <UserButton onSelectGroup={setActiveGroupId} activeGroupId={activeGroupId} />
+        <UserButton onSelectGroup={setActiveGroupId} onGroupJoined={setActiveGroupId} activeGroupId={activeGroupId} />
         <h1>SuperNav AI</h1>
         <p className="app-tagline">ה-Waze של הסופר — MVP הדגמה</p>
       </header>

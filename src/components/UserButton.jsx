@@ -5,7 +5,7 @@ import UserPanel from './UserPanel';
 
 // תמיד רץ בתוך App.jsx *אחרי* AuthGate.jsx — כלומר user תמיד מוגדר
 // כאן, ההתחברות כבר קרתה לפני שהגענו לממשק.
-export default function UserButton({ onSelectGroup, activeGroupId }) {
+export default function UserButton({ onSelectGroup, onGroupJoined, activeGroupId }) {
   const { user } = useAuth();
   const [open, setOpen] = useState(false);
   const [joinError, setJoinError] = useState('');
@@ -17,7 +17,8 @@ export default function UserButton({ onSelectGroup, activeGroupId }) {
     const token = url.searchParams.get('join');
     if (!token) return;
     setOpen(true);
-    joinGroup(token).then(() => {
+    joinGroup(token).then((group) => {
+      onGroupJoined?.(group.id);
       url.searchParams.delete('join');
       window.history.replaceState({}, '', url.toString());
     }).catch((err) => setJoinError(err?.message || 'קישור ההזמנה לא תקין'));
