@@ -1,9 +1,9 @@
-import { useEffect, useState } from 'react';
+import { lazy, Suspense, useEffect, useState } from 'react';
 import './App.css';
 import Home from './components/Home';
-import StoreMap from './components/StoreMap';
-import PriceComparison from './components/PriceComparison';
-import Navigation from './components/Navigation';
+const StoreMap = lazy(() => import('./components/StoreMap'));
+const PriceComparison = lazy(() => import('./components/PriceComparison'));
+const Navigation = lazy(() => import('./components/Navigation'));
 import Icon from './components/Icon';
 import IconSprite from './components/IconSprite';
 import UserButton from './components/UserButton';
@@ -71,10 +71,12 @@ export default function App() {
       </nav>
 
       <main className="app-main">
-        {tab === 'home' && <Home list={list} onNavigate={setTab} groupId={activeGroupId} onExitGroup={() => setActiveGroupId(null)} />}
-        {tab === 'map' && <StoreMap />}
-        {tab === 'compare' && <PriceComparison />}
-        {tab === 'nav' && <Navigation list={navigationList} onBack={() => setTab('home')} />}
+        <Suspense fallback={<p className="loading-hint">טוען מסך…</p>}>
+          {tab === 'home' && <Home list={list} onNavigate={setTab} groupId={activeGroupId} onExitGroup={() => setActiveGroupId(null)} />}
+          {tab === 'map' && <StoreMap />}
+          {tab === 'compare' && <PriceComparison />}
+          {tab === 'nav' && <Navigation list={navigationList} onBack={() => setTab('home')} />}
+        </Suspense>
       </main>
     </div>
   );

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { lazy, Suspense, useEffect, useMemo, useState } from 'react';
 import { locationLabel } from '../data/storeData';
 import { getDepartment } from '../lib/storeConfig';
 import { useAuth } from '../lib/useAuth';
@@ -7,9 +7,9 @@ import { searchCatalog, getAllProducts } from '../lib/catalog';
 import { useTripSync } from '../lib/useTripSync';
 import PurchasePredictions from './PurchasePredictions';
 import ProductImage from './ProductImage';
-import ScanOrSearchModal from './ScanOrSearchModal';
+const ScanOrSearchModal = lazy(() => import('./ScanOrSearchModal'));
 import VoiceAddPanel from './VoiceAddPanel';
-import FavoritesManager from './FavoritesManager';
+const FavoritesManager = lazy(() => import('./FavoritesManager'));
 import TripVenuePicker from './TripVenuePicker';
 import PriceTag from './PriceTag';
 import Icon from './Icon';
@@ -108,6 +108,7 @@ export default function Home({ list, onNavigate, groupId = null, onExitGroup }) 
 
   return (
     <div className="home-page">
+      <Suspense fallback={null}>
       {favoritesOpen && (
         <FavoritesManager
           onAddToList={handleAdd}
@@ -203,6 +204,7 @@ export default function Home({ list, onNavigate, groupId = null, onExitGroup }) 
           </button>
         </div>
       )}
+      </Suspense>
 
       {query.trim() && (
         <div className="home-search-results">
