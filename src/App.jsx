@@ -1,8 +1,6 @@
 import { lazy, Suspense, useEffect, useState } from 'react';
 import './App.css';
 import Home from './components/Home';
-const StoreMap = lazy(() => import('./components/StoreMap'));
-const PriceComparison = lazy(() => import('./components/PriceComparison'));
 const Navigation = lazy(() => import('./components/Navigation'));
 import Icon from './components/Icon';
 import IconSprite from './components/IconSprite';
@@ -16,8 +14,6 @@ import { useGroupHome } from './lib/useGroupHome';
 // "רשימת קניות" אוחדה לתוך "דף בית" (הוסרה כטאב נפרד) — ר' Home.jsx.
 const TABS = [
   { id: 'home', icon: 'home', label: 'דף בית' },
-  { id: 'map', icon: 'map', label: 'מפת חנות' },
-  { id: 'compare', icon: 'tag', label: 'השוואת מחירים' },
   { id: 'nav', icon: 'compass', label: 'ניווט' },
 ];
 
@@ -73,8 +69,6 @@ export default function App() {
       <main className="app-main">
         <Suspense fallback={<p className="loading-hint">טוען מסך…</p>}>
           {tab === 'home' && <Home list={list} onNavigate={setTab} groupId={activeGroupId} onExitGroup={() => setActiveGroupId(null)} />}
-          {tab === 'map' && <StoreMap />}
-          {tab === 'compare' && <PriceComparison />}
           {tab === 'nav' && <Navigation list={navigationList} onBack={() => setTab('home')} />}
         </Suspense>
       </main>

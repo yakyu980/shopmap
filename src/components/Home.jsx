@@ -371,7 +371,7 @@ export default function Home({ list, onNavigate, groupId = null, onExitGroup }) 
       </div>
 
       <button className="btn btn--primary home-nav-cta" onClick={() => onNavigate('nav')}>
-        <Icon name="compass" /> נווט לרשימה שלי
+        <Icon name="compass" /> עבור לניווט בסופר
       </button>
 
       <p className="home-catalog-note">קטלוג הסניף: {getAllProducts().length} מוצרים בעשר מחלקות.</p>
