@@ -33,6 +33,12 @@ export async function createGroup(name) {
   return data.group;
 }
 
+export async function updateGroupPhoto(groupId, photo) {
+  const data = await api.patch(`/groups/${groupId}/photo`, { photo: photo || null });
+  update(groups.map((group) => (group.id === groupId ? data.group : group)));
+  return data.group;
+}
+
 export async function createInvite(groupId) {
   const data = await api.post(`/groups/${groupId}/invite`);
   return data.token;

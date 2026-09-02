@@ -11,6 +11,7 @@ import {
   removeMember,
   leaveGroup,
   blockGroup,
+  updateGroupPhoto,
 } from '../lib/groups';
 import { PRODUCTS } from '../data/storeData';
 import Icon from './Icon';
@@ -173,13 +174,15 @@ function GroupCard({ group, myUserId, onSelectGroup, activeGroupId }) {
   const [inviteLink, setInviteLink] = useState(null);
   const [copied, setCopied] = useState(false);
   const [busy, setBusy] = useState(false);
+  const groupFileRef = useRef(null);
+  const [photoBusy, setPhotoBusy] = useState(false);
   const isAdmin = group.myRole === 'admin';
 
   async function handleInvite() {
     setBusy(true);
     try {
       const token = await createInvite(group.id);
-      const url = new URL(window.location.href);
+      const url = new URL(window.location.origin + window.location.pathname);
       url.searchParams.set('join', token);
       setInviteLink(url.toString());
       setCopied(false);
@@ -197,12 +200,32 @@ function GroupCard({ group, myUserId, onSelectGroup, activeGroupId }) {
     }
   }
 
+  async function handleGroupPhoto(e) {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file || !isAdmin) return;
+    setPhotoBusy(true);
+    try {
+      const photo = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+      await updateGroupPhoto(group.id, photo);
+    } finally {
+      setPhotoBusy(false);
+    }
+  }
+
   return (
     <div className="group-card">
       <div className="group-card-head">
+        {group.photo ? <img className="group-avatar" src={group.photo} alt="" /> : <span className="group-avatar group-avatar--empty"><Icon name="family" /></span>}
         <strong>{group.name}</strong>
         <span className="group-card-count">{group.members.length} חברים</span>
       </div>
+      {isAdmin && <><button className="btn btn--text btn--small" onClick={() => groupFileRef.current?.click()} disabled={photoBusy}>{photoBusy ? 'מעלה תמונה…' : 'תמונת קבוצה'}</button><input ref={groupFileRef} type="file" accept="image/*" hidden onChange={handleGroupPhoto} /></>}
       <button className="btn btn--primary btn--small" onClick={() => onSelectGroup?.(group.id)}>
         {activeGroupId === group.id ? 'הקבוצה הפעילה' : 'פתח דף בית של הקבוצה'}
       </button>
@@ -362,6 +385,9 @@ export default function UserPanel({ onClose, onSelectGroup, activeGroupId }) {
 
             <section className="settings-section">
               <h3>הקבוצות שלי ({groups.length})</h3>
+              <button className="btn btn--ghost" onClick={() => onSelectGroup?.(null)}>
+                <Icon name="home" /> הרשימה שלי
+              </button>
               {groups.length === 0 && <p className="empty-hint">אין לך עדיין קבוצות-קניות.</p>}
               {groups.map((g) => (
                 <GroupCard key={g.id} group={g} myUserId={user.id} onSelectGroup={onSelectGroup} activeGroupId={activeGroupId} />
