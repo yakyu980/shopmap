@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { fetchGroupHome, addGroupHomeItem, updateGroupHomeItem, removeGroupHomeItem, clearGroupHomeItems, reorderGroupHomeItems, importGroupHomeItems, addGroupFavorite, removeGroupFavorite, setGroupVenue } from './groupHome';
 
-const POLL_MS = 5000;
+const POLL_MS = 2000;
 
 export function useGroupHome(groupId) {
   const [group, setGroup] = useState(null);
@@ -22,9 +22,18 @@ export function useGroupHome(groupId) {
   }, [groupId, refresh]);
 
   const addItem = useCallback(async (product) => {
+    const optimisticId = `pending-${Date.now()}`;
+    setGroup((current) => {
+      if (!current) return current;
+      const existing = product.id && current.shoppingItems.find((item) => item.productId === product.id);
+      const shoppingItems = existing
+        ? current.shoppingItems.map((item) => item.id === existing.id ? { ...item, qty: (item.qty || 1) + 1 } : item)
+        : [...current.shoppingItems, { ...product, id: optimisticId, productId: product.id, qty: 1, picked: false, addedBy: 'את/ה' }];
+      return { ...current, shoppingItems };
+    });
     try { setGroup(await addGroupHomeItem(groupId, product)); setError(''); }
-    catch (err) { setError(err.message || 'לא ניתן להוסיף לקבוצה'); }
-  }, [groupId]);
+    catch (err) { setError(err.message || 'לא ניתן להוסיף לקבוצה'); refresh(); }
+  }, [groupId, refresh]);
   const updateItem = useCallback(async (itemId, changes) => {
     try { setGroup(await updateGroupHomeItem(groupId, itemId, changes)); setError(''); }
     catch (err) { setError(err.message || 'לא ניתן לעדכן את הקבוצה'); }
