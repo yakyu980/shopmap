@@ -127,6 +127,12 @@ async function syncShoppingItems(groupId, items) {
   if (error) throw error;
 }
 
+async function readShoppingItems(group) {
+  const { data, error } = await supabase.from('shopping_items').select('*').eq('group_id', group.id).order('position', { ascending: true });
+  if (error) return Array.isArray(group.shopping_items) ? group.shopping_items : [];
+  return (data || []).map((item) => ({ id: item.id, productId: item.product_id, name: item.name, price: Number(item.price) || 0, category: item.category, department: item.department, shelf: item.shelf, zone: item.zone, barcode: item.barcode, qty: item.qty, picked: item.picked, addedBy: item.added_by, addedAt: item.added_at }));
+}
+
 router.get('/:id/home', requireAuth, h(async (req, res) => {
   const { data: group } = await supabase.from('groups').select('*').eq('id', req.params.id).maybeSingle();
   if (!group) return res.status(404).json({ error: 'קבוצה לא נמצאה' });
@@ -162,7 +168,7 @@ router.post('/:id/home/items', requireAuth, h(async (req, res) => {
   const product = req.body || {};
   if (!canAddProduct(membership, product)) return res.status(403).json({ error: 'אין לך הרשאה להוסיף את המוצר הזה' });
   if (!product.name || typeof product.price !== 'number') return res.status(400).json({ error: 'name/price נדרשים' });
-  const currentItems = Array.isArray(group.shopping_items) ? group.shopping_items : [];
+  const currentItems = await readShoppingItems(group);
   const existing = product.productId ? currentItems.find((item) => item.productId === product.productId) : null;
   const items = existing
     ? currentItems.map((item) => item.id === existing.id ? { ...item, qty: (item.qty || 1) + 1 } : item)
@@ -179,7 +185,7 @@ router.post('/:id/home/items/import', requireAuth, h(async (req, res) => {
   const membership = await myMembership(group.id, req.user.id);
   if (!canUseGroup(membership)) return res.status(403).json({ error: 'אינך חבר פעיל בקבוצה' });
   const incoming = Array.isArray(req.body?.items) ? req.body.items : [];
-  const items = [...(group.shopping_items || [])];
+  const items = [...await readShoppingItems(group)];
   const rejected = [];
   for (const product of incoming) {
     if (!canAddProduct(membership, product)) { rejected.push(product.name || product.productId || 'מוצר'); continue; }
@@ -220,7 +226,7 @@ router.patch('/:id/home/items/:itemId', requireAuth, h(async (req, res) => {
   if (!group) return res.status(404).json({ error: 'קבוצה לא נמצאה' });
   const membership = await myMembership(group.id, req.user.id);
   if (!canUseGroup(membership)) return res.status(403).json({ error: 'אינך חבר פעיל בקבוצה' });
-  const items = (group.shopping_items || []).map((item) => item.id === req.params.itemId ? { ...item, qty: Math.max(1, Number(req.body?.qty) || item.qty || 1), picked: req.body?.picked === undefined ? item.picked : !!req.body.picked } : item);
+  const items = (await readShoppingItems(group)).map((item) => item.id === req.params.itemId ? { ...item, qty: Math.max(1, Number(req.body?.qty) || item.qty || 1), picked: req.body?.picked === undefined ? item.picked : !!req.body.picked } : item);
   const { data, error } = await supabase.from('groups').update({ shopping_items: items }).eq('id', group.id).select().single();
   if (error) throw error;
   await syncShoppingItems(group.id, items);
@@ -233,7 +239,7 @@ router.post('/:id/home/items/reorder', requireAuth, h(async (req, res) => {
   const membership = await myMembership(group.id, req.user.id);
   if (!canUseGroup(membership)) return res.status(403).json({ error: 'אינך חבר פעיל בקבוצה' });
   const { fromId, toId } = req.body || {};
-  const items = [...(group.shopping_items || [])];
+  const items = [...await readShoppingItems(group)];
   const fromIndex = items.findIndex((item) => item.id === fromId);
   const toIndex = items.findIndex((item) => item.id === toId);
   if (fromIndex < 0 || toIndex < 0 || fromIndex === toIndex) return res.json({ group: await serializeGroup(group, req.user.id) });
@@ -250,7 +256,7 @@ router.delete('/:id/home/items/:itemId', requireAuth, h(async (req, res) => {
   if (!group) return res.status(404).json({ error: 'קבוצה לא נמצאה' });
   const membership = await myMembership(group.id, req.user.id);
   if (!canUseGroup(membership)) return res.status(403).json({ error: 'אינך חבר פעיל בקבוצה' });
-  const items = (group.shopping_items || []).filter((item) => item.id !== req.params.itemId);
+  const items = (await readShoppingItems(group)).filter((item) => item.id !== req.params.itemId);
   const { data, error } = await supabase.from('groups').update({ shopping_items: items }).eq('id', group.id).select().single();
   if (error) throw error;
   await syncShoppingItems(group.id, items);
