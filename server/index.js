@@ -34,7 +34,14 @@ app.use('/api/deals', dealsRoutes);
 app.use('/api/recognize-product', recognizeProductRoutes);
 app.use('/api/price-data', priceDataRoutes);
 
-app.get('/api/health', (req, res) => res.json({ ok: true }));
+app.get('/api/health', async (req, res) => {
+  let shoppingItemsRealtime = false;
+  try {
+    const { error } = await supabase.from('shopping_items').select('id').limit(1);
+    shoppingItemsRealtime = !error;
+  } catch { /* הסכמה הישנה עדיין פעילה */ }
+  res.json({ ok: true, shoppingItemsRealtime });
+});
 
 const PORT = process.env.PORT || 8787;
 
