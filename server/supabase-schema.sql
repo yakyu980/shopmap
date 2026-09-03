@@ -213,6 +213,54 @@ alter table groups add column if not exists shopping_items jsonb not null defaul
 alter table groups add column if not exists favorites jsonb not null default '[]'::jsonb;
 alter table groups add column if not exists venue_id text references venues(id) on delete set null;
 
+-- רשימת קניות משותפת כרשומות עצמאיות: מאפשרת עדכוני Realtime קטנים
+-- בלי לקרוא ולכתוב את כל מסמך הקבוצה. העמודה הישנה נשמרת זמנית למיגרציה.
+create table if not exists shopping_items (
+  id text primary key,
+  group_id text not null references groups(id) on delete cascade,
+  product_id text,
+  name text not null,
+  price numeric not null default 0,
+  category text,
+  department text,
+  shelf integer,
+  zone integer,
+  barcode text,
+  qty integer not null default 1 check (qty > 0),
+  picked boolean not null default false,
+  added_by text,
+  added_at bigint not null,
+  position integer not null default 0,
+  unique (group_id, product_id)
+);
+
+create index if not exists idx_shopping_items_group_position
+  on shopping_items(group_id, position);
+
+-- הרצה חד-פעמית בטוחה: מעתיקה נתוני JSON קיימים רק אם הטבלה החדשה ריקה.
+insert into shopping_items (id, group_id, product_id, name, price, category, department, shelf, zone, barcode, qty, picked, added_by, added_at, position)
+select
+  coalesce(nullif(item->>'id', ''), 'migrated-' || groups.id || '-' || ordinality::text),
+  groups.id,
+  nullif(item->>'productId', ''),
+  coalesce(item->>'name', 'מוצר'),
+  coalesce(nullif(item->>'price', '')::numeric, 0),
+  nullif(item->>'category', ''), nullif(item->>'department', ''),
+  nullif(item->>'shelf', '')::integer, nullif(item->>'zone', '')::integer,
+  nullif(item->>'barcode', ''), greatest(coalesce(nullif(item->>'qty', '')::integer, 1), 1),
+  coalesce((item->>'picked')::boolean, false), nullif(item->>'addedBy', ''),
+  coalesce(nullif(item->>'addedAt', '')::bigint, groups.created_at), ordinality::integer - 1
+from groups
+cross join lateral jsonb_array_elements(groups.shopping_items) with ordinality as elements(item, ordinality)
+where jsonb_typeof(groups.shopping_items) = 'array'
+  and not exists (select 1 from shopping_items si where si.group_id = groups.id);
+
+-- Realtime נשלח רק עבור שורת המוצר שהשתנתה.
+do $$ begin
+  alter publication supabase_realtime add table public.shopping_items;
+exception when duplicate_object then null;
+end $$;
+
 create table if not exists group_memberships (
   id text primary key,
   group_id text not null references groups(id) on delete cascade,
