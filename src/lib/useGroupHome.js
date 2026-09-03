@@ -43,6 +43,7 @@ export function useGroupHome(groupId) {
           }
         })
         .catch(() => { /* polling remains the safe fallback */ });
+    }
     const onVisible = () => { if (document.visibilityState === 'visible') refresh(); };
     document.addEventListener('visibilitychange', onVisible);
     return () => { clearInterval(interval); controller.abort(); eventReader?.cancel?.(); document.removeEventListener('visibilitychange', onVisible); };
