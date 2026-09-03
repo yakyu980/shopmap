@@ -52,6 +52,7 @@ React/Vite PWA  ->  Express API  ->  Supabase ושירותים חיצוניים
 - groups
 - products וזיהוי מוצר
 - venues ו־trips
+- חיפוש סופרים סמוכים דרך Geoapify, לפי קואורדינטות GPS מהלקוח
 - price observations, import, deals ו־price data
 - health check ב־`/api/health`
 

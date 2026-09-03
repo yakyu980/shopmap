@@ -28,6 +28,7 @@ npm start
 - `SUPABASE_URL`
 - `SUPABASE_SERVICE_ROLE_KEY` או `SUPABASE_SECRET_KEY`
 - `GEMINI_API_KEY` לזיהוי מוצר בתמונה
+- `GEOAPIFY_API_KEY` לאיתור סופרים סמוכים לפי GPS
 - `PORT` — ברירת מחדל `8787`
 
 בפריסה, צד הלקוח קורא את `VITE_API_URL`. ללא כתובת API זמינה, יכולות שרת לא יעבדו; אין להציג אותן כזמינות אופליין.

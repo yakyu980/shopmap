@@ -61,3 +61,9 @@ export async function createVenue({ chainName, branchName, storeType, address })
   update({ venues: [...state.venues, data.venue], loaded: true });
   return data.venue;
 }
+
+export async function findNearbySupermarkets({ lat, lng, radius = 5000 }) {
+  const params = new URLSearchParams({ lat: String(lat), lng: String(lng), radius: String(radius) });
+  const data = await api.get(`/venues/nearby?${params}`);
+  return data.supermarkets || [];
+}
