@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { fetchGroupHome, addGroupHomeItem, updateGroupHomeItem, removeGroupHomeItem, clearGroupHomeItems, reorderGroupHomeItems, importGroupHomeItems, addGroupFavorite, removeGroupFavorite, setGroupVenue } from './groupHome';
+import { getToken } from './apiClient';
 
 // Fallback מהיר עד הפעלת Supabase Realtime. כשהחלון ברקע עוצרים את
 // הבקשות כדי לא להעמיס על השרת; בחזרה למסך מתבצע רענון מידי.
@@ -22,9 +23,29 @@ export function useGroupHome(groupId) {
     const interval = setInterval(() => {
       if (document.visibilityState === 'visible') refresh();
     }, POLL_MS);
+    const token = getToken();
+    const eventsUrl = `${import.meta.env.VITE_API_URL || '/api'}/groups/${groupId}/home/events`;
+    const controller = new AbortController();
+    let eventReader;
+    if (token && typeof fetch === 'function') {
+      fetch(eventsUrl, { headers: { Authorization: `Bearer ${token}` }, signal: controller.signal })
+        .then(async (response) => {
+          if (!response.ok || !response.body) return;
+          eventReader = response.body.getReader();
+          const decoder = new TextDecoder();
+          let buffer = '';
+          while (!controller.signal.aborted) {
+            const { value, done } = await eventReader.read();
+            if (done) break;
+            buffer += decoder.decode(value, { stream: true });
+            const events = buffer.split('\n\n'); buffer = events.pop() || '';
+            if (events.some((event) => event.includes('event: shopping_item'))) refresh();
+          }
+        })
+        .catch(() => { /* polling remains the safe fallback */ });
     const onVisible = () => { if (document.visibilityState === 'visible') refresh(); };
     document.addEventListener('visibilitychange', onVisible);
-    return () => { clearInterval(interval); document.removeEventListener('visibilitychange', onVisible); };
+    return () => { clearInterval(interval); controller.abort(); eventReader?.cancel?.(); document.removeEventListener('visibilitychange', onVisible); };
   }, [groupId, refresh]);
 
   const addItem = useCallback(async (product) => {
