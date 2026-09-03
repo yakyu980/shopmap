@@ -16,6 +16,7 @@ import dealsRoutes from './routes/deals.js';
 import recognizeProductRoutes from './routes/recognizeProduct.js';
 import priceDataRoutes from './routes/priceData.js';
 import { seedProducts } from './seedProducts.js';
+import { supabase } from './supabaseClient.js';
 
 const app = express();
 app.use(cors());
