@@ -299,10 +299,15 @@ export default function UserPanel({ onClose, onSelectGroup, activeGroupId }) {
   const [joinBusy, setJoinBusy] = useState(false);
   const [joinError, setJoinError] = useState('');
   const [settingsGroupId, setSettingsGroupId] = useState(null);
+  const [groupsLoading, setGroupsLoading] = useState(false);
+  const [groupsError, setGroupsError] = useState('');
   const settingsGroup = groups.find((group) => group.id === settingsGroupId) || null;
 
   useEffect(() => {
-    if (user) fetchGroups().catch(() => {});
+    if (!user) return;
+    setGroupsLoading(true);
+    setGroupsError('');
+    fetchGroups().catch((err) => setGroupsError(err?.message || 'לא ניתן לטעון את הקבוצות כרגע')).finally(() => setGroupsLoading(false));
   }, [user]);
 
   async function handlePhotoChange(e) {
@@ -392,6 +397,7 @@ export default function UserPanel({ onClose, onSelectGroup, activeGroupId }) {
               <section className="settings-section group-settings-view">
                 <button className="btn btn--text btn--small" onClick={() => setSettingsGroupId(null)}>חזרה לקבוצות</button>
                 <h3>הגדרות: {settingsGroup.name}</h3>
+                <p className="settings-hint">{settingsGroup.members.length} חברים · ההרשאה שלך: {ROLE_LABEL[settingsGroup.myRole] || 'חבר/ה'}</p>
                 <GroupCard group={settingsGroup} myUserId={user.id} onSelectGroup={onSelectGroup} activeGroupId={activeGroupId} />
               </section>
             ) : <>
@@ -420,7 +426,9 @@ export default function UserPanel({ onClose, onSelectGroup, activeGroupId }) {
               <button className="btn btn--ghost" onClick={() => onSelectGroup?.(null)}>
                 <Icon name="home" /> הרשימה שלי
               </button>
-              {groups.length === 0 && <p className="empty-hint">אין לך עדיין קבוצות-קניות.</p>}
+              {groupsLoading && <p className="settings-hint">טוען קבוצות…</p>}
+              {groupsError && <p className="login-error" role="alert"><Icon name="warning" /> {groupsError} <button className="btn btn--text btn--small" onClick={() => fetchGroups().catch((err) => setGroupsError(err?.message || 'טעינת הקבוצות נכשלה'))}>נסה שוב</button></p>}
+              {!groupsLoading && !groupsError && groups.length === 0 && <p className="empty-hint">אין לך עדיין קבוצות-קניות.</p>}
               {groups.map((g) => (
                 <GroupCard key={g.id} group={g} myUserId={user.id} onSelectGroup={onSelectGroup} activeGroupId={activeGroupId} compact onOpenSettings={setSettingsGroupId} />
               ))}
