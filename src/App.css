@@ -2716,6 +2716,7 @@
 
 .group-list-row { display: flex; align-items: center; gap: 8px; width: 100%; padding: 8px 0; border-bottom: 1px solid var(--border); }
 .group-list-row__main { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; border: 0; background: transparent; color: inherit; text-align: right; cursor: pointer; padding: 2px; }
+.group-avatar-button { flex: 0 0 auto; border: 0; background: transparent; padding: 0; cursor: pointer; }
 .group-list-row__text { display: grid; gap: 2px; min-width: 0; }
 .group-list-row__text strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .group-list-row__text small { color: var(--text-dim); }
