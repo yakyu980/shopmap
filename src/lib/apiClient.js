@@ -28,14 +28,22 @@ async function request(path, { method = 'GET', body, signal } = {}) {
   const token = getToken();
   if (token) headers.Authorization = `Bearer ${token}`;
 
-  const res = await fetch(BASE + path, {
-    method,
-    headers,
-    body: body !== undefined ? JSON.stringify(body) : undefined,
-    signal,
-  });
+  let res;
+  try {
+    res = await fetch(BASE + path, { method, headers, body: body !== undefined ? JSON.stringify(body) : undefined, signal });
+    // Render/Supabase may briefly rate-limit after wake-up. Retry once using
+    // the server hint instead of surfacing the opaque "Failed to fetch".
+    if (res.status === 429) {
+      const retryAfter = Math.min(3000, Math.max(250, Number(res.headers.get('Retry-After')) * 1000 || 800));
+      await new Promise((resolve) => setTimeout(resolve, retryAfter));
+      res = await fetch(BASE + path, { method, headers, body: body !== undefined ? JSON.stringify(body) : undefined, signal });
+    }
+  } catch (err) {
+    if (err?.name === 'AbortError') throw err;
+    throw new Error('השרת לא זמין כרגע. בדקו חיבור לאינטרנט ונסו שוב.');
+  }
   const data = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(data.error || 'שגיאת-שרת');
+  if (!res.ok) throw new Error(data.error || (res.status === 429 ? 'השרת עמוס כרגע. נסו שוב בעוד רגע.' : 'שגיאת-שרת'));
   return data;
 }
 
