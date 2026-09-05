@@ -39,8 +39,8 @@ export async function updateGroupPhoto(groupId, photo) {
   return data.group;
 }
 
-export async function createInvite(groupId) {
-  const data = await api.post(`/groups/${groupId}/invite`);
+export async function createInvite(groupId, options = {}) {
+  const data = await api.post(`/groups/${groupId}/invite`, options);
   return data.token;
 }
 

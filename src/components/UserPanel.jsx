@@ -29,6 +29,7 @@ function MemberRow({ group, member, isMe, canManage }) {
   const [productId, setProductId] = useState(member.restriction?.productId || '');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  const [menuOpen, setMenuOpen] = useState(false);
 
   async function save() {
     setBusy(true);
@@ -70,21 +71,13 @@ function MemberRow({ group, member, isMe, canManage }) {
             )}
           </span>
         </span>
-        {canManage && !isMe && (
-          <button className="btn btn--text btn--small" onClick={() => setEditing((v) => !v)}>
-            <Icon name="edit" /> הרשאות
-          </button>
-        )}
-        {canManage && !isMe && (
-          <button
-            className="btn btn--icon btn--danger"
-            onClick={() => removeMember(group.id, member.userId)}
-            aria-label="הסר מהקבוצה"
-            title="הסר מהקבוצה"
-          >
-            <Icon name="trash" />
-          </button>
-        )}
+        {canManage && !isMe && <div className="member-actions-menu">
+          <button className="btn btn--icon" onClick={() => setMenuOpen((v) => !v)} aria-label={`אפשרויות עבור ${member.username}`} aria-expanded={menuOpen}>⋮</button>
+          {menuOpen && <div className="member-actions-popover">
+            <button className="btn btn--text btn--small" onClick={() => { setEditing((v) => !v); setMenuOpen(false); }}><Icon name="edit" /> שנה הרשאות</button>
+            <button className="btn btn--text btn--small btn--danger" onClick={() => removeMember(group.id, member.userId)}><Icon name="trash" /> הסר מהקבוצה</button>
+          </div>}
+        </div>}
       </div>
 
       {editing && (
@@ -177,6 +170,8 @@ function GroupCard({ group, myUserId, onSelectGroup, activeGroupId, compact = fa
   const groupFileRef = useRef(null);
   const [photoBusy, setPhotoBusy] = useState(false);
   const [photoError, setPhotoError] = useState('');
+  const [inviteRole, setInviteRole] = useState('member');
+  const [inviteRestrictionType, setInviteRestrictionType] = useState('category');
   const isAdmin = group.myRole === 'admin';
 
   if (compact) {
@@ -197,7 +192,8 @@ function GroupCard({ group, myUserId, onSelectGroup, activeGroupId, compact = fa
   async function handleInvite() {
     setBusy(true);
     try {
-      const token = await createInvite(group.id);
+      const restriction = inviteRole === 'restricted' ? { type: inviteRestrictionType, ...(inviteRestrictionType === 'category' ? { categories: CATEGORIES } : { productId: PRODUCTS[0]?.id || '' }) } : null;
+      const token = await createInvite(group.id, { role: inviteRole, restriction });
       const url = new URL(window.location.origin + window.location.pathname);
       url.searchParams.set('join', token);
       setInviteLink(url.toString());
@@ -262,6 +258,10 @@ function GroupCard({ group, myUserId, onSelectGroup, activeGroupId, compact = fa
 
       {isAdmin && (
         <div className="group-invite-row">
+          <select className="map-edit-input" value={inviteRole} onChange={(e) => setInviteRole(e.target.value)} aria-label="הרשאת חבר חדש">
+            <option value="member">חבר רגיל</option><option value="admin">מנהל</option><option value="restricted">מוגבל</option>
+          </select>
+          {inviteRole === 'restricted' && <select className="map-edit-input" value={inviteRestrictionType} onChange={(e) => setInviteRestrictionType(e.target.value)} aria-label="סוג הגבלה"><option value="category">קטגוריות</option><option value="product">מוצר יחיד</option></select>}
           <button className="btn btn--ghost btn--small" onClick={handleInvite} disabled={busy}>
             <Icon name="family" /> צור קישור-הזמנה
           </button>

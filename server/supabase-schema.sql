@@ -278,6 +278,8 @@ create table if not exists group_invites (
   created_by text references users(id) on delete set null,
   created_at bigint not null
 );
+alter table group_invites add column if not exists role text not null default 'member';
+alter table group_invites add column if not exists restriction jsonb;
 
 create index if not exists idx_users_household on users(household_id);
 create index if not exists idx_venues_household on venues(household_id);

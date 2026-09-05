@@ -327,10 +327,12 @@ router.post(
       return res.status(403).json({ error: 'רק מנהל-קבוצה יכול ליצור קישור-הזמנה' });
     }
 
+    const requestedRole = ['admin', 'member', 'restricted'].includes(req.body?.role) ? req.body.role : 'member';
+    const restriction = requestedRole === 'restricted' && req.body?.restriction ? req.body.restriction : null;
     const token = crypto.randomBytes(9).toString('base64url');
     const { error } = await supabase
       .from('group_invites')
-      .insert({ token, group_id: group.id, created_by: req.user.id, created_at: Date.now() });
+      .insert({ token, group_id: group.id, created_by: req.user.id, created_at: Date.now(), role: requestedRole, restriction });
     if (error) throw error;
     res.json({ token });
   })
@@ -358,8 +360,8 @@ router.post(
       id: 'gm' + Date.now(),
       group_id: group.id,
       user_id: req.user.id,
-      role: 'member',
-      restriction: null,
+      role: invite.role || 'member',
+      restriction: invite.restriction || null,
       status: 'active',
       joined_at: Date.now(),
     });
