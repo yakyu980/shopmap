@@ -261,6 +261,21 @@ do $$ begin
 exception when duplicate_object then null;
 end $$;
 
+-- פעולה אטומית להוספת מוצר/הגדלת כמות. מונעת race בין שני משתמשים.
+create or replace function public.add_shopping_item_atomic(
+  p_group_id text, p_product_id text, p_name text, p_price numeric,
+  p_category text, p_department text, p_shelf integer, p_zone integer, p_barcode text, p_added_by text
+) returns void language plpgsql security definer as $$
+begin
+  if p_product_id is not null then
+    update public.shopping_items set qty = qty + 1 where group_id = p_group_id and product_id = p_product_id;
+    if found then return; end if;
+  end if;
+  insert into public.shopping_items(id, group_id, product_id, name, price, category, department, shelf, zone, barcode, qty, picked, added_by, added_at, position)
+  values ('gi' || extract(epoch from clock_timestamp())::bigint || floor(random()*10000)::int, p_group_id, p_product_id, p_name, coalesce(p_price,0), p_category, p_department, p_shelf, p_zone, p_barcode, 1, false, p_added_by, extract(epoch from clock_timestamp()*1000)::bigint,
+    coalesce((select max(position)+1 from public.shopping_items where group_id=p_group_id),0));
+end; $$;
+
 create table if not exists group_memberships (
   id text primary key,
   group_id text not null references groups(id) on delete cascade,
