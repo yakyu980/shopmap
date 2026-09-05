@@ -8,7 +8,7 @@ const CACHE_KEY = 'supernav_auth_cache_v1'; // {user, household} — לתצוג�
 
 function loadCache() {
   try {
-    return JSON.parse(localStorage.getItem(CACHE_KEY)) || null;
+    return JSON.parse(sessionStorage.getItem(CACHE_KEY)) || null;
   } catch {
     return null;
   }
@@ -16,7 +16,7 @@ function loadCache() {
 
 function persistCache(user, household) {
   try {
-    localStorage.setItem(CACHE_KEY, JSON.stringify({ user, household }));
+    sessionStorage.setItem(CACHE_KEY, JSON.stringify({ user, household }));
   } catch {
     /* אחסון חסום — מתעלמים */
   }

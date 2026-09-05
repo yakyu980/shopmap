@@ -6,7 +6,9 @@ const TOKEN_KEY = 'supernav_auth_token';
 
 export function getToken() {
   try {
-    return localStorage.getItem(TOKEN_KEY);
+    // sessionStorage מבודד בין לשוניות, כך ששני משתמשים יכולים לעבוד
+    // במקביל באותו דפדפן בלי שהתחברות אחת תחליף את השנייה.
+    return sessionStorage.getItem(TOKEN_KEY);
   } catch {
     return null;
   }
@@ -14,8 +16,8 @@ export function getToken() {
 
 export function setToken(token) {
   try {
-    if (token) localStorage.setItem(TOKEN_KEY, token);
-    else localStorage.removeItem(TOKEN_KEY);
+    if (token) sessionStorage.setItem(TOKEN_KEY, token);
+    else sessionStorage.removeItem(TOKEN_KEY);
   } catch {
     /* אחסון חסום — מתעלמים */
   }
