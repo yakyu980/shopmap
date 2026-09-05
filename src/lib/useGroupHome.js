@@ -4,7 +4,9 @@ import { getToken } from './apiClient';
 
 // Fallback מהיר עד הפעלת Supabase Realtime. כשהחלון ברקע עוצרים את
 // הבקשות כדי לא להעמיס על השרת; בחזרה למסך מתבצע רענון מידי.
-const POLL_MS = 450;
+// Realtime הוא המסלול הראשי. polling איטי משמש רק כשחיבור האירועים לא זמין,
+// כדי למנוע 429 ועומס מיותר על Render.
+const POLL_MS = 5000;
 
 export function useGroupHome(groupId) {
   const [group, setGroup] = useState(null);
@@ -21,16 +23,18 @@ export function useGroupHome(groupId) {
     if (!groupId) return undefined;
     refresh();
     const interval = setInterval(() => {
-      if (document.visibilityState === 'visible') refresh();
+      if (document.visibilityState === 'visible' && !realtimeConnected) refresh();
     }, POLL_MS);
     const token = getToken();
     const eventsUrl = `${import.meta.env.VITE_API_URL || '/api'}/groups/${groupId}/home/events`;
     const controller = new AbortController();
     let eventReader;
+    let realtimeConnected = false;
     if (token && typeof fetch === 'function') {
       fetch(eventsUrl, { headers: { Authorization: `Bearer ${token}` }, signal: controller.signal })
         .then(async (response) => {
           if (!response.ok || !response.body) return;
+          realtimeConnected = true;
           eventReader = response.body.getReader();
           const decoder = new TextDecoder();
           let buffer = '';
