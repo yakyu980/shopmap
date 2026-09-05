@@ -2227,7 +2227,7 @@
   margin: 4px 0;
 }
 
-.trip-banner {
+.trip-banner { 
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -2742,6 +2742,8 @@
   justify-content: space-between;
   margin-bottom: 6px;
 }
+.trip-banner-avatar { width: 34px; height: 34px; flex: 0 0 34px; border-radius: 50%; object-fit: cover; border: 2px solid rgba(255,255,255,.9); box-shadow: 0 2px 8px rgba(20,52,82,.18); }
+.trip-banner-avatar--empty { display: inline-grid; place-items: center; background: #dbeafe; color: #1d5da8; }
 
 .group-list-row { display: flex; align-items: center; gap: 8px; width: 100%; padding: 8px 0; border-bottom: 1px solid var(--border); }
 .group-list-row--active { background: color-mix(in srgb, var(--primary) 10%, transparent); border-radius: 12px; padding: 8px; box-shadow: inset -4px 0 0 var(--primary); }

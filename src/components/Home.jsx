@@ -131,7 +131,7 @@ export default function Home({ list, onNavigate, groupId = null, onExitGroup }) 
       {groupHome.error && <p className="login-error"><Icon name="warning" /> {groupHome.error}</p>}
       {notice && <p className="settings-hint" role="status"><Icon name="check" /> {notice}</p>}
       {undoItem && <p className="settings-hint" role="status">המוצר “{undoItem.name}” הוסר. <button className="btn btn--text" onClick={() => { addItem(undoItem); setUndoItem(null); }}>בטל</button></p>}
-      {groupId && <div className="trip-banner"><span className="trip-banner-label"><Icon name="family" /> דף הבית של: {groupHome.group?.name || 'הקבוצה'} </span><button className="btn btn--text" onClick={() => setVenuePickerOpen(true)}>📍 {groupHome.group?.venueId ? 'שנה סניף' : 'בחר סניף'}</button><button className="btn btn--text" onClick={() => onExitGroup?.()}>מצב אישי</button></div>}
+      {groupId && <div className="trip-banner"><span className="trip-banner-label">{groupHome.group?.photo ? <img className="trip-banner-avatar" src={groupHome.group.photo} alt="" /> : <span className="trip-banner-avatar trip-banner-avatar--empty"><Icon name="family" /></span>}<span><Icon name="family" /> דף הבית של: {groupHome.group?.name || 'הקבוצה'}</span></span><button className="btn btn--text" onClick={() => setVenuePickerOpen(true)}>📍 {groupHome.group?.venueId ? 'שנה סניף' : 'בחר סניף'}</button><button className="btn btn--text" onClick={() => onExitGroup?.()}>מצב אישי</button></div>}
       {!groupId && token && (
         <div className="trip-banner">
           {trip ? (
