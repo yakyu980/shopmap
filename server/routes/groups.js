@@ -91,7 +91,8 @@ router.get(
 router.patch('/:id/photo', requireAuth, h(async (req, res) => {
   const { data: group } = await supabase.from('groups').select('*').eq('id', req.params.id).maybeSingle();
   if (!group) return res.status(404).json({ error: 'קבוצה לא נמצאה' });
-  if (!(await isAdmin(group.id, req.user.id))) return res.status(403).json({ error: 'רק מנהל-קבוצה יכול לשנות תמונה' });
+  const membership = await myMembership(group.id, req.user.id);
+  if (!canUseGroup(membership)) return res.status(403).json({ error: 'רק חבר פעיל בקבוצה יכול לשנות תמונה' });
   const photo = req.body?.photo || null;
   if (photo && (typeof photo !== 'string' || photo.length > 2_000_000)) return res.status(400).json({ error: 'תמונת הקבוצה גדולה מדי' });
   const { data, error } = await supabase.from('groups').update({ photo }).eq('id', group.id).select().single();

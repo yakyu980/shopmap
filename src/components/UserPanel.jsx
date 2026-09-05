@@ -176,6 +176,7 @@ function GroupCard({ group, myUserId, onSelectGroup, activeGroupId }) {
   const [busy, setBusy] = useState(false);
   const groupFileRef = useRef(null);
   const [photoBusy, setPhotoBusy] = useState(false);
+  const [photoError, setPhotoError] = useState('');
   const isAdmin = group.myRole === 'admin';
 
   async function handleInvite() {
@@ -203,16 +204,20 @@ function GroupCard({ group, myUserId, onSelectGroup, activeGroupId }) {
   async function handleGroupPhoto(e) {
     const file = e.target.files?.[0];
     e.target.value = '';
-    if (!file || !isAdmin) return;
+    if (!file) return;
     setPhotoBusy(true);
+    setPhotoError('');
     try {
       const photo = await new Promise((resolve, reject) => {
         const reader = new FileReader();
         reader.onload = () => resolve(reader.result);
-        reader.onerror = reject;
+        reader.onerror = () => reject(new Error('לא ניתן לקרוא את התמונה. נסו שוב.'));
+        reader.onabort = () => reject(new Error('בחירת התמונה בוטלה.'));
         reader.readAsDataURL(file);
       });
       await updateGroupPhoto(group.id, photo);
+    } catch (err) {
+      setPhotoError(err.message || 'העלאת תמונת הקבוצה נכשלה. נסו שוב.');
     } finally {
       setPhotoBusy(false);
     }
@@ -225,7 +230,11 @@ function GroupCard({ group, myUserId, onSelectGroup, activeGroupId }) {
         <strong>{group.name}</strong>
         <span className="group-card-count">{group.members.length} חברים</span>
       </div>
-      {isAdmin && <><button className="btn btn--text btn--small" onClick={() => groupFileRef.current?.click()} disabled={photoBusy}>{photoBusy ? 'מעלה תמונה…' : 'תמונת קבוצה'}</button><input ref={groupFileRef} type="file" accept="image/*" hidden onChange={handleGroupPhoto} /></>}
+      <button className="btn btn--ghost btn--small group-photo-button" onClick={() => groupFileRef.current?.click()} disabled={photoBusy}>
+        <Icon name="camera" /> {photoBusy ? 'מעלה תמונה…' : group.photo ? 'החלפת תמונת קבוצה' : 'הוספת תמונת קבוצה'}
+      </button>
+      <input ref={groupFileRef} type="file" accept="image/*" hidden onChange={handleGroupPhoto} />
+      {photoError && <p className="login-error" role="alert">{photoError}</p>}
       <button className="btn btn--primary btn--small" onClick={() => onSelectGroup?.(group.id)}>
         {activeGroupId === group.id ? 'הקבוצה הפעילה' : 'פתח דף בית של הקבוצה'}
       </button>

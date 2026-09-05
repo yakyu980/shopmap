@@ -2723,6 +2723,11 @@
 .group-avatar { width: 42px; height: 42px; border-radius: 50%; object-fit: cover; flex: 0 0 auto; }
 .group-avatar--empty { display: inline-grid; place-items: center; background: var(--primary-soft, #e8f0ff); color: var(--primary, #2f7de1); }
 
+.group-photo-button {
+  width: 100%;
+  margin-bottom: 8px;
+}
+
 .group-card-count {
   font-size: 11px;
   color: var(--text-dim);
