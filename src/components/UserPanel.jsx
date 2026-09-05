@@ -170,7 +170,7 @@ function MemberRow({ group, member, isMe, canManage }) {
   );
 }
 
-function GroupCard({ group, myUserId, onSelectGroup, activeGroupId }) {
+function GroupCard({ group, myUserId, onSelectGroup, activeGroupId, compact = false, onOpenSettings }) {
   const [inviteLink, setInviteLink] = useState(null);
   const [copied, setCopied] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -178,6 +178,18 @@ function GroupCard({ group, myUserId, onSelectGroup, activeGroupId }) {
   const [photoBusy, setPhotoBusy] = useState(false);
   const [photoError, setPhotoError] = useState('');
   const isAdmin = group.myRole === 'admin';
+
+  if (compact) {
+    return (
+      <div className="group-list-row">
+        <button className="group-list-row__main" onClick={() => onSelectGroup?.(group.id)}>
+          {group.photo ? <img className="group-avatar" src={group.photo} alt="" /> : <span className="group-avatar group-avatar--empty"><Icon name="family" /></span>}
+          <span className="group-list-row__text"><strong>{group.name}</strong><small>{group.members.length} חברים</small></span>
+        </button>
+        <button className="btn btn--icon" onClick={() => onOpenSettings?.(group.id)} aria-label={`הגדרות ${group.name}`} title="הגדרות קבוצה"><Icon name="gear" /></button>
+      </div>
+    );
+  }
 
   async function handleInvite() {
     setBusy(true);
@@ -284,6 +296,8 @@ export default function UserPanel({ onClose, onSelectGroup, activeGroupId }) {
   const [joinToken, setJoinToken] = useState('');
   const [joinBusy, setJoinBusy] = useState(false);
   const [joinError, setJoinError] = useState('');
+  const [settingsGroupId, setSettingsGroupId] = useState(null);
+  const settingsGroup = groups.find((group) => group.id === settingsGroupId) || null;
 
   useEffect(() => {
     if (user) fetchGroups().catch(() => {});
@@ -372,6 +386,13 @@ export default function UserPanel({ onClose, onSelectGroup, activeGroupId }) {
 
             {photoError && <p className="login-error" role="alert">{photoError}</p>}
 
+            {settingsGroup ? (
+              <section className="settings-section group-settings-view">
+                <button className="btn btn--text btn--small" onClick={() => setSettingsGroupId(null)}>חזרה לקבוצות</button>
+                <h3>הגדרות: {settingsGroup.name}</h3>
+                <GroupCard group={settingsGroup} myUserId={user.id} onSelectGroup={onSelectGroup} activeGroupId={activeGroupId} />
+              </section>
+            ) : <>
             <section className="settings-section">
               <h3>הצטרפות לקבוצה עם קישור/קוד</h3>
               <div className="group-invite-link-row">
@@ -399,7 +420,7 @@ export default function UserPanel({ onClose, onSelectGroup, activeGroupId }) {
               </button>
               {groups.length === 0 && <p className="empty-hint">אין לך עדיין קבוצות-קניות.</p>}
               {groups.map((g) => (
-                <GroupCard key={g.id} group={g} myUserId={user.id} onSelectGroup={onSelectGroup} activeGroupId={activeGroupId} />
+                <GroupCard key={g.id} group={g} myUserId={user.id} onSelectGroup={onSelectGroup} activeGroupId={activeGroupId} compact onOpenSettings={setSettingsGroupId} />
               ))}
 
               <div className="group-invite-link-row">
@@ -414,6 +435,7 @@ export default function UserPanel({ onClose, onSelectGroup, activeGroupId }) {
                 </button>
               </div>
             </section>
+            </>}
       </div>
     </div>
   );

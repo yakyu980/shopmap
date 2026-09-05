@@ -49,7 +49,11 @@ export default function App() {
     <div className="app">
       <IconSprite />
       <header className="app-header">
-        <UserButton onSelectGroup={setActiveGroupId} onGroupJoined={setActiveGroupId} activeGroupId={activeGroupId} />
+        <UserButton
+          onSelectGroup={(groupId) => { setActiveGroupId(groupId); setTab('home'); }}
+          onGroupJoined={(groupId) => { setActiveGroupId(groupId); setTab('home'); }}
+          activeGroupId={activeGroupId}
+        />
         <h1>SuperNav AI</h1>
         <p className="app-tagline">ה-Waze של הסופר — MVP הדגמה</p>
       </header>
