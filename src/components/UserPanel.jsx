@@ -180,13 +180,14 @@ function GroupCard({ group, myUserId, onSelectGroup, activeGroupId, compact = fa
   const isAdmin = group.myRole === 'admin';
 
   if (compact) {
+    const isActive = activeGroupId === group.id;
     return (
-      <div className="group-list-row">
+      <div className={'group-list-row' + (isActive ? ' group-list-row--active' : '')}>
         <button className="group-avatar-button" onClick={() => onOpenSettings?.(group.id)} aria-label={`הגדרות ${group.name}`}>
           {group.photo ? <img className="group-avatar" src={group.photo} alt="" /> : <span className="group-avatar group-avatar--empty"><Icon name="family" /></span>}
         </button>
         <button className="group-list-row__main" onClick={() => onSelectGroup?.(group.id)}>
-          <span className="group-list-row__text"><strong>{group.name}</strong><small>{group.members.length} חברים</small></span>
+          <span className="group-list-row__text"><strong>{group.name} {isActive && <em className="group-active-badge">פעילה</em>}</strong><small>{group.members.length} חברים</small></span>
         </button>
         <button className="btn btn--icon" onClick={() => onOpenSettings?.(group.id)} aria-label={`הגדרות ${group.name}`} title="הגדרות קבוצה"><Icon name="gear" /></button>
       </div>

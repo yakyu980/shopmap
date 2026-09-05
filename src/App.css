@@ -1819,10 +1819,33 @@
 
 /* ---- דף השוואת מחירים ---- */
 .compare-page {
+  position: relative;
+  isolation: isolate;
   padding: 12px 16px 24px;
   display: flex;
   flex-direction: column;
   gap: 8px;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--border) 78%, #b9c9d8);
+  border-radius: 24px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, .88), rgba(248, 251, 254, .94)),
+    url('/compare-note-bg.png') center top / cover no-repeat;
+  box-shadow: 0 14px 35px rgba(32, 61, 92, .10);
+}
+
+.compare-page::before {
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  background: url('/compare-note-bg.png') center top / cover no-repeat;
+  opacity: .22;
+  content: "";
+  pointer-events: none;
+}
+
+.compare-page > * {
+  position: relative;
 }
 
 .compare-intro {
@@ -2544,6 +2567,12 @@
 
 /* השוואת מוצרים מרובים בין רשתות */
 .price-compare-focus { display: grid; width: 100%; gap: 12px; margin: 0 auto; padding: 10px 0 24px; }
+.price-compare-focus > .compare-search-row,
+.price-compare-focus > .compare-venues-button,
+.price-compare-focus > .compare-filter-bar,
+.price-compare-focus > .chain-comparison-list,
+.price-compare-focus > .compare-summary,
+.price-compare-focus > .price-compare-focus__empty { border-radius: 18px; }
 .compare-search-row { display: flex; align-items: flex-start; gap: 8px; }
 .compare-search-row .official-product-search { flex: 1; min-width: 0; }
 .compare-camera-button { min-width: 48px; font-size: 20px; }
@@ -2636,7 +2665,7 @@
 .chain-comparison__header h3 { margin: 0 0 4px; font-size: 17px; }
 .chain-comparison__header small, .chain-comparison__hint { color: var(--text-dim); font-size: 11px; }
 .chain-price-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(150px, 100%), 1fr)); gap: 12px; margin-top: 14px; }
-.chain-price-block { display: flex; flex-direction: column; align-items: center; gap: 8px; min-width: 0; padding: 18px 10px; border: 2px solid var(--border); border-radius: 16px; background: var(--bg); color: var(--text); text-align: center; overflow-wrap: anywhere; }
+.chain-price-block { display: flex; flex-direction: column; align-items: center; gap: 8px; min-width: 0; padding: 18px 10px; border: 2px solid var(--border); border-radius: 16px; background: rgba(255, 255, 255, .90); color: var(--text); text-align: center; overflow-wrap: anywhere; box-shadow: 0 5px 14px rgba(32, 61, 92, .08); }
 .chain-price-block h4 { margin: 0; font-size: 16px; }
 .chain-price-block__badge { min-height: 24px; font-size: 11px; font-weight: 700; }
 .chain-price-block__price { font-size: 30px; line-height: 1.2; }
@@ -2715,11 +2744,13 @@
 }
 
 .group-list-row { display: flex; align-items: center; gap: 8px; width: 100%; padding: 8px 0; border-bottom: 1px solid var(--border); }
+.group-list-row--active { background: color-mix(in srgb, var(--primary) 10%, transparent); border-radius: 12px; padding: 8px; box-shadow: inset -4px 0 0 var(--primary); }
 .group-list-row__main { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; border: 0; background: transparent; color: inherit; text-align: right; cursor: pointer; padding: 2px; }
 .group-avatar-button { flex: 0 0 auto; border: 0; background: transparent; padding: 0; cursor: pointer; }
 .group-list-row__text { display: grid; gap: 2px; min-width: 0; }
 .group-list-row__text strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .group-list-row__text small { color: var(--text-dim); }
+.group-active-badge { display: inline-block; margin-inline-start: 6px; padding: 2px 7px; border-radius: 999px; background: var(--primary); color: #fff; font-size: 11px; font-style: normal; vertical-align: middle; }
 .group-settings-view > h3 { margin: 10px 0; }
 
 .captured-photo-preview > strong,
