@@ -8,6 +8,7 @@ import Icon from './components/Icon';
 import IconSprite from './components/IconSprite';
 import UserButton from './components/UserButton';
 import AuthGate from './components/AuthGate';
+import ComparePreview from './components/ComparePreview';
 import { useShoppingList } from './lib/useShoppingList';
 import { useHouseholdSync } from './lib/useHouseholdSync';
 import { useAuth } from './lib/useAuth';
@@ -21,7 +22,7 @@ const TABS = [
   { id: 'nav', icon: 'compass', label: 'ניווט' },
 ];
 
-export default function App() {
+function AuthenticatedApp() {
   const [tab, setTab] = useState('home');
   const [activeGroupId, setActiveGroupId] = useState(null);
   const { user } = useAuth();
@@ -84,4 +85,9 @@ export default function App() {
       </main>
     </div>
   );
+}
+
+export default function App() {
+  if (new URLSearchParams(window.location.search).get('demo') === 'compare') return <ComparePreview />;
+  return <AuthenticatedApp />;
 }
