@@ -2,6 +2,8 @@ import { lazy, Suspense, useEffect, useState } from 'react';
 import './App.css';
 import Home from './components/Home';
 const Navigation = lazy(() => import('./components/Navigation'));
+const StoreMap = lazy(() => import('./components/StoreMap'));
+const PriceComparison = lazy(() => import('./components/PriceComparison'));
 import Icon from './components/Icon';
 import IconSprite from './components/IconSprite';
 import UserButton from './components/UserButton';
@@ -11,9 +13,11 @@ import { useHouseholdSync } from './lib/useHouseholdSync';
 import { useAuth } from './lib/useAuth';
 import { useGroupHome } from './lib/useGroupHome';
 
-// "רשימת קניות" אוחדה לתוך "דף בית" (הוסרה כטאב נפרד) — ר' Home.jsx.
+// דף הבית והניווט הם הליבה; כלים משניים נשארים זמינים בטאבים שלהם.
 const TABS = [
   { id: 'home', icon: 'home', label: 'דף בית' },
+  { id: 'map', icon: 'map', label: 'מפת חנות' },
+  { id: 'compare', icon: 'tag', label: 'השוואת מחירים' },
   { id: 'nav', icon: 'compass', label: 'ניווט' },
 ];
 
@@ -69,6 +73,8 @@ export default function App() {
       <main className="app-main">
         <Suspense fallback={<p className="loading-hint">טוען מסך…</p>}>
           {tab === 'home' && <Home list={list} onNavigate={setTab} groupId={activeGroupId} onExitGroup={() => setActiveGroupId(null)} />}
+          {tab === 'map' && <StoreMap />}
+          {tab === 'compare' && <PriceComparison />}
           {tab === 'nav' && <Navigation list={navigationList} onBack={() => setTab('home')} />}
         </Suspense>
       </main>
