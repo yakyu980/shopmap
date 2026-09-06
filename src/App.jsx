@@ -13,6 +13,7 @@ import { useShoppingList } from './lib/useShoppingList';
 import { useHouseholdSync } from './lib/useHouseholdSync';
 import { useAuth } from './lib/useAuth';
 import { useGroupHome } from './lib/useGroupHome';
+import { useTripSync } from './lib/useTripSync';
 
 // דף הבית והניווט הם הליבה; כלים משניים נשארים זמינים בטאבים שלהם.
 const TABS = [
@@ -28,6 +29,7 @@ function AuthenticatedApp() {
   const { user } = useAuth();
   const list = useShoppingList(user?.id);
   const groupHome = useGroupHome(activeGroupId);
+  const tripSync = useTripSync();
   useHouseholdSync();
 
   useEffect(() => {
@@ -42,7 +44,15 @@ function AuthenticatedApp() {
         removeItem: groupHome.removeItem,
         clear: groupHome.clearItems,
       }
-    : list;
+    : tripSync.trip
+      ? {
+          items: tripSync.trip.items,
+          togglePicked: tripSync.toggleTripItem,
+          addItem: tripSync.addTripItem,
+          removeItem: tripSync.removeTripItem,
+          clear: tripSync.finishTrip,
+        }
+      : list;
 
   if (!user) return <AuthGate />;
 
@@ -77,7 +87,7 @@ function AuthenticatedApp() {
 
       <main className="app-main">
         <Suspense fallback={<p className="loading-hint">טוען מסך…</p>}>
-          {tab === 'home' && <Home list={list} onNavigate={setTab} groupId={activeGroupId} onExitGroup={() => setActiveGroupId(null)} />}
+          {tab === 'home' && <Home list={list} tripSync={tripSync} onNavigate={setTab} groupId={activeGroupId} onExitGroup={() => setActiveGroupId(null)} />}
           {tab === 'map' && <StoreMap />}
           {tab === 'compare' && <PriceComparison />}
           {tab === 'nav' && <Navigation list={navigationList} onBack={() => setTab('home')} />}

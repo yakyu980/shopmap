@@ -38,6 +38,7 @@ React/Vite PWA  ->  Express API  ->  Supabase ושירותים חיצוניים
 - חנות ומחלקות: `storeConfig.js` + `useStoreConfig.js`
 - קטלוג: `catalog.js` + `useCatalog.js`
 - רשימת קניות: `useShoppingList.js`
+- טיול משותף: `App.jsx` מפעיל `useTripSync.js` פעם אחת ומשתף אותו עם Home והניווט. מקור רשימת הניווט נבחר לפי קבוצה פעילה, אחרת טיול פעיל, אחרת הרשימה האישית; פעולות הניווט מופנות לאותו מקור.
 - חשבון: `auth.js` + `useAuth.js`
 - סניפים: `venues.js` + `useVenues.js`
 - דף בית קבוצתי: `groupHome.js` + `useGroupHome.js` ועמודות `groups.shopping_items`/`groups.favorites`

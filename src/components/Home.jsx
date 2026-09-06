@@ -4,7 +4,6 @@ import { getDepartment } from '../lib/storeConfig';
 import { useAuth } from '../lib/useAuth';
 import { useCatalog } from '../lib/useCatalog';
 import { searchCatalog, getAllProducts } from '../lib/catalog';
-import { useTripSync } from '../lib/useTripSync';
 import PurchasePredictions from './PurchasePredictions';
 import ProductImage from './ProductImage';
 const ScanOrSearchModal = lazy(() => import('./ScanOrSearchModal'));
@@ -18,11 +17,11 @@ import { useGroups } from '../lib/useGroups';
 import { fetchGroups } from '../lib/groups';
 import { importGroupHomeItems } from '../lib/groupHome';
 
-export default function Home({ list, onNavigate, groupId = null, onExitGroup }) {
+export default function Home({ list, tripSync, onNavigate, groupId = null, onExitGroup }) {
   const { items, addItem, removeItem, incrementItem, decrementItem, updateItem, reorderItems } = list;
   const { token } = useAuth();
   const dynamicProducts = useCatalog();
-  const { trip, startTrip, addTripItem, toggleTripItem, removeTripItem, finishTrip } = useTripSync();
+  const { trip, startTrip, addTripItem, toggleTripItem, removeTripItem, finishTrip } = tripSync;
   const groupHome = useGroupHome(groupId);
   const groups = useGroups();
 
