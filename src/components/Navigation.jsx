@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { computeRoute, dist, reorderRemainingStops, GRID_UNIT_METERS } from '../lib/route';
+import { computeRoute, dist, reconcileRoute, reorderRemainingStops, GRID_UNIT_METERS } from '../lib/route';
 import { locationLabel } from '../data/storeData';
 import { getDepartment, getDepartments } from '../lib/storeConfig';
 import { markFound, markNotFound } from '../lib/verification';
@@ -29,7 +29,8 @@ function timeAgoLabel(ts) {
 export default function Navigation({ list, onBack }) {
   const { items, togglePicked, addItem, removeItem, clear } = list;
   const customItemsCount = items.filter((i) => i.custom).length;
-  const [routeInit] = useState(() => computeRoute(items));
+  const [routeInit, setRouteInit] = useState(() => computeRoute(items));
+  const [routeItems, setRouteItems] = useState(items);
   const { entrance } = routeInit;
   const [stops, setStops] = useState(routeInit.stops);
   const [stopIndex, setStopIndex] = useState(0);
@@ -46,6 +47,18 @@ export default function Navigation({ list, onBack }) {
   const stepCounter = useStepCounter();
   const gps = useGeolocationWatch();
   const family = useFamilyMembers();
+
+  if (items !== routeItems) {
+    const nextRoute = computeRoute(items);
+    const fromPoint = checkpointPosition || getDepartment(currentLocationId) ||
+      stops[stopIndex]?.department || stops[stopIndex - 1]?.department || nextRoute.entrance;
+    const next = reconcileRoute(stops, stopIndex, nextRoute.stops, fromPoint);
+    setRouteItems(items);
+    setRouteInit(nextRoute);
+    setStops(next.stops);
+    setStopIndex(next.stopIndex);
+    if (next.stopIndex >= next.stops.length) setArMode(false);
+  }
 
   const finished = stopIndex >= stops.length;
 

@@ -54,7 +54,7 @@ export function useShoppingList(userId) {
     setItems((prev) =>
       prev
         .map((i) => (i.id === productId ? { ...i, qty: (i.qty || 1) - 1 } : i))
-        .filter((i) => (i.qty || 1) > 0)
+        .filter((i) => (i.qty ?? 1) > 0)
     );
   }, []);
 
@@ -86,12 +86,22 @@ export function useShoppingList(userId) {
     );
   }, []);
 
+  const restoreItem = useCallback((product, index) => {
+    setItems((prev) => {
+      if (prev.some((item) => item.id === product.id)) return prev;
+      const next = [...prev];
+      next.splice(Math.max(0, Math.min(index, next.length)), 0, product);
+      return next;
+    });
+  }, []);
+
   const clear = useCallback(() => setItems([]), []);
 
   return {
     items,
     addItem,
     removeItem,
+    restoreItem,
     incrementItem,
     decrementItem,
     updateItem,

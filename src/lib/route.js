@@ -1,4 +1,4 @@
-import { getDepartments, getDepartment } from './storeConfig';
+import { getDepartments, getDepartment } from './storeConfig.js';
 
 // המרה גסה בין יחידת-מרחק לוגית (על רשת המחלקות) למטרים — לצורך השוואה
 // מול הערכת-המרחק שמגיעה ממד-הצעדים הניסיוני.
@@ -77,4 +77,30 @@ export function reorderRemainingStops(stops, fromIndex, fromPoint) {
     remaining.find((s) => s.department.id === d.id)
   );
   return [...before, ...orderedStops];
+}
+
+// Refresh item snapshots without losing completed stops or a manually reordered route.
+// New items in a completed department make that department pending again.
+export function reconcileRoute(previousStops, stopIndex, nextStops, fromPoint) {
+  const byDepartment = new Map(nextStops.map((stop) => [stop.department.id, stop]));
+  const sameMembership = previousStops.length === nextStops.length && previousStops.every((stop) => {
+    const next = byDepartment.get(stop.department.id);
+    return next && next.items.length === stop.items.length &&
+      next.items.every((item) => stop.items.some((old) => old.id === item.id));
+  });
+  if (sameMembership) {
+    return { stops: previousStops.map((stop) => byDepartment.get(stop.department.id)), stopIndex };
+  }
+
+  const completed = previousStops.slice(0, stopIndex).flatMap((stop) => {
+    const next = byDepartment.get(stop.department.id);
+    return next && next.items.every((item) => stop.items.some((old) => old.id === item.id)) ? [next] : [];
+  });
+  const completedIds = new Set(completed.map((stop) => stop.department.id));
+  const remaining = nextStops.filter((stop) => !completedIds.has(stop.department.id));
+  const current = remaining.find((stop) => stop.department.id === previousStops[stopIndex]?.department.id);
+  const rest = remaining.filter((stop) => stop !== current);
+  const ordered = orderByNearestNeighbor(current?.department || fromPoint, rest.map((stop) => stop.department))
+    .map((department) => byDepartment.get(department.id));
+  return { stops: [...completed, ...(current ? [current] : []), ...ordered], stopIndex: completed.length };
 }
