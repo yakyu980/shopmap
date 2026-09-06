@@ -1634,6 +1634,45 @@
   border-color: var(--primary);
 }
 
+.btn--scan {
+  background: #dbeafe;
+  border-color: #93c5fd;
+  color: #124b82;
+  font-weight: 700;
+}
+
+.btn--scan:hover,
+.btn--scan:focus-visible {
+  background: #bfdbfe;
+  border-color: #2563eb;
+}
+
+.btn--favorites {
+  background: #fff4cc;
+  border-color: #f2c94c;
+  color: #765600;
+  font-weight: 700;
+}
+
+.btn--favorites:hover,
+.btn--favorites:focus-visible {
+  background: #ffe69a;
+  border-color: #c28b00;
+}
+
+.btn--personal-mode {
+  background: var(--surface);
+  border: 1px solid var(--primary);
+  color: var(--primary-dark);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.btn--personal-mode:hover,
+.btn--personal-mode:focus-visible {
+  background: var(--primary-tint);
+}
+
 .home-product-rows {
   display: flex;
   flex-direction: column;

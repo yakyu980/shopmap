@@ -131,7 +131,7 @@ export default function Home({ list, tripSync, onNavigate, groupId = null, onExi
       {groupHome.error && <p className="login-error"><Icon name="warning" /> {groupHome.error}</p>}
       {notice && <p className="settings-hint" role="status"><Icon name="check" /> {notice}</p>}
       {undoItem && <p className="settings-hint" role="status">המוצר “{undoItem.product.name}” הוסר. <button className="btn btn--text" onClick={() => { list.restoreItem(undoItem.product, undoItem.index); setUndoItem(null); }}>בטל</button></p>}
-      {groupId && <div className="trip-banner"><span className="trip-banner-label">{groupHome.group?.photo ? <img className="trip-banner-avatar" src={groupHome.group.photo} alt="" /> : <span className="trip-banner-avatar trip-banner-avatar--empty"><Icon name="family" /></span>}<span><Icon name="family" /> דף הבית של: {groupHome.group?.name || 'הקבוצה'}</span></span><button className="btn btn--text" onClick={() => setVenuePickerOpen(true)}>📍 {groupHome.group?.venueId ? 'שנה סניף' : 'בחר סניף'}</button><button className="btn btn--text" onClick={() => onExitGroup?.()}>מצב אישי</button></div>}
+      {groupId && <div className="trip-banner"><span className="trip-banner-label">{groupHome.group?.photo ? <img className="trip-banner-avatar" src={groupHome.group.photo} alt="" /> : <span className="trip-banner-avatar trip-banner-avatar--empty"><Icon name="family" /></span>}<span><Icon name="family" /> דף הבית של: {groupHome.group?.name || 'הקבוצה'}</span></span><button className="btn btn--text" onClick={() => setVenuePickerOpen(true)}>📍 {groupHome.group?.venueId ? 'שנה סניף' : 'בחר סניף'}</button><button className="btn btn--personal-mode" onClick={() => onExitGroup?.()}><Icon name="home" /> חזרה לרשימה שלי</button></div>}
       {!groupId && token && (
         <div className="trip-banner">
           {trip ? (
@@ -184,10 +184,10 @@ export default function Home({ list, tripSync, onNavigate, groupId = null, onExi
         <VoiceAddPanel onAdd={handleAdd} />
 
         <div className="scan-buttons-row">
-          <button className="btn btn--tinted" onClick={() => setScannerOpen(true)}>
+          <button className="btn btn--tinted btn--scan" onClick={() => setScannerOpen(true)}>
             <Icon name="barcode" solid /> סרוק / זהה מוצר
           </button>
-          <button className="btn btn--tinted" onClick={() => setFavoritesOpen(true)}>
+          <button className="btn btn--tinted btn--favorites" onClick={() => setFavoritesOpen(true)}>
             <Icon name="star" /> המועדפים שלי
           </button>
         </div>
