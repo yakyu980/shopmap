@@ -23,7 +23,7 @@ export default function Home({ list, tripSync, onNavigate, groupId = null, onExi
   const { items, addItem, removeItem, incrementItem, decrementItem, updateItem, reorderItems } = list;
   const { token } = useAuth();
   const dynamicProducts = useCatalog();
-  const { trip, addTripItem, toggleTripItem, removeTripItem, finishTrip } = tripSync;
+  const { trip, addTripItem, toggleTripItem, removeTripItem, updateTripItem, updateTripVenue, finishTrip } = tripSync;
   const groupHome = useGroupHome(groupId);
   const groups = useGroups();
 
@@ -58,7 +58,9 @@ export default function Home({ list, tripSync, onNavigate, groupId = null, onExi
         const data = await api.get(`/price-import/${encodeURIComponent(product.barcode)}`);
         const row = (data.rows || []).find((candidate) => candidate.venueId === venue.id || candidate.storeId === venue.id);
         if (row && Number(row.price) > 0) {
-          updateItem(product.id, { price: Number(row.price) });
+          if (groupId) await groupHome.updateItem(product.id, { price: Number(row.price) });
+          else if (trip) await updateTripItem(product.id, { price: Number(row.price) });
+          else updateItem(product.id, { price: Number(row.price) });
           updated += 1;
         }
       } catch { /* מחיר חסר נשאר ללא שינוי */ }
@@ -162,6 +164,7 @@ export default function Home({ list, tripSync, onNavigate, groupId = null, onExi
               <span className="trip-banner-label">
                 <Icon name="family" /> טיול-קניות משותף פעיל
               </span>
+              <button className="btn btn--venue-search btn--venue-search-compact" onClick={() => setVenuePickerOpen(true)}><Icon name="location" /> חיפוש סופר</button>
               <button className="btn btn--text" onClick={finishTrip}>
                 🏁 סיים טיול
               </button>
@@ -183,6 +186,10 @@ export default function Home({ list, tripSync, onNavigate, groupId = null, onExi
             }
             if (venue && !groupId && !trip) {
               setSelectedVenue(venue);
+              await refreshPricesForVenue(venue);
+            }
+            if (venue && trip) {
+              await updateTripVenue(venue.id);
               await refreshPricesForVenue(venue);
             }
             setVenuePickerOpen(false);

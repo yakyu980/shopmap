@@ -77,11 +77,29 @@ export function useTripSync() {
     [trip]
   );
 
+  const updateTripItem = useCallback(
+    async (itemId, changes) => {
+      if (!trip || changes.price === undefined) return;
+      const data = await api.patch(`/trips/${trip.id}/items/${itemId}`, { price: changes.price });
+      setTrip(data.trip);
+    },
+    [trip]
+  );
+
+  const updateTripVenue = useCallback(
+    async (venueId) => {
+      if (!trip) return;
+      const data = await api.patch(`/trips/${trip.id}`, { venueId });
+      setTrip(data.trip);
+    },
+    [trip]
+  );
+
   const finishTrip = useCallback(async () => {
     if (!trip) return;
     await api.post(`/trips/${trip.id}/finish`);
     setTrip(null);
   }, [trip]);
 
-  return { trip, startTrip, addTripItem, toggleTripItem, removeTripItem, finishTrip };
+  return { trip, startTrip, addTripItem, toggleTripItem, removeTripItem, updateTripItem, updateTripVenue, finishTrip };
 }

@@ -119,6 +119,40 @@ router.post(
   })
 );
 
+router.patch(
+  '/:id',
+  requireAuth,
+  h(async (req, res) => {
+    const trip = await findTrip(req.params.id, req.household.id);
+    if (!trip) return res.status(404).json({ error: 'טיול לא נמצא' });
+    const { venueId } = req.body || {};
+    if (venueId !== null && typeof venueId !== 'string') return res.status(400).json({ error: 'מזהה סניף לא תקין' });
+    const { data, error } = await supabase.from('trips').update({ venue_id: venueId }).eq('id', trip.id).select().single();
+    if (error) throw error;
+    res.json({ trip: toTrip(data) });
+  })
+);
+
+router.patch(
+  '/:id/items/:itemId',
+  requireAuth,
+  h(async (req, res) => {
+    const trip = await findTrip(req.params.id, req.household.id);
+    if (!trip) return res.status(404).json({ error: 'טיול לא נמצא' });
+    const { price } = req.body || {};
+    if (typeof price !== 'number' || !Number.isFinite(price) || price <= 0) {
+      return res.status(400).json({ error: 'מחיר חיובי נדרש' });
+    }
+    const items = (trip.items || []).map((item) =>
+      item.id === req.params.itemId ? { ...item, price } : item
+    );
+    if (!items.some((item) => item.id === req.params.itemId)) return res.status(404).json({ error: 'פריט לא נמצא' });
+    const { data, error } = await supabase.from('trips').update({ items }).eq('id', trip.id).select().single();
+    if (error) throw error;
+    res.json({ trip: toTrip(data) });
+  })
+);
+
 router.post(
   '/:id/items/:itemId/remove',
   requireAuth,

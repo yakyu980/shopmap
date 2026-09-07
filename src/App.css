@@ -1682,6 +1682,7 @@
 }
 .btn--venue-search:hover,
 .btn--venue-search:focus-visible { background: #1d4ed8; }
+.btn--venue-search-compact { padding: 6px 9px; font-size: 12px; }
 .selected-venue-banner {
   display: flex; align-items: center; gap: 8px; padding: 9px 12px; margin: 8px 0;
   border-radius: 10px; background: #dbeafe; border: 1px solid #60a5fa; color: #123b70;
