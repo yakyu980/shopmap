@@ -12,16 +12,18 @@ const FavoritesManager = lazy(() => import('./FavoritesManager'));
 import TripVenuePicker from './TripVenuePicker';
 import PriceTag from './PriceTag';
 import Icon from './Icon';
+import ControlledPrices from './ControlledPrices';
 import { useGroupHome } from '../lib/useGroupHome';
 import { useGroups } from '../lib/useGroups';
 import { fetchGroups } from '../lib/groups';
 import { importGroupHomeItems } from '../lib/groupHome';
+import { api } from '../lib/apiClient';
 
 export default function Home({ list, tripSync, onNavigate, groupId = null, onExitGroup }) {
   const { items, addItem, removeItem, incrementItem, decrementItem, updateItem, reorderItems } = list;
   const { token } = useAuth();
   const dynamicProducts = useCatalog();
-  const { trip, startTrip, addTripItem, toggleTripItem, removeTripItem, finishTrip } = tripSync;
+  const { trip, addTripItem, toggleTripItem, removeTripItem, finishTrip } = tripSync;
   const groupHome = useGroupHome(groupId);
   const groups = useGroups();
 
@@ -35,6 +37,8 @@ export default function Home({ list, tripSync, onNavigate, groupId = null, onExi
   const [transferBusy, setTransferBusy] = useState(false);
   const [notice, setNotice] = useState('');
   const [undoItem, setUndoItem] = useState(null);
+  const [selectedVenue, setSelectedVenue] = useState(null);
+  const [venuePriceStatus, setVenuePriceStatus] = useState('');
 
   // "פריטים אישיים" (מ-⭐ מועדפים, לא בקטלוג) — ר' FavoritesManager.jsx.
   // אין להם department/price אמיתיים, ולא ניתנים-לניווט/לטיול-משותף.
@@ -42,6 +46,25 @@ export default function Home({ list, tripSync, onNavigate, groupId = null, onExi
   const customItems = groupId || trip ? [] : items.filter((i) => i.custom);
 
   useEffect(() => { if (token) fetchGroups().catch(() => {}); }, [token]);
+
+  async function refreshPricesForVenue(venue) {
+    if (!venue) return;
+    const products = groupId ? groupHome.items : items.filter((item) => !item.custom);
+    setVenuePriceStatus('בודק מחירים לפי הסניף…');
+    let updated = 0;
+    for (const product of products) {
+      if (!product.barcode) continue;
+      try {
+        const data = await api.get(`/price-import/${encodeURIComponent(product.barcode)}`);
+        const row = (data.rows || []).find((candidate) => candidate.venueId === venue.id || candidate.storeId === venue.id);
+        if (row && Number(row.price) > 0) {
+          updateItem(product.id, { price: Number(row.price) });
+          updated += 1;
+        }
+      } catch { /* מחיר חסר נשאר ללא שינוי */ }
+    }
+    setVenuePriceStatus(updated ? `עודכנו מחירים עבור ${updated} מוצרים` : 'אין עדיין מחירים מעודכנים לסניף הזה');
+  }
 
   async function transferToGroup() {
     if (!transferGroupId || !items.length) return;
@@ -144,8 +167,8 @@ export default function Home({ list, tripSync, onNavigate, groupId = null, onExi
               </button>
             </>
           ) : (
-            <button className="btn btn--ghost btn--small" onClick={() => setVenuePickerOpen(true)}>
-              🛒 התחל טיול-קניות משותף
+            <button className="btn btn--venue-search" onClick={() => setVenuePickerOpen(true)}>
+              <Icon name="location" /> חיפוש סופר
             </button>
           )}
         </div>
@@ -153,9 +176,15 @@ export default function Home({ list, tripSync, onNavigate, groupId = null, onExi
       {venuePickerOpen && (
         <TripVenuePicker
           onClose={() => setVenuePickerOpen(false)}
-          onPick={async (venueId) => {
-            if (groupId) await groupHome.updateVenue(venueId);
-            else await startTrip(venueId);
+          onPick={async (venue) => {
+            if (venue && groupId) {
+              await groupHome.updateVenue(venue.id);
+              await refreshPricesForVenue(venue);
+            }
+            if (venue && !groupId && !trip) {
+              setSelectedVenue(venue);
+              await refreshPricesForVenue(venue);
+            }
             setVenuePickerOpen(false);
           }}
         />
@@ -204,6 +233,9 @@ export default function Home({ list, tripSync, onNavigate, groupId = null, onExi
           </button>
         </div>
       )}
+
+      {!groupId && selectedVenue && <div className="selected-venue-banner"><Icon name="location" /><span><strong>{selectedVenue.chainName}</strong> · {selectedVenue.branchName}<small>{selectedVenue.address || 'מיקום שמור'}</small></span><button className="btn btn--text" onClick={() => setVenuePickerOpen(true)}>שנה סופר</button></div>}
+      {venuePriceStatus && <p className="settings-hint" role="status">{venuePriceStatus}</p>}
       </Suspense>
 
       {query.trim() && (
@@ -243,6 +275,7 @@ export default function Home({ list, tripSync, onNavigate, groupId = null, onExi
       )}
 
       <PurchasePredictions onAdd={handleAdd} listedIds={new Set(displayItems.map((i) => i.productId || i.id))} />
+      <ControlledPrices />
 
       <div className="home-shopping-list">
         <div className="home-section-title-row">

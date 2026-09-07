@@ -64,7 +64,7 @@ export default function TripVenuePicker({ onClose, onPick }) {
         storeType: 'supermarket',
         address: store.address,
       });
-      onPick(venue.id);
+      onPick(venue);
     } catch {
       setError('מצאנו את הסופר, אבל לא הצלחנו לשמור אותו');
     } finally {
@@ -81,7 +81,7 @@ export default function TripVenuePicker({ onClose, onPick }) {
     setError('');
     try {
       const venue = await createVenue({ chainName, branchName, storeType });
-      onPick(venue.id);
+      onPick(venue);
     } catch {
       setError('לא הצלחתי לשמור — נסו שוב');
     } finally {
@@ -94,7 +94,7 @@ export default function TripVenuePicker({ onClose, onPick }) {
       <div className="modal venue-picker-modal" onClick={(e) => e.stopPropagation()}>
         <CloseButton onClick={onClose} />
         <h2>איפה קונים?</h2>
-        <p className="settings-hint">בחרו חנות-שמורה, או הוסיפו חדשה — כדי לתייג את הטיול לפי סוג-חנות</p>
+        <p className="settings-hint">בחרו סופר לפי GPS, מהרשימה או הזינו רשת וסניף ידנית</p>
 
         <button className="btn btn--primary" onClick={handleFindNearby} disabled={locating || creating}>
           <Icon name="location" /> {locating ? 'מאתר GPS וסופרים…' : 'מצא סופרים לידי'}
@@ -123,7 +123,7 @@ export default function TripVenuePicker({ onClose, onPick }) {
           <ul className="venue-list">
             {venues.map((v) => (
               <li key={v.id}>
-                <button className="venue-row-btn" onClick={() => onPick(v.id)}>
+                <button className="venue-row-btn" onClick={() => onPick(v)}>
                   <span className="venue-row-name">
                     {v.chainName} · {v.branchName}
                   </span>
@@ -157,12 +157,12 @@ export default function TripVenuePicker({ onClose, onPick }) {
           </select>
           {error && <p className="settings-error" role="alert">{error}</p>}
           <button className="btn btn--primary" onClick={handleCreateAndStart} disabled={creating}>
-            <Icon name="plus" /> {creating ? 'שומר…' : 'צור והתחל טיול'}
+            <Icon name="plus" /> {creating ? 'שומר…' : 'שמור סופר'}
           </button>
         </div>
 
         <button className="btn btn--ghost" onClick={() => onPick(null)}>
-          התחל בלי לציין חנות
+          המשך בלי לבחור סופר
         </button>
       </div>
     </div>

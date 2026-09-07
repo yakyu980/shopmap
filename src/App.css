@@ -1673,6 +1673,24 @@
   background: var(--primary-tint);
 }
 
+.btn--venue-search {
+  background: #2563eb;
+  border: 1px solid #1d4ed8;
+  color: #fff;
+  font-weight: 800;
+  box-shadow: 0 2px 8px rgba(37, 99, 235, .25);
+}
+.btn--venue-search:hover,
+.btn--venue-search:focus-visible { background: #1d4ed8; }
+.selected-venue-banner {
+  display: flex; align-items: center; gap: 8px; padding: 9px 12px; margin: 8px 0;
+  border-radius: 10px; background: #dbeafe; border: 1px solid #60a5fa; color: #123b70;
+}
+.selected-venue-banner span { flex: 1; }
+.selected-venue-banner strong, .selected-venue-banner small { display: block; }
+.selected-venue-banner strong { font-size: 14px; }
+.selected-venue-banner small { font-size: 11px; color: #315b8f; }
+
 .home-product-rows {
   display: flex;
   flex-direction: column;
