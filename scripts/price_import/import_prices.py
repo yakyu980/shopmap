@@ -117,6 +117,7 @@ def extract_barcodes(row):
 
 
 def run_download_and_parse():
+    enabled = reviewed_scrapers()
     from il_supermarket_scarper import ScarpingTask
     from il_supermarket_parsers import ConvertingTask
 
@@ -125,6 +126,7 @@ def run_download_and_parse():
     OUTPUTS.mkdir(parents=True)
     STATUS.mkdir(parents=True)
     scraper = ScarpingTask(
+        enabled_scrapers=enabled,
         files_types=FILE_TYPES,
         multiprocessing=4,
         output_configuration={"output_mode": "disk", "base_storage_path": str(DUMPS)},
@@ -143,7 +145,20 @@ def run_download_and_parse():
     parser.join()
 
 
+def reviewed_scrapers():
+    with (ROOT / "source_policy.json").open(encoding="utf-8") as handle:
+        sources = json.load(handle)["reviewed_sources"]
+    if not sources:
+        raise RuntimeError("Retailer downloads disabled: no source has completed permission and adapter review")
+    for source in sources:
+        if not all(source.get(field) for field in ("scraper", "official_url", "reuse_basis_url", "reviewed_at", "adapter_review")):
+            raise RuntimeError("Incomplete source review; refusing retailer downloads")
+    return [source["scraper"] for source in sources]
+
+
 def main():
+    # Check before credentials, dependencies or network access.
+    reviewed_scrapers()
     from supabase import create_client
 
     url = os.environ.get("SUPABASE_URL")

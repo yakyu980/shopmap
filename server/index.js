@@ -15,6 +15,7 @@ import priceImportRoutes from './routes/priceImport.js';
 import dealsRoutes from './routes/deals.js';
 import recognizeProductRoutes from './routes/recognizeProduct.js';
 import priceDataRoutes from './routes/priceData.js';
+import controlledPriceRoutes from './routes/controlledPrices.js';
 import { seedProducts } from './seedProducts.js';
 import { supabase } from './supabaseClient.js';
 
@@ -34,6 +35,7 @@ app.use('/api/price-import', priceImportRoutes);
 app.use('/api/deals', dealsRoutes);
 app.use('/api/recognize-product', recognizeProductRoutes);
 app.use('/api/price-data', priceDataRoutes);
+app.use('/api/controlled-prices', controlledPriceRoutes);
 
 app.get('/api/health', async (req, res) => {
   let shoppingItemsRealtime = false;

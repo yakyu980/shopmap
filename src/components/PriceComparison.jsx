@@ -13,6 +13,7 @@ import DeptIcon from './DeptIcon';
 import DealsTab from './DealsTab';
 import DeepCompare from './DeepCompare';
 import PurchaseHistoryCompare from './PurchaseHistoryCompare';
+import ControlledPrices from './ControlledPrices';
 
 const COMPARE_TABS = [
   { id: 'compare', icon: 'tag', label: 'השוואת מחירים' },
@@ -82,6 +83,7 @@ export default function PriceComparison() {
         <Icon name="tag" /> השוואת מוצרים מרובים בין רשתות
       </p>
       <MultiProductCompare />
+      <ControlledPrices />
 
       <p className="compare-intro">
         השוואת מחירים והיסטוריית-מחיר לכל מוצר בקטלוג. נתוני ההיסטוריה הכללית כאן הם
