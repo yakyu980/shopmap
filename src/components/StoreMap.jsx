@@ -5,6 +5,7 @@ import Icon from './Icon';
 import DeptIcon from './DeptIcon';
 import CheckpointQrModal from './CheckpointQrModal';
 import MappingDeviceReadiness from './MappingDeviceReadiness';
+import MappingSessionPanel from './MappingSessionPanel';
 import {
   addCheckpoint,
   addDepartment,
@@ -171,6 +172,7 @@ export default function StoreMap({ activeDeptId, currentCheckpointId }) {
   return (
     <div className="store-map store-map--satellite">
       <MappingDeviceReadiness />
+      <MappingSessionPanel />
       {config.floors.length > 1 && (
         <div className="floor-switcher" role="tablist" aria-label="קומות">
           {config.floors.map((f) => (
