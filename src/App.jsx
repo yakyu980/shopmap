@@ -8,7 +8,6 @@ import Icon from './components/Icon';
 import IconSprite from './components/IconSprite';
 import UserButton from './components/UserButton';
 import AuthGate from './components/AuthGate';
-import ComparePreview from './components/ComparePreview';
 import { useShoppingList } from './lib/useShoppingList';
 import { useHouseholdSync } from './lib/useHouseholdSync';
 import { useAuth } from './lib/useAuth';
@@ -97,7 +96,22 @@ function AuthenticatedApp() {
   );
 }
 
+function ComparisonDesignPreview() {
+  return (
+    <div className="app">
+      <IconSprite />
+      <header className="app-header">
+        <h1>SuperNav AI</h1>
+        <p className="app-tagline">תצוגת עיצוב · נתוני דוגמה מסומנים</p>
+      </header>
+      <main className="app-main">
+        <PriceComparison />
+      </main>
+    </div>
+  );
+}
+
 export default function App() {
-  if (new URLSearchParams(window.location.search).get('demo') === 'compare') return <ComparePreview />;
+  if (new URLSearchParams(window.location.search).get('demo') === 'compare') return <ComparisonDesignPreview />;
   return <AuthenticatedApp />;
 }
