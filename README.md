@@ -54,6 +54,7 @@ node --test src/lib/chainPriceBlocks.test.js
 - [דף הבית — מקור האמת של הזרימה המרכזית](docs/HOME.md)
 - [דוח QA של דף הבית](docs/QA-HOME.md)
 - [ארכיטקטורה ומפת קוד](docs/ARCHITECTURE.md)
+- [מיפוי פיזי — התקדמות ובדיקת קוד](docs/MAPPING-PROGRESS.md)
 - [פיתוח, בדיקות ופריסה](docs/DEVELOPMENT.md)
 - [כללי העבודה של סוכני קוד](AGENTS.md)
 
